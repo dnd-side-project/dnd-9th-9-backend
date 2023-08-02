@@ -3,6 +3,8 @@ package com.dnd.Exercise.global.error.handler;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.dto.ErrorResponse;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.slack.SlackAlarm;
+import com.dnd.Exercise.global.slack.SlackAlarmErrorLevel;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,9 +14,10 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@ControllerAdvice
+@RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
@@ -71,7 +74,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, errorCode.getStatus());
     }
 
-
+    @SlackAlarm(level = SlackAlarmErrorLevel.ERROR)
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponse> handleException(
             Exception e, HttpServletRequest request) {
