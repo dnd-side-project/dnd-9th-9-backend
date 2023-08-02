@@ -47,6 +47,10 @@ dependencies {
 	implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
 }
 
+jar {
+	enabled = false
+}
+
 // QueryDsl 추가 시작
 def querydslDir = "$buildDir/generated/querydsl"
 

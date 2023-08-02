@@ -1,0 +1,64 @@
+name: Deploy to Amazon EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET_NAME: dnd-9-9-backend
+  S3_FOLDER_NAME: deploy
+  CODE_DEPLOY_APPLICATION_NAME: dnd-9-9-backend
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: deployment-group
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - name: Add application.properties
+      run: |
+        mkdir ./src/main/resources/
+        touch ./src/main/resources/application.properties
+        echo "${{ secrets.APPLICATION_PROPS }}" > ./src/main/resources/application.properties
+        cat ./src/main/resources/application.properties
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew clean build -x test
+
+    - name: Make zip file 
+      run: zip -qq -r ./$GITHUB_SHA.zip .
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Upload to AWS S3
+      run: aws s3 cp --region ${{ env.AWS_REGION }} ./$GITHUB_SHA.zip s3://$S3_BUCKET_NAME/$S3_FOLDER_NAME/$GITHUB_SHA.zip
+
+    - name: Deploy to AWS EC2 from S3
+      run: |
+        aws deploy create-deployment \
+          --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+          --deployment-config-name CodeDeployDefault.AllAtOnce \
+          --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+          --s3-location bucket=$S3_BUCKET_NAME,key=$S3_FOLDER_NAME/$GITHUB_SHA.zip,bundleType=zip
