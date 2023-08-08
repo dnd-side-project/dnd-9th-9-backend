@@ -47,7 +47,7 @@ public class Team {
     private String description;
 
     @OneToOne(fetch = LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "leader_id")
     private User leader;
 
     @ManyToOne(fetch = LAZY)

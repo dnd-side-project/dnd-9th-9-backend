@@ -23,10 +23,10 @@ public class TeamBattleEntry {
     private Long id;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "team_id")
+    @JoinColumn(name = "sender_team_id")
     private Team sender;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "team_id")
+    @JoinColumn(name = "receiver_team_id")
     private Team receiver;
 }

@@ -2,6 +2,7 @@ package com.dnd.Exercise.domain.duelEntry.duelEntry;
 
 import static javax.persistence.FetchType.LAZY;
 
+import com.dnd.Exercise.domain.duel.entity.Duel;
 import com.dnd.Exercise.domain.user.entity.User;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,14 +19,14 @@ public class DuelEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "duel_id")
+    @Column(name = "duel_entry_id")
     private Long id;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "sender_user_id")
     private User sender;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "user_id")
-    private User receiver;
+    @JoinColumn(name = "duel_id")
+    private Duel receiver;
 }

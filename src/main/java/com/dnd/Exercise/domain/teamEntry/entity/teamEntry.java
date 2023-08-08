@@ -22,7 +22,7 @@ public class teamEntry {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "entrant_id")
     private User entrant;
 
     @ManyToOne(fetch = FetchType.LAZY)
