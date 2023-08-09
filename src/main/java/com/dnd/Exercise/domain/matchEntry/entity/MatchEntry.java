@@ -1,10 +1,10 @@
-package com.dnd.Exercise.domain.notification.entity;
+package com.dnd.Exercise.domain.matchEntry.entity;
 
 import static javax.persistence.FetchType.*;
 
 import com.dnd.Exercise.domain.match.entity.Match;
+import com.dnd.Exercise.domain.notification.entity.MatchType;
 import com.dnd.Exercise.domain.user.entity.User;
-import com.dnd.Exercise.global.common.BaseEntity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -18,25 +18,25 @@ import lombok.Getter;
 
 @Entity
 @Getter
-public class Notification extends BaseEntity {
+public class MatchEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notification_id")
+    @Column(name = "match_entry_id")
     private Long id;
-
-    private String content;
-
-    private Boolean isRead;
 
     @Enumerated(EnumType.STRING)
     private MatchType matchType;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "entrant_user_id")
+    private User entrantUser;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "match_id")
-    private Match match;
+    @JoinColumn(name = "entrant_match_id")
+    private Match entrantMatch;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "host_match_id")
+    private Match hostMatch;
 }

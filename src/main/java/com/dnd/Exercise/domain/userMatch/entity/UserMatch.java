@@ -1,6 +1,6 @@
-package com.dnd.Exercise.domain.teamEntry.entity;
+package com.dnd.Exercise.domain.userMatch.entity;
 
-import com.dnd.Exercise.domain.team.entity.Team;
+import com.dnd.Exercise.domain.match.entity.Match;
 import com.dnd.Exercise.domain.user.entity.User;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,18 +14,19 @@ import lombok.Getter;
 
 @Entity
 @Getter
-public class teamEntry {
+public class UserMatch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "team_entry_id")
+    @Column(name = "user_match_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "entrant_id")
-    private User entrant;
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id")
-    private Team team;
+    @JoinColumn(name = "match_id")
+    private Match match;
+
 }

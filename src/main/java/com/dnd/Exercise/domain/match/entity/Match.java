@@ -1,9 +1,9 @@
-package com.dnd.Exercise.domain.team.entity;
+package com.dnd.Exercise.domain.match.entity;
 
 import static javax.persistence.FetchType.LAZY;
 
-import com.dnd.Exercise.domain.teamBattle.entity.TeamBattle;
-import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.domain.notification.entity.MatchType;
+import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -12,16 +12,15 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import lombok.Getter;
 
 @Entity
 @Getter
-public class Team {
+public class Match {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "team_id")
+    @Column(name = "match_id")
     private Long id;
 
     private String name;
@@ -34,23 +33,32 @@ public class Team {
     @Enumerated(EnumType.STRING)
     private Goal goal;
 
-    private Boolean isPublic;
-
     private String rule;
 
-    private int teamSize;
+    private int maxSize;
+
+    private int currentSize;
 
     private Boolean isActive;
 
+    @Enumerated(EnumType.STRING)
     private Period period;
 
     private String description;
 
-    @OneToOne(fetch = LAZY)
-    @JoinColumn(name = "leader_id")
-    private User leader;
+    private Long leaderId;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "team_battle_id")
-    private TeamBattle teamBattle;
+    @Enumerated(EnumType.STRING)
+    private MatchStatus MatchStatus;
+
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    @Enumerated(EnumType.STRING)
+    private MatchType matchType;
+
+    @OneToOne(fetch = LAZY)
+    @JoinColumn(name = "opponent_id")
+    private Match opponent;
 }
