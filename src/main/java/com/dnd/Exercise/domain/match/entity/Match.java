@@ -55,6 +55,9 @@ public class Match {
     @Enumerated(EnumType.STRING)
     private MatchType matchType;
 
+    @Enumerated(EnumType.STRING)
+    private SkillLevel skillLevel;
+
     @OneToOne(fetch = LAZY)
     @JoinColumn(name = "opponent_id")
     private Match opponent;
