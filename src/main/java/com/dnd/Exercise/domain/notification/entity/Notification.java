@@ -30,7 +30,7 @@ public class Notification extends BaseEntity {
     private Boolean isRead;
 
     @Enumerated(EnumType.STRING)
-    private MatchType matchType;
+    private NotificationType notificationType;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "user_id")
