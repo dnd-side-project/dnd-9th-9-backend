@@ -50,14 +50,13 @@ public class MatchController {
     }
 
 
-    @ApiOperation(value = "단일 매치 조회 🔥", notes = "팀원 제외, 해당 매치에 관한 정보만 조회합니다")
+    @ApiOperation(value = "단일 매치 조회 🔥", notes = "팀원 제외, 해당 매치에 관한 정보와 매칭된 매치일 경우 상대 팀 정보를 조회합니다")
     @GetMapping("/{id}")
     public ResponseEntity<FindMatchRes> findMatch(
             @Parameter(description = "매치 Id값") @PathVariable("id") Long matchId){
         FindMatchRes findMatchRes = new FindMatchRes();
         return ResponseDto.ok(findMatchRes);
     }
-
 
     @ApiOperation(value = "매치 프로필 수정 🔥")
     @PatchMapping("/{id}/profile")
