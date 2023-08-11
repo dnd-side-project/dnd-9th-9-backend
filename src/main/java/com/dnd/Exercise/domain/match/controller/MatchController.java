@@ -91,4 +91,12 @@ public class MatchController {
         AutoMatchingRes autoMatchingRes = new AutoMatchingRes();
         return ResponseDto.ok(autoMatchingRes);
     }
+
+    @ApiOperation(value = "방장 넘기기 🔥")
+    @PatchMapping("/{id}/change-leader")
+    public ResponseEntity<String> changeLeader(
+            @Parameter(description = "매치 Id값") @PathVariable("id") Long matchId,
+            @Parameter(description = "새로운 리더 Id값") @RequestParam("id") Long id){
+        return ResponseDto.ok("팀장 변경 완료");
+    }
 }
