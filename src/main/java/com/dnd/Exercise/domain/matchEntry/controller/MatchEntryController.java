@@ -4,6 +4,7 @@ import com.dnd.Exercise.domain.match.entity.MatchType;
 import com.dnd.Exercise.domain.matchEntry.dto.request.DeleteMatchEntryReq;
 import com.dnd.Exercise.domain.matchEntry.dto.request.EntryDirection;
 import com.dnd.Exercise.domain.matchEntry.dto.response.FindAllMatchEntryRes;
+import com.dnd.Exercise.domain.matchEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -24,12 +25,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/match/entry")
 public class MatchEntryController {
 
+    @ApiOperation(value = "[팀 - 팀원] 페이지 - 팀 신청받은 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
+    @GetMapping("/team/{id}")
+    public ResponseEntity<FindAllTeamEntryRes> findAllTeamEntries(
+            @Parameter(description = "매치 Id값") @PathVariable("id") Long matchId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "3") int size){
+        FindAllTeamEntryRes findAllTeamEntryRes = new FindAllTeamEntryRes();
+        return ResponseDto.ok(findAllTeamEntryRes);
+    }
+
     /**
      * AuthenticationPrinciple을 통한 본인이 참여하고 있는 MATCH인지 확인하는 로직 추가 고려
      */
-    @ApiOperation(value = "[매치 - 매칭] 페이지 - 매치 신청 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
-    @GetMapping("/{id}")
-    public ResponseEntity<FindAllMatchEntryRes> findAllMatchEntriesByDirection(
+    @ApiOperation(value = "[매치 - 매칭] 페이지 - 배틀 신청 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
+    @GetMapping("/battle/{id}")
+    public ResponseEntity<FindAllMatchEntryRes> findAllBattleEntriesByDirection(
             @Parameter(description = "매치 Id값") @PathVariable("id") Long matchId,
             @RequestParam(value = "direction") EntryDirection entryDirection,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -39,9 +50,9 @@ public class MatchEntryController {
     }
 
 
-    @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 매치 신청 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
+    @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 매치 신청한 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
     @GetMapping
-    public ResponseEntity<FindAllMatchEntryRes> findAllMatchEntriesByType(
+    public ResponseEntity<FindAllMatchEntryRes> findAllBattleEntriesByType(
             // AuthenticationPrinciple 추가
             @RequestParam(value = "matchType") MatchType matchType,
             @RequestParam(value = "page", defaultValue = "0") int page,
