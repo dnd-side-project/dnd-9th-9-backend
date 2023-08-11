@@ -1,5 +1,5 @@
 package com.dnd.Exercise.domain.match.entity;
 
 public enum MatchStatus {
-    IN_PROGRESS, RECRUITING, COMPLETED
+    RECRUITING, IN_PROGRESS, COMPLETED
 }

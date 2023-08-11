@@ -2,7 +2,6 @@ package com.dnd.Exercise.domain.match.entity;
 
 import static javax.persistence.FetchType.LAZY;
 
-import com.dnd.Exercise.domain.notification.entity.MatchType;
 import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,7 +24,7 @@ public class Match {
 
     private String name;
 
-    private String profile_img;
+    private String profileImg;
 
     @Enumerated(EnumType.STRING)
     private Strength strength;
@@ -39,8 +38,6 @@ public class Match {
 
     private int currentSize;
 
-    private Boolean isActive;
-
     @Enumerated(EnumType.STRING)
     private Period period;
 
@@ -49,7 +46,7 @@ public class Match {
     private Long leaderId;
 
     @Enumerated(EnumType.STRING)
-    private MatchStatus MatchStatus;
+    private MatchStatus matchStatus;
 
     private LocalDate startDate;
 
@@ -57,6 +54,9 @@ public class Match {
 
     @Enumerated(EnumType.STRING)
     private MatchType matchType;
+
+    @Enumerated(EnumType.STRING)
+    private SkillLevel skillLevel;
 
     @OneToOne(fetch = LAZY)
     @JoinColumn(name = "opponent_id")

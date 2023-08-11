@@ -3,7 +3,7 @@ package com.dnd.Exercise.domain.matchEntry.entity;
 import static javax.persistence.FetchType.*;
 
 import com.dnd.Exercise.domain.match.entity.Match;
-import com.dnd.Exercise.domain.notification.entity.MatchType;
+import com.dnd.Exercise.domain.match.entity.MatchType;
 import com.dnd.Exercise.domain.user.entity.User;
 import javax.persistence.Column;
 import javax.persistence.Entity;
