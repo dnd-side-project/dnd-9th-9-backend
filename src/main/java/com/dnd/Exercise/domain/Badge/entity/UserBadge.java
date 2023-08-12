@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.Badge.entity;
 
-import com.dnd.Exercise.domain.match.entity.Match;
+import com.dnd.Exercise.domain.match.entity.Field;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.BaseEntity;
 import lombok.Getter;
@@ -26,6 +26,6 @@ public class UserBadge extends BaseEntity {
     private Badge badge;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "match_id")
-    private Match match;
+    @JoinColumn(name = "field_id")
+    private Field field;
 }
