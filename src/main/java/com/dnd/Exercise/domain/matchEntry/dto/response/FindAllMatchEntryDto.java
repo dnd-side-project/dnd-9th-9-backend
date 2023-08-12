@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class FindAllMatchEntryDto {
+    private Long entryId;
+
     private Long matchId;
 
     private String name;
