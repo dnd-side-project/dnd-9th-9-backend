@@ -1,11 +1,12 @@
-package com.dnd.Exercise.domain.exercise.dto.response;
+package com.dnd.Exercise.domain.match.dto.response;
 
+import com.dnd.Exercise.domain.match.entity.WinStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class GetRatingExerciseSummaryRes {
+public class GetMatchExerciseSummaryRes {
 
     private int totalRecordCount;
 
@@ -14,4 +15,8 @@ public class GetRatingExerciseSummaryRes {
     private int totalBurnedCalorie;
 
     private int totalExerciseTimeMinute;
+
+    private String opponentMatchName;
+
+    private WinStatus winStatus;
 }
