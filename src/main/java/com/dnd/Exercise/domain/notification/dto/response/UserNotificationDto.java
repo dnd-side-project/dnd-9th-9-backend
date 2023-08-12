@@ -6,7 +6,7 @@ import lombok.Data;
 public class UserNotificationDto {
     private Long id;
 
-    private Long matchId;
+    private Long fieldId;
 
     private String content;
 

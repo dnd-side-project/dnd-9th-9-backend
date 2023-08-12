@@ -2,7 +2,7 @@ package com.dnd.Exercise.domain.user.entity;
 
 import javax.persistence.*;
 
-import com.dnd.Exercise.domain.match.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.global.common.BaseEntity;
 import lombok.Getter;
 

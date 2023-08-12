@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.teamworkRate.entity;
 
-import com.dnd.Exercise.domain.match.entity.Match;
+import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.user.entity.User;
 import lombok.Getter;
 
@@ -22,7 +22,7 @@ public class TeamworkRate {
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "match_id")
-    private Match match;
+    private Field field;
 
     private int rate;
 }

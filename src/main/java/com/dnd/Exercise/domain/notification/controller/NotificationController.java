@@ -28,10 +28,10 @@ public class NotificationController {
     }
 
 
-    @ApiOperation(value = "매치 알림 조회 💡")
+    @ApiOperation(value = "필드 알림 조회 💡")
     @GetMapping("/{id}")
-    public ResponseEntity<FindAllNotificationsRes> findAllMatchNotifications(
-            @Parameter(description = "매치 ID") @PathVariable("id") Long id){
+    public ResponseEntity<FindAllNotificationsRes> findAllFieldNotifications(
+            @Parameter(description = "필드 ID") @PathVariable("id") Long id){
         FindAllNotificationsRes findAllNotificationsRes = new FindAllNotificationsRes();
         return ResponseDto.ok(findAllNotificationsRes);
     }
@@ -48,7 +48,7 @@ public class NotificationController {
     @ApiOperation(value = "팀원 깨우기 💡", notes = "2시간에 한 번만 가능하도록")
     @PostMapping("/alert/{id}")
     public ResponseEntity<String> alertMembers(
-            @Parameter(description = "매치 ID") @PathVariable("id") Long id){
+            @Parameter(description = "필드 ID") @PathVariable("id") Long id){
         return ResponseDto.ok("팀원 꺠우기 완료");
     }
 
