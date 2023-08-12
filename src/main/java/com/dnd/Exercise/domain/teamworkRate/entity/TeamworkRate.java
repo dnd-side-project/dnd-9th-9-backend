@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.teamworkRate.entity;
 
-import com.dnd.Exercise.domain.match.entity.Field;
+import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.user.entity.User;
 import lombok.Getter;
 

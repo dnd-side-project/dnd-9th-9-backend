@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.Badge.entity;
 
-import com.dnd.Exercise.domain.match.entity.Field;
+import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.BaseEntity;
 import lombok.Getter;

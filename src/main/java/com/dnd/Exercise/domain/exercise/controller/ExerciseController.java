@@ -4,10 +4,7 @@ package com.dnd.Exercise.domain.exercise.controller;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByAppleReq;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByCommonReq;
 import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
-import com.dnd.Exercise.domain.exercise.dto.response.FindAllExerciseDetailsOfDayRes;
-import com.dnd.Exercise.domain.exercise.dto.response.GetCalorieStateRes;
-import com.dnd.Exercise.domain.exercise.dto.response.GetMyExerciseSummaryRes;
-import com.dnd.Exercise.domain.exercise.dto.response.GetRatingExerciseSummaryRes;
+import com.dnd.Exercise.domain.exercise.dto.response.*;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -67,15 +64,6 @@ public class ExerciseController {
         return ResponseDto.ok(new GetMyExerciseSummaryRes());
     }
 
-    @ApiOperation(value = " (대결 지표로 사용되는) 나의 하루 기록 요약 📝", notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br> - '홈화면' 등에서 사용")
-    @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
-    @GetMapping("/rating-summary")
-    public ResponseEntity<GetRatingExerciseSummaryRes> getRatingExerciseSummary (
-            @DateTimeFormat(pattern = "yyyy-MM-dd")
-            @RequestParam LocalDate date) {
-        return ResponseDto.ok(new GetRatingExerciseSummaryRes());
-    }
-
     @ApiOperation(value = "칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝", notes = "특정 하루에 대한 나의 소모칼로리, 목표칼로리값을 불러옵니다.")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/calorie-state")
@@ -83,5 +71,14 @@ public class ExerciseController {
             @DateTimeFormat(pattern = "yyyy-MM-dd")
             @RequestParam LocalDate date) {
         return ResponseDto.ok(new GetCalorieStateRes());
+    }
+
+    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면'")
+    @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
+    @GetMapping("/recent")
+    public ResponseEntity<GetRecentsRes> getRecents (
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            @RequestParam LocalDate date) {
+        return ResponseDto.ok(new GetRecentsRes());
     }
 }
