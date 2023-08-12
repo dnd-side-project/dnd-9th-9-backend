@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,8 +39,24 @@ public class NotificationController {
 
     @ApiOperation(value = "알림 읽음 처리 💡")
     @PatchMapping("/{id}/read")
-    public ResponseEntity<String> ReadNotification(
+    public ResponseEntity<String> readNotification(
             @Parameter(description = "알림 ID") @PathVariable("id") Long id){
         return ResponseDto.ok("알림 읽음");
+    }
+
+
+    @ApiOperation(value = "팀원 깨우기 💡", notes = "2시간에 한 번만 가능하도록")
+    @PostMapping("/alert/{id}")
+    public ResponseEntity<String> alertMembers(
+            @Parameter(description = "매치 ID") @PathVariable("id") Long id){
+        return ResponseDto.ok("팀원 꺠우기 완료");
+    }
+
+
+    @ApiOperation(value = "응원하기 💡", notes = "2시간에 한 번만 가능하도록")
+    @PostMapping("/cheer/{id}")
+    public ResponseEntity<String> cheerMembers(
+            @Parameter(description = "유저 ID") @PathVariable("id") Long id){
+        return ResponseDto.ok("응원하기 완료");
     }
 }
