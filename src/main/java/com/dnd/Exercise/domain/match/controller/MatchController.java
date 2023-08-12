@@ -99,4 +99,12 @@ public class MatchController {
             @Parameter(description = "새로운 리더 Id값") @RequestParam("id") Long id){
         return ResponseDto.ok("팀장 변경 완료");
     }
+
+    @ApiOperation(value = "배틀 중단하기 🔥",
+            notes = "배틀 중단 시 정책 결정(매치 삭제 혹은 매치 간의 연결만 끊기) <br> **Delete or Patch**")
+    @DeleteMapping("/{id}/terminate")
+    public ResponseEntity<String> terminateBattle(
+            @Parameter(description = "매치 Id값") @PathVariable("id") Long matchId){
+        return ResponseDto.ok("배틀 중단 완료");
+    }
 }
