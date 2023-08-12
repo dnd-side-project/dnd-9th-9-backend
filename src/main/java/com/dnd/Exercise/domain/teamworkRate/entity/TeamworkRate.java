@@ -21,7 +21,7 @@ public class TeamworkRate {
     private User submitUser;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "match_id")
+    @JoinColumn(name = "field_id")
     private Field field;
 
     private int rate;

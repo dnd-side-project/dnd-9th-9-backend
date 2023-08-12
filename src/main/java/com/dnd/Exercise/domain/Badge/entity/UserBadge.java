@@ -26,6 +26,6 @@ public class UserBadge extends BaseEntity {
     private Badge badge;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "match_id")
+    @JoinColumn(name = "field_id")
     private Field field;
 }
