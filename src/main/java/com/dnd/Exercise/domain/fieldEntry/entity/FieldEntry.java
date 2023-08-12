@@ -1,10 +1,10 @@
-package com.dnd.Exercise.domain.notification.entity;
+package com.dnd.Exercise.domain.fieldEntry.entity;
 
 import static javax.persistence.FetchType.*;
 
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
-import com.dnd.Exercise.global.common.BaseEntity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -18,25 +18,25 @@ import lombok.Getter;
 
 @Entity
 @Getter
-public class Notification extends BaseEntity {
+public class FieldEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notification_id")
+    @Column(name = "field_entry_id")
     private Long id;
 
-    private String content;
-
-    private Boolean isRead;
-
     @Enumerated(EnumType.STRING)
-    private NotificationType notificationType;
+    private FieldType fieldType;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "entrant_user_id")
+    private User entrantUser;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "field_id")
-    private Field field;
+    @JoinColumn(name = "entrant_field_id")
+    private Field entrantField;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "host_field_id")
+    private Field hostField;
 }
