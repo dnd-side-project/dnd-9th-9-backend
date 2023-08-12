@@ -56,6 +56,10 @@ public class UserMatchController {
         return ResponseDto.ok("팀원 내보내기 완료");
     }
 
-    // @ApiOperation(value = "팀원 날짜 별 기록 조회")
-    // @GetMapping("{id}/record")
+    @ApiOperation(value = "매치 나가기 📜")
+    @DeleteMapping("{id}/exit")
+    public ResponseEntity<String> exitMatch(
+            @Parameter(description = "매치 Id값") @PathVariable("id") Long id){
+        return ResponseDto.ok("매치 나가기 완료");
+    }
 }
