@@ -4,9 +4,7 @@ package com.dnd.Exercise.domain.exercise.controller;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByAppleReq;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByCommonReq;
 import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
-import com.dnd.Exercise.domain.exercise.dto.response.FindAllExerciseDetailsOfDayRes;
-import com.dnd.Exercise.domain.exercise.dto.response.GetCalorieStateRes;
-import com.dnd.Exercise.domain.exercise.dto.response.GetMyExerciseSummaryRes;
+import com.dnd.Exercise.domain.exercise.dto.response.*;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -73,5 +71,14 @@ public class ExerciseController {
             @DateTimeFormat(pattern = "yyyy-MM-dd")
             @RequestParam LocalDate date) {
         return ResponseDto.ok(new GetCalorieStateRes());
+    }
+
+    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면'")
+    @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
+    @GetMapping("/recent")
+    public ResponseEntity<GetRecentsRes> getRecents (
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            @RequestParam LocalDate date) {
+        return ResponseDto.ok(new GetRecentsRes());
     }
 }
