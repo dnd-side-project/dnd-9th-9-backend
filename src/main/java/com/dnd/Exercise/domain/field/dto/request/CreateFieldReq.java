@@ -9,6 +9,7 @@ import com.dnd.Exercise.domain.field.entity.Strength;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.Getter;
+import org.hibernate.validator.constraints.Range;
 
 
 @Getter
@@ -27,6 +28,7 @@ public class CreateFieldReq {
 
     private String rule;
 
+    @Range(min = 1, max = 10)
     @NotNull
     private int maxSize;
 

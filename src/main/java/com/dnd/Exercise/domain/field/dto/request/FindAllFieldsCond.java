@@ -5,6 +5,7 @@ import com.dnd.Exercise.domain.field.entity.Goal;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.Strength;
+import java.util.List;
 import lombok.Getter;
 
 @Getter
@@ -12,13 +13,13 @@ public class FindAllFieldsCond {
 
     private FieldType fieldType;
 
-    private int memberCount;
+    private Integer memberCount;
 
-    private SkillLevel skillLevel;
+    private List<SkillLevel> skillLevel;
 
-    private Strength strength;
+    private List<Strength> strength;
 
-    private Period period;
+    private List<Period> period;
 
-    private Goal goal;
+    private List<Goal> goal;
 }

@@ -18,9 +18,9 @@ public class FindAllFieldsDto {
 
     private FieldType fieldType;
 
-    private int memberCount;
+    private int currentSize;
 
-    private int memberMaxCount;
+    private int maxSize;
 
     private SkillLevel skillLevel;
 
