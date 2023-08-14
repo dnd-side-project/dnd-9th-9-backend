@@ -4,6 +4,8 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/user-field")
 public class UserFieldController {
 
-    @ApiOperation(value = "팀원 조회 📜")
+    @ApiOperation(value = "팀원 리스트 조회 📜")
     @GetMapping("/{id}")
     public ResponseEntity<List<FindAllMembersRes>> findAllMembers(
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId){
@@ -61,5 +63,19 @@ public class UserFieldController {
     public ResponseEntity<String> exitField(
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id){
         return ResponseDto.ok("필드 나가기 완료");
+    }
+
+    @ApiOperation(value = "홈화면 나의 배틀 현황 조회 (팀 제외) 📜", notes = "데이터: 매치 시작일부터 특정 날짜까지의 누적 데이터")
+    @GetMapping("/home/battle")
+    public ResponseEntity<FindMyBattleStatusRes> findMyBattleStatus(){
+        FindMyBattleStatusRes findMyBattleStatusRes = new FindMyBattleStatusRes();
+        return ResponseDto.ok(findMyBattleStatusRes);
+    }
+
+    @ApiOperation(value = "홈화면 나의 팀 현황 조회 (팀배틀, 1:1 배틀 제외)", notes = "데이터: 매치 시작일부터 오늘까지의 누적 데이터")
+    @GetMapping("/home/team")
+    public ResponseEntity<FindMyTeamStatusRes> findMyTeamStatus(){
+        FindMyTeamStatusRes findMyTeamStatusRes = new FindMyTeamStatusRes();
+        return ResponseDto.ok(findMyTeamStatusRes);
     }
 }
