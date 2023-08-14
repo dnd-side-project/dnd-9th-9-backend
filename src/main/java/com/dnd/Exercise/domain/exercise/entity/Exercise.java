@@ -8,6 +8,7 @@ import lombok.Getter;
 import javax.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static javax.persistence.FetchType.LAZY;
 
@@ -27,6 +28,8 @@ public class Exercise extends BaseEntity {
     private Sports sports;
 
     private LocalDate exerciseDate;
+
+    private LocalDateTime recordingDateTime;
 
     private int durationMinute;
 
