@@ -14,6 +14,8 @@ import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.FieldSide;
 import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.service.FieldService;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -21,9 +23,14 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.time.LocalDate;
 import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -39,11 +46,18 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/field")
+@RequiredArgsConstructor
 public class FieldController {
+
+    private final FieldService fieldService;
 
     @ApiOperation(value = "필드 생성 🔥", notes = "프로필 사진 업로드가 먼저 진행되어야 합니다")
     @PostMapping
-    public ResponseEntity<String> createField(@RequestBody @Valid CreateFieldReq createFieldReq){
+    public ResponseEntity<String> createField(
+            @AuthenticationPrincipal User user,
+            @RequestBody @Valid CreateFieldReq createFieldReq){
+        Long userId = user.getId();
+        fieldService.createField(createFieldReq, userId);
         return ResponseDto.ok("필드 생성 완료");
     }
 
@@ -52,8 +66,7 @@ public class FieldController {
     @GetMapping
     public ResponseEntity<FindAllFieldsRes> findAllFields(
             @ModelAttribute("findAllFieldsCond") FindAllFieldsCond findAllFieldsCond,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size){
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
         FindAllFieldsRes findAllFieldsRes = new FindAllFieldsRes();
         return ResponseDto.ok(findAllFieldsRes);
     }
