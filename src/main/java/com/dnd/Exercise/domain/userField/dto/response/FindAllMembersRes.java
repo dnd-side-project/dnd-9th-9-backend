@@ -13,4 +13,6 @@ public class FindAllMembersRes {
     private String profileImg;
 
     private SkillLevel skillLevel;
+
+    private Boolean isLeader;
 }
