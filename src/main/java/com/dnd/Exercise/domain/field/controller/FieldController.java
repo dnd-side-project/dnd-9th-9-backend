@@ -1,11 +1,14 @@
 package com.dnd.Exercise.domain.field.controller;
 
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
+import com.dnd.Exercise.domain.field.dto.request.FindAllFieldRecordsReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
@@ -150,4 +153,25 @@ public class FieldController {
         return ResponseDto.ok(getDuelRankingRes);
     }
 
+    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회")
+    @GetMapping("{id}/record")
+    public ResponseEntity<FindAllFieldRecordsRes> findAllFieldRecords(
+            @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
+            @RequestBody FindAllFieldRecordsReq findAllFieldRecordsReq){
+        FindAllFieldRecordsRes findAllFieldRecordsRes = new FindAllFieldRecordsRes();
+        return ResponseDto.ok(findAllFieldRecordsRes);
+    }
+
+    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회", notes = "운동 내역 클릭시")
+    @GetMapping("{fieldId}/record/{exerciseId}")
+    public ResponseEntity<FindFieldRecordDto> findFieldRecord(
+            @Parameter(description = "필드 Id값") @PathVariable("fieldId") Long fieldId,
+            @Parameter(description = "운동 Id값") @PathVariable("exerciseId") Long exerciseId){
+        FindFieldRecordDto findFieldRecordDto = new FindFieldRecordDto();
+        return ResponseDto.ok(findFieldRecordDto);
+    }
+
+
+    //매치 종료 스케줄러
+    //매치 종료 Get
 }
