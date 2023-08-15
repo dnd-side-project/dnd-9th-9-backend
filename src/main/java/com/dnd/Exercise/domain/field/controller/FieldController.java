@@ -33,7 +33,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -75,13 +74,17 @@ public class FieldController {
     }
 
 
-    @ApiOperation(value = "단일 필드 조회 🔥", notes = "팀원 제외, 해당 필드에 관한 정보와 매칭된 필드일 경우 상대 팀 정보를 조회합니다")
+    @ApiOperation(value = "단일 필드 조회 🔥", notes = "팀원 정보를 제외한 해당 필드에 관한 정보를 불러옵니다. <br>"
+            + "로그인한 유저가 해당 필드의 팀원이고, 매칭된 필드일 경우 상대 팀 정보를 추가로 조회합니다")
     @GetMapping("/{id}")
     public ResponseEntity<FindFieldRes> findField(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id){
-        FindFieldRes findFieldRes = new FindFieldRes();
-        return ResponseDto.ok(findFieldRes);
+        FindFieldRes result = fieldService.findField(id, user);
+        return ResponseDto.ok(result);
     }
+
+
 
     @ApiOperation(value = "필드 프로필 수정 🔥")
     @PatchMapping("/{id}/profile")
