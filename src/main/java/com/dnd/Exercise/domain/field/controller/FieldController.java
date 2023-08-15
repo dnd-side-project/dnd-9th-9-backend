@@ -89,8 +89,10 @@ public class FieldController {
     @ApiOperation(value = "필드 프로필 수정 🔥")
     @PatchMapping("/{id}/profile")
     public ResponseEntity<String> updateFieldProfile(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
             @RequestBody @Valid UpdateFieldProfileReq updateFieldProfileReq){
+        fieldService.updateFieldProfile(id, user, updateFieldProfileReq);
         return ResponseDto.ok("필드 프로필 수정 완료");
     }
 
@@ -98,8 +100,10 @@ public class FieldController {
     @ApiOperation(value = "필드 정보 수정 🔥")
     @PatchMapping("/{id}/info")
     public ResponseEntity<String> updateFieldInfo(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
             @RequestBody @Valid UpdateFieldInfoReq updateFieldInfoReq){
+        fieldService.updateFieldInfo(id, user, updateFieldInfoReq);
         return ResponseDto.ok("필드 정보 수정 완료");
     }
 

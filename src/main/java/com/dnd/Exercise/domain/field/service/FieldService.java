@@ -2,6 +2,8 @@ package com.dnd.Exercise.domain.field.service;
 
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
+import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
+import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -14,4 +16,8 @@ public interface FieldService {
     FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond, Pageable pageable);
 
     FindFieldRes findField(Long id, User user);
+
+    void updateFieldProfile(Long id, User user, UpdateFieldProfileReq updateFieldProfileReq);
+
+    void updateFieldInfo(Long id, User user, UpdateFieldInfoReq updateFieldInfoReq);
 }
