@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -18,6 +19,8 @@ public class ExerciseDetailDto {
     private Sports sports;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate exerciseDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime recordingDateTime;
     private int durationMinute;
     private int burnedCalorie;
 
@@ -32,6 +35,7 @@ public class ExerciseDetailDto {
         this.id = entity.getId();
         this.sports = entity.getSports();
         this.exerciseDate = entity.getExerciseDate();
+        this.recordingDateTime = entity.getRecordingDateTime();
         this.durationMinute = entity.getDurationMinute();
         this.burnedCalorie = entity.getBurnedCalorie();
         this.memoImg = entity.getMemoImg();
