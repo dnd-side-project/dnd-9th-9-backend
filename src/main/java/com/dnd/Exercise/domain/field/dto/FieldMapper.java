@@ -2,6 +2,7 @@ package com.dnd.Exercise.domain.field.dto;
 
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
+import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.entity.Field;
@@ -16,4 +17,5 @@ public interface FieldMapper extends GenericMapper<UpdateFieldProfileReq, Field>
 
     FieldDto toFieldDto(Field field);
 
+    AutoMatchingRes toAutoMatchingRes(Field field);
 }

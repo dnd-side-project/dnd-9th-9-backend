@@ -2,6 +2,7 @@ package com.dnd.Exercise.domain.field.service;
 
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
+import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
 import com.dnd.Exercise.domain.field.dto.FieldMapper;
@@ -9,16 +10,21 @@ import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
+import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.FieldStatus;
+import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -115,6 +121,47 @@ public class FieldServiceImpl implements FieldService{
         }
         userFieldRepository.deleteAllByField(myField);
         fieldRepository.deleteById(id);
+    }
+
+
+    @Override
+    public AutoMatchingRes autoMatching(FieldType fieldType, User user) {
+        Long userId = user.getId();
+
+        UserField userField = userFieldRepository.findMyFieldByTypeAndStatus(
+                userId, fieldType, List.of(RECRUITING, IN_PROGRESS)).orElseThrow(
+                        () -> new BusinessException(SHOULD_CREATE));
+
+        Field myField = userField.getField();
+        FieldStatus fieldStatus = myField.getFieldStatus();
+
+        if (fieldStatus == IN_PROGRESS){
+            throw new BusinessException(ALREADY_IN_PROGRESS);
+        }
+
+        if (fieldStatus == RECRUITING && !isFull(myField)){
+            throw new BusinessException(RECRUITING_YET);
+        }
+
+        isLeader(user, userField.getField());
+
+        List<Field> allFields = fieldRepository.findAllByCond(RECRUITING, fieldType, myField.getPeriod());
+
+        // 기존에 추천해줬던 매치 제외시키는 로직 추가 필요
+        Field resultField = allFields.stream()
+                .filter(field -> !field.getId().equals(myField.getId()) && isFull(field))
+                .min(Comparator.comparingInt(field ->
+                                Math.abs(myField.getSkillLevel().ordinal() - field.getSkillLevel().ordinal())
+                                + Math.abs(myField.getStrength().ordinal() - field.getStrength().ordinal())
+                                + Math.abs(myField.getMaxSize() - field.getMaxSize())
+                ))
+                .orElseThrow(() -> new BusinessException(NO_SIMILAR_FIELD_FOUND));
+
+        return fieldMapper.toAutoMatchingRes(resultField);
+    }
+
+    private Boolean isFull(Field field) {
+        return field.getCurrentSize() == field.getMaxSize();
     }
 
     private void isLeader(User user, Field field) {

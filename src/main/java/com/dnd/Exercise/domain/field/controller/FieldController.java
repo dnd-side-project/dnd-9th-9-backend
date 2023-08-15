@@ -119,11 +119,12 @@ public class FieldController {
 
     @ApiOperation(value = "자동 매칭 🔥")
     @GetMapping("/auto")
-    public ResponseEntity<AutoMatchingRes> autoFielding(
+    public ResponseEntity<AutoMatchingRes> autoMatching(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "1대1 배틀일 경우 DUEL, 팀 배틀일 경우 TEAM_BATTLE")
             @RequestParam("fieldType") FieldType fieldType){
-        AutoMatchingRes autoMatchingRes = new AutoMatchingRes();
-        return ResponseDto.ok(autoMatchingRes);
+        AutoMatchingRes result = fieldService.autoMatching(fieldType, user);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "방장 넘기기 🔥")
