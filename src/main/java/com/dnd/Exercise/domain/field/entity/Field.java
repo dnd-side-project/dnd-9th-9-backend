@@ -91,4 +91,8 @@ public class Field extends BaseEntity {
         this.skillLevel = skillLevel;
         this.opponent = null;
     }
+
+    public void removeOpponent(){
+        this.opponent = null;
+    }
 }

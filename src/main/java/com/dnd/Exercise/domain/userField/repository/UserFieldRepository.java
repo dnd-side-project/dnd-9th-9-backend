@@ -9,4 +9,6 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long> {
 
 
      Boolean existsByFieldAndUser(Field field, User user);
+
+     void deleteAllByField(Field field);
 }

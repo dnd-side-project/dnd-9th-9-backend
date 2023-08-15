@@ -20,4 +20,6 @@ public interface FieldService {
     void updateFieldProfile(Long id, User user, UpdateFieldProfileReq updateFieldProfileReq);
 
     void updateFieldInfo(Long id, User user, UpdateFieldInfoReq updateFieldInfoReq);
+
+    void deleteFieldId(Long id, User user);
 }

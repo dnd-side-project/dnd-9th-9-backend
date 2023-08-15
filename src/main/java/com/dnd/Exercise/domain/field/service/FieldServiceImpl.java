@@ -20,7 +20,6 @@ import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +41,7 @@ public class FieldServiceImpl implements FieldService{
     @Transactional
     @Override
     public void createField(CreateFieldReq createFieldReq, Long userId) {
+        // 이미 진행 중인 필드가 있을 경우 예외 발생 로직 추가
         Field field = createFieldReq.toEntity(userId);
         fieldRepository.save(field);
     }
@@ -97,6 +97,24 @@ public class FieldServiceImpl implements FieldService{
         isLeader(user, field);
         isRecruiting(field);
         fieldMapper.updateFromInfoDto(updateFieldInfoReq, field);
+    }
+
+    @Transactional
+    @Override
+    public void deleteFieldId(Long id, User user) {
+        Field myField = getField(id);
+
+        isLeader(user, myField);
+
+        if (myField.getFieldStatus().equals(COMPLETED)){
+            throw new BusinessException(DELETE_FAILED);
+        }
+        if (myField.getFieldStatus().equals(IN_PROGRESS)){
+            Field opponentField = getField(myField.getOpponent().getId());
+            opponentField.removeOpponent();
+        }
+        userFieldRepository.deleteAllByField(myField);
+        fieldRepository.deleteById(id);
     }
 
     private void isLeader(User user, Field field) {

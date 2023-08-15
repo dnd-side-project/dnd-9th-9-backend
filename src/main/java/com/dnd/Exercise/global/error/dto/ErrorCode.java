@@ -22,7 +22,9 @@ public enum ErrorCode {
 
     FORBIDDEN(HttpStatus.FORBIDDEN, "C-006","접근 권한이 없습니다."),
 
-    INVALID_STATUS(HttpStatus.BAD_REQUEST, "F-001", "진행 중, 완료된 필드에 대해서는 수정이 불가능합니다.");
+    INVALID_STATUS(HttpStatus.BAD_REQUEST, "F-001", "진행 중, 완료된 필드에 대해서는 수정이 불가능합니다."),
+
+    DELETE_FAILED(HttpStatus.BAD_REQUEST, "F-002", "완료된 필드에 대해서는 삭제가 불가능합니다.");
 
     private final HttpStatus status;
     private final String code;
