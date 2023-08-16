@@ -4,8 +4,11 @@ import com.dnd.Exercise.domain.field.entity.Goal;
 import com.dnd.Exercise.domain.field.entity.Period;
 import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.Strength;
+import lombok.Data;
 
+@Data
 public class AutoMatchingRes {
+    private Long id;
 
     private String name;
 

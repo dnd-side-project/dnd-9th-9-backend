@@ -14,6 +14,8 @@ import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.FieldSide;
 import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.service.FieldService;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -21,12 +23,16 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.time.LocalDate;
 import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,39 +45,54 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/field")
+@RequiredArgsConstructor
 public class FieldController {
+
+    private final FieldService fieldService;
 
     @ApiOperation(value = "필드 생성 🔥", notes = "프로필 사진 업로드가 먼저 진행되어야 합니다")
     @PostMapping
-    public ResponseEntity<String> createField(@RequestBody @Valid CreateFieldReq createFieldReq){
+    public ResponseEntity<String> createField(
+            @AuthenticationPrincipal User user,
+            @RequestBody @Valid CreateFieldReq createFieldReq){
+        Long userId = user.getId();
+        fieldService.createField(createFieldReq, userId);
         return ResponseDto.ok("필드 생성 완료");
     }
 
 
-    @ApiOperation(value = "조건에 따른 모든 필드 조회 🔥", notes = "페이지 기본값: 0, 사이즈 기본값: 10")
+    @ApiOperation(value = "조건에 따른 모든 필드 조회 🔥",
+            notes = "페이지 기본값: 0, 사이즈 기본값: 10 <br> Swagger의 page 관련 "
+                    + "request 인자(offset, pageNumber, pageSize, paged, sort.sorted, sort.unsorted, unpaged)는 "
+                    + "배제하고 page, size만 넣으면 페이징됩니다")
     @GetMapping
     public ResponseEntity<FindAllFieldsRes> findAllFields(
-            @ModelAttribute("findAllFieldsCond") FindAllFieldsCond findAllFieldsCond,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size){
-        FindAllFieldsRes findAllFieldsRes = new FindAllFieldsRes();
-        return ResponseDto.ok(findAllFieldsRes);
+            @RequestBody FindAllFieldsCond findAllFieldsCond,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+        FindAllFieldsRes result = fieldService.findAllFields(findAllFieldsCond, pageable);
+        return ResponseDto.ok(result);
     }
 
 
-    @ApiOperation(value = "단일 필드 조회 🔥", notes = "팀원 제외, 해당 필드에 관한 정보와 매칭된 필드일 경우 상대 팀 정보를 조회합니다")
+    @ApiOperation(value = "단일 필드 조회 🔥", notes = "팀원 정보를 제외한 해당 필드에 관한 정보를 불러옵니다. <br>"
+            + "로그인한 유저가 해당 필드의 팀원이고, 매칭된 필드일 경우 상대 팀 정보를 추가로 조회합니다")
     @GetMapping("/{id}")
     public ResponseEntity<FindFieldRes> findField(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id){
-        FindFieldRes findFieldRes = new FindFieldRes();
-        return ResponseDto.ok(findFieldRes);
+        FindFieldRes result = fieldService.findField(id, user);
+        return ResponseDto.ok(result);
     }
+
+
 
     @ApiOperation(value = "필드 프로필 수정 🔥")
     @PatchMapping("/{id}/profile")
     public ResponseEntity<String> updateFieldProfile(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
             @RequestBody @Valid UpdateFieldProfileReq updateFieldProfileReq){
+        fieldService.updateFieldProfile(id, user, updateFieldProfileReq);
         return ResponseDto.ok("필드 프로필 수정 완료");
     }
 
@@ -79,8 +100,10 @@ public class FieldController {
     @ApiOperation(value = "필드 정보 수정 🔥")
     @PatchMapping("/{id}/info")
     public ResponseEntity<String> updateFieldInfo(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
             @RequestBody @Valid UpdateFieldInfoReq updateFieldInfoReq){
+        fieldService.updateFieldInfo(id, user, updateFieldInfoReq);
         return ResponseDto.ok("필드 정보 수정 완료");
     }
 
@@ -88,17 +111,20 @@ public class FieldController {
     @ApiOperation(value = "필드 삭제 🔥")
     @DeleteMapping("{id}")
     public ResponseEntity<String> deleteField(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id){
+        fieldService.deleteFieldId(id, user);
         return ResponseDto.ok("필드 삭제 완료");
     }
 
     @ApiOperation(value = "자동 매칭 🔥")
     @GetMapping("/auto")
-    public ResponseEntity<AutoMatchingRes> autoFielding(
+    public ResponseEntity<AutoMatchingRes> autoMatching(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "1대1 배틀일 경우 DUEL, 팀 배틀일 경우 TEAM_BATTLE")
             @RequestParam("fieldType") FieldType fieldType){
-        AutoMatchingRes autoMatchingRes = new AutoMatchingRes();
-        return ResponseDto.ok(autoMatchingRes);
+        AutoMatchingRes result = fieldService.autoMatching(fieldType, user);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "방장 넘기기 🔥")
