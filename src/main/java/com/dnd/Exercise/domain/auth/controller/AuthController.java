@@ -5,20 +5,28 @@ import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
 import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
+import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @Api(tags = "인증 🔐")
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/auth")
 public class AuthController {
 
+    private final AuthService authService;
+
     @ApiOperation(value = "회원가입 🔐", notes = "일반 회원가입 시 사용합니다.")
     @PostMapping("/sign-up")
-    public ResponseEntity<String> signUp(@RequestBody SignUpReq signUpReq) {
+    public ResponseEntity<String> signUp(@RequestBody @Valid SignUpReq signUpReq) {
+        authService.signUp(signUpReq);
         return ResponseDto.ok("회원가입 완료");
     }
 

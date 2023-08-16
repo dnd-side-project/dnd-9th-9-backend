@@ -4,10 +4,11 @@ import javax.persistence.*;
 
 import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.global.common.BaseEntity;
-import lombok.Getter;
+import lombok.*;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,4 +49,14 @@ public class User extends BaseEntity {
     private Boolean isNotificationAgreed;
 
     private Boolean isAppleLinked;
+
+    @Builder
+    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType) {
+        this.uid = uid;
+        this.password = password;
+        this.phoneNum = phoneNum;
+        this.name = name;
+        this.skillLevel = skillLevel;
+        this.loginType = loginType;
+    }
 }
