@@ -26,4 +26,11 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long> {
      )
      Optional<UserField> findMyFieldByTypeAndStatus(@Param("id") Long id,
              @Param("type") FieldType fieldType, @Param("statusList") List<FieldStatus> statusList);
+
+     @Query(value =
+             "select uf from UserField uf "
+                     + "join fetch uf.user "
+                     + "where uf.field.id = :id"
+     )
+     List<UserField> findAllByField(@Param("id") Long id);
 }
