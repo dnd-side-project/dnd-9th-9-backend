@@ -32,8 +32,9 @@ public class AuthController {
 
     @ApiOperation(value = "로그인 🔐", notes = "일반 로그인 시 사용합니다.")
     @PostMapping("/login")
-    public ResponseEntity<TokenRes> login(@RequestBody LoginReq loginReq) {
-        return ResponseDto.ok(new TokenRes());
+    public ResponseEntity<TokenRes> login(@RequestBody @Valid LoginReq loginReq) {
+        TokenRes token = authService.login(loginReq);
+        return ResponseDto.ok(token);
     }
 
     @ApiOperation(value = "회원가입 시 중복된 id 체크 🔐", notes = "사용 가능한 id 인지 체크합니다.")
