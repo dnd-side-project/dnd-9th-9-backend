@@ -6,12 +6,14 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
+import com.dnd.Exercise.domain.userField.service.UserFieldService;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,13 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 @Api(tags = "팀원 관련 정보, 필드 이력 관리 📜")
 @RestController
 @RequestMapping("/user-field")
+@RequiredArgsConstructor
 public class UserFieldController {
+
+    private final UserFieldService userFieldService;
 
     @ApiOperation(value = "팀원 리스트 조회 📜")
     @GetMapping("/{id}")
     public ResponseEntity<List<FindAllMembersRes>> findAllMembers(
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId){
-        List<FindAllMembersRes> findAllMembersRes = new ArrayList<FindAllMembersRes>();
+        List<FindAllMembersRes> findAllMembersRes = userFieldService.findAllMembers(fieldId);
         return ResponseDto.ok(findAllMembersRes);
     }
 
