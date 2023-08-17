@@ -7,6 +7,8 @@ import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.global.common.ResponseDto;
+import com.dnd.Exercise.global.error.dto.ErrorCode;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,9 @@ public class AuthController {
     @ApiOperation(value = "회원가입 🔐", notes = "일반 회원가입 시 사용합니다.")
     @PostMapping("/sign-up")
     public ResponseEntity<String> signUp(@RequestBody @Valid SignUpReq signUpReq) {
+        if(!authService.checkUidAvailable(signUpReq.getUid())) {
+            throw new BusinessException(ErrorCode.ID_ALREADY_EXISTS);
+        }
         authService.signUp(signUpReq);
         return ResponseDto.ok("회원가입 완료");
     }
@@ -40,7 +45,7 @@ public class AuthController {
     @ApiOperation(value = "회원가입 시 중복된 id 체크 🔐", notes = "사용 가능한 id 인지 체크합니다.")
     @GetMapping("/id-available")
     public ResponseEntity<Boolean> idAvailable(@RequestParam String uid) {
-        return ResponseDto.ok(true);
+        return ResponseDto.ok(authService.checkUidAvailable(uid));
     }
 
     @ApiOperation(value = "access 토큰 만료 시 재발급 🔐", notes = "refresh 토큰으로 access 토큰을 갱신합니다.")

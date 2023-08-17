@@ -7,4 +7,5 @@ import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 public interface AuthService {
     void signUp(SignUpReq signUpReq);
     TokenRes login(LoginReq loginReq);
+    boolean checkUidAvailable(String uid);
 }

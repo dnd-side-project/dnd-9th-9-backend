@@ -49,4 +49,9 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         return token;
     }
+
+    @Override
+    public boolean checkUidAvailable(String uid) {
+        return !userRepository.existsByUid(uid);
+    }
 }
