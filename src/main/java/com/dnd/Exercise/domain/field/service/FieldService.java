@@ -12,6 +12,7 @@ import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
+import java.time.LocalDate;
 import org.springframework.data.domain.Pageable;
 
 public interface FieldService {
@@ -33,4 +34,6 @@ public interface FieldService {
     GetFieldExerciseSummaryRes getFieldExerciseSummary(User user, Long fieldId, FieldSideDateReq summaryReq);
 
     GetRankingRes getTeamRanking(User user, Long fieldId, FieldSideDateReq teamRankingReq);
+
+    GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date);
 }

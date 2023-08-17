@@ -174,10 +174,11 @@ public class FieldController {
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/duel/ranking")
     public ResponseEntity<GetRankingRes> getDuelRanking(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date){
-        GetRankingRes getDuelRankingRes = new GetRankingRes();
-        return ResponseDto.ok(getDuelRankingRes);
+        GetRankingRes result = fieldService.getDuelRanking(user, fieldId, date);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회")

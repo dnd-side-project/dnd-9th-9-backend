@@ -225,8 +225,24 @@ public class FieldServiceImpl implements FieldService{
             field = field.getOpponent();
         }
         Long targetId = field.getId();
-        List<Long> memberIds = getMemberIdsForField(targetId);
+        List<Long> memberIds = getMemberIds(targetId);
 
+        return getGetRankingRes(date, memberIds);
+    }
+
+    @Override
+    public GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date) {
+        Field field = validateFieldAccess(user, fieldId);
+        Long opponentFieldId = field.getOpponent().getId();
+
+        Long memberId = getMemberIds(fieldId).get(0);
+        Long opponentMemberId = getMemberIds(opponentFieldId).get(0);
+        List<Long> memberIds = List.of(memberId, opponentMemberId);
+
+        return getGetRankingRes(date, memberIds);
+    }
+
+    private GetRankingRes getGetRankingRes(LocalDate date, List<Long> memberIds) {
         return GetRankingRes.builder()
                 .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
                 .exerciseTimeRanking(getRankingByCriteria(EXERCISE_TIME, date, memberIds))
@@ -252,7 +268,7 @@ public class FieldServiceImpl implements FieldService{
     }
 
     private List<Integer> fetchFieldSummary(Long fieldId, LocalDate targetDate) {
-        List<Long> memberIds = getMemberIdsForField(fieldId);
+        List<Long> memberIds = getMemberIds(fieldId);
         List<ActivityRing> activityRings = getActivityRings(targetDate, memberIds);
         List<Exercise> exercises = getExercises(targetDate, memberIds);
 
@@ -305,7 +321,7 @@ public class FieldServiceImpl implements FieldService{
         }
     }
 
-    private List<Long> getMemberIdsForField(Long fieldId) {
+    private List<Long> getMemberIds(Long fieldId) {
         List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
         return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
     }
