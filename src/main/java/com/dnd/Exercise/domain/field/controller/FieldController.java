@@ -3,6 +3,7 @@ package com.dnd.Exercise.domain.field.controller;
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldRecordsReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
+import com.dnd.Exercise.domain.field.dto.request.GetFieldExerciseSummaryReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
@@ -143,18 +144,19 @@ public class FieldController {
         return ResponseDto.ok("배틀 중단 완료");
     }
 
-    // DB에서 SUM 연산해서 가져오기, 양방향 매핑 고려
+    //  양방향 매핑 고려
     @ApiOperation(value = " (대결 지표로 사용되는) 나의 필드 or 상대편 필드 하루 요약 조회 🔥",
             notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
-                    + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'홈화면', '하루 요약'에서 사용")
+                    + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'하루 요약'에서 사용 <br>"
+                    + "배틀 상대가 있는 필드로 HOME 조회 시 나의 승리 여부와 상대 필드 이름도 조회됩니다.")
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/rating-summary")
     public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date,
-            @RequestParam FieldSide fieldSide) {
-        GetFieldExerciseSummaryRes getFieldExerciseSummaryRes = new GetFieldExerciseSummaryRes();
-        return ResponseDto.ok(getFieldExerciseSummaryRes);
+            @RequestBody GetFieldExerciseSummaryReq summaryReq) {
+        GetFieldExerciseSummaryRes result = fieldService.getFieldExerciseSummary(user, fieldId, summaryReq);
+        return ResponseDto.ok(result);
     }
 
     // DB에서 RANK 사용해서 상위 3개만 추출
