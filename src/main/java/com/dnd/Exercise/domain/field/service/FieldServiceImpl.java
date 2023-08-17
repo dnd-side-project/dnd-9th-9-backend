@@ -5,6 +5,10 @@ import static com.dnd.Exercise.domain.field.entity.FieldSide.HOME;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
 import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
@@ -14,7 +18,7 @@ import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.FieldMapper;
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
-import com.dnd.Exercise.domain.field.dto.request.GetFieldExerciseSummaryReq;
+import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
@@ -24,10 +28,13 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes.GetFieldExerciseSummaryResBuilder;
+import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
+import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldSide;
 import com.dnd.Exercise.domain.field.entity.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -182,7 +189,7 @@ public class FieldServiceImpl implements FieldService{
      * AWAY & opponent!=null - 상대 필드 요약 정보 제공
      */
     @Override
-    public GetFieldExerciseSummaryRes getFieldExerciseSummary(User user, Long fieldId, GetFieldExerciseSummaryReq summaryReq) {
+    public GetFieldExerciseSummaryRes getFieldExerciseSummary(User user, Long fieldId, FieldSideDateReq summaryReq) {
         Field field = validateFieldAccess(user, fieldId);
         Field opponentField = field.getOpponent();
 
@@ -205,6 +212,35 @@ public class FieldServiceImpl implements FieldService{
         }
 
         return summaryResBuilder.build();
+    }
+
+    @Override
+    public GetRankingRes getTeamRanking(User user, Long fieldId, FieldSideDateReq teamRankingReq) {
+        Field field = validateFieldAccess(user, fieldId);
+
+        LocalDate date = teamRankingReq.getDate();
+        FieldSide fieldSide = teamRankingReq.getFieldSide();
+
+        if (isAway(fieldSide)){
+            field = field.getOpponent();
+        }
+        Long targetId = field.getId();
+        List<Long> memberIds = getMemberIdsForField(targetId);
+
+        return GetRankingRes.builder()
+                .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
+                .exerciseTimeRanking(getRankingByCriteria(EXERCISE_TIME, date, memberIds))
+                .burnedCalorieRanking(getRankingByCriteria(BURNED_CALORIE, date, memberIds))
+                .goalAchievedCountRanking(getRankingByCriteria(GOAL_ACHIEVED, date, memberIds))
+                .build();
+    }
+
+    private List<RankingDto> getRankingByCriteria(RankCriterion criterion, LocalDate date, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
+            return activityRingRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+        } else {
+            return exerciseRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+        }
     }
 
     private boolean isAway(FieldSide fieldSide) {
@@ -271,7 +307,7 @@ public class FieldServiceImpl implements FieldService{
 
     private List<Long> getMemberIdsForField(Long fieldId) {
         List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
-        return allMembers.stream().map(UserField::getId).collect(Collectors.toList());
+        return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
     }
 
     private List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {

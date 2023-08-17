@@ -3,7 +3,7 @@ package com.dnd.Exercise.domain.field.controller;
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldRecordsReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
-import com.dnd.Exercise.domain.field.dto.request.GetFieldExerciseSummaryReq;
+import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
@@ -13,7 +13,6 @@ import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
-import com.dnd.Exercise.domain.field.entity.FieldSide;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.service.FieldService;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -154,7 +153,7 @@ public class FieldController {
     public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody GetFieldExerciseSummaryReq summaryReq) {
+            @RequestBody FieldSideDateReq summaryReq) {
         GetFieldExerciseSummaryRes result = fieldService.getFieldExerciseSummary(user, fieldId, summaryReq);
         return ResponseDto.ok(result);
     }
@@ -164,11 +163,11 @@ public class FieldController {
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/team/ranking")
     public ResponseEntity<GetRankingRes> getTeamRanking(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date,
-            @RequestParam FieldSide fieldSide){
-        GetRankingRes getTeamRankingRes = new GetRankingRes();
-        return ResponseDto.ok(getTeamRankingRes);
+            @RequestBody FieldSideDateReq teamRankingReq){
+        GetRankingRes result = fieldService.getTeamRanking(user, fieldId, teamRankingReq);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "1:1 배틀 랭킹 조회 🔥", notes = "1:1 배틀에서만 사용")
