@@ -10,9 +10,7 @@ import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,12 +44,8 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(loginReq.getPassword(), user.getPassword())) {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
-
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginReq.getUid(), loginReq.getPassword());
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-
         TokenRes token = TokenRes.builder()
-                .accessToken(jwtTokenProvider.createToken(authentication.getName()))
+                .accessToken(jwtTokenProvider.createToken(user.getId()))
                 .build();
         return token;
     }

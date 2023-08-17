@@ -37,8 +37,8 @@ public class JwtTokenProvider {
         tokenValidTime = tokenValidTime * 60 * 1000L;
     }
 
-    public String createToken(String uid) {
-        Claims claims = Jwts.claims().setSubject(uid);
+    public String createToken(Long id) {
+        Claims claims = Jwts.claims().setSubject(id.toString());
         Date now = new Date();
         return Jwts.builder()
                 .setClaims(claims)
@@ -49,11 +49,11 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(this.getUserUid(token));
-        return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, AuthorityUtils.NO_AUTHORITIES);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(this.getUserId(token));
+        return new UsernamePasswordAuthenticationToken(Long.parseLong(userDetails.getUsername()), null, AuthorityUtils.NO_AUTHORITIES);
     }
 
-    public String getUserUid(String token) {
+    public String getUserId(String token) {
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }
 
