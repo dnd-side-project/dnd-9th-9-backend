@@ -6,7 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ActivityRingRepository extends JpaRepository<ActivityRing, Long> {
+public interface ActivityRingRepository
+        extends JpaRepository<ActivityRing, Long>, ActivityRingRepositoryCustom {
 
     List<ActivityRing> findAllByDateAndUserIdIn(LocalDate date, Collection<Long> id);
 }
