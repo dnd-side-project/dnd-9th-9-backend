@@ -6,7 +6,7 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Data
-public class GetFieldExerciseSummaryReq {
+public class FieldSideDateReq {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
 
