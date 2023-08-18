@@ -5,7 +5,7 @@ import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
 import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
-import com.dnd.Exercise.domain.auth.repository.RefreshTokenRepository;
+import com.dnd.Exercise.domain.auth.repository.RefreshTokenRedisRepository;
 import com.dnd.Exercise.domain.user.entity.LoginType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -28,7 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     @Override
     @Transactional
@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
         if (requestToken == null || !jwtTokenProvider.validateToken(requestToken)) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
-        RefreshToken redisToken = refreshTokenRepository.findById(requestToken).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
+        RefreshToken redisToken = refreshTokenRedisRepository.findById(requestToken).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
         if ((redisToken.getUserId() != Long.parseLong(jwtTokenProvider.getUserId(requestToken)))) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }

@@ -1,6 +1,6 @@
 package com.dnd.Exercise.global.jwt;
 
-import com.dnd.Exercise.domain.auth.repository.RefreshTokenRepository;
+import com.dnd.Exercise.domain.auth.repository.RefreshTokenRedisRepository;
 import com.dnd.Exercise.domain.auth.service.CustomUserDetailsService;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class JwtTokenProvider {
     private long refreshTokenValidTime;
 
     private final CustomUserDetailsService userDetailsService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     @PostConstruct
     protected void init() {
@@ -61,7 +61,7 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
         RefreshToken refreshToken = new RefreshToken(token, id);
-        refreshTokenRepository.save(refreshToken);
+        refreshTokenRedisRepository.save(refreshToken);
         return refreshToken.getRefreshToken();
     }
 
