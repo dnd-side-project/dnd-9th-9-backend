@@ -51,7 +51,8 @@ public class AuthController {
     @ApiOperation(value = "access 토큰 만료 시 재발급 🔐", notes = "refresh 토큰으로 access 토큰을 갱신합니다.")
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenRes> refresh(@RequestBody RefreshReq refreshReq) {
-        return ResponseDto.ok(new AccessTokenRes());
+        AccessTokenRes token = authService.refresh(refreshReq);
+        return ResponseDto.ok(token);
     }
 
     @ApiOperation(value = "로그아웃 🔐", notes = "")

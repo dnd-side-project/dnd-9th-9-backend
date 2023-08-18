@@ -26,6 +26,8 @@ public enum ErrorCode {
 
     ID_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "A-002", "이미 사용중인 아이디 입니다."),
 
+    INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "A-003", "유효하지 않은 refresh 토큰 입니다."),
+
     INVALID_STATUS(HttpStatus.BAD_REQUEST, "F-001", "진행 중, 완료된 필드에 대해서는 수정이 불가능합니다."),
 
     DELETE_FAILED(HttpStatus.BAD_REQUEST, "F-002", "완료된 필드에 대해서는 삭제가 불가능합니다."),

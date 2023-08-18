@@ -1,14 +1,18 @@
 package com.dnd.Exercise.domain.auth.service;
 
 import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
+import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
 import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
+import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
+import com.dnd.Exercise.domain.auth.repository.RefreshTokenRepository;
 import com.dnd.Exercise.domain.user.entity.LoginType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
+import com.dnd.Exercise.global.jwt.RefreshToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     @Transactional
@@ -54,5 +59,23 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean checkUidAvailable(String uid) {
         return !userRepository.existsByUid(uid);
+    }
+
+    @Override
+    public AccessTokenRes refresh(RefreshReq refreshReq) {
+        String requestToken = refreshReq.getRefreshToken();
+
+        if (requestToken == null || !jwtTokenProvider.validateToken(requestToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        RefreshToken redisToken = refreshTokenRepository.findById(requestToken).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
+        if ((redisToken.getUserId() != Long.parseLong(jwtTokenProvider.getUserId(requestToken)))) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        AccessTokenRes newAccessToken = AccessTokenRes.builder()
+                .accessToken(jwtTokenProvider.createAccessToken(redisToken.getUserId()))
+                .build();
+        return newAccessToken;
     }
 }

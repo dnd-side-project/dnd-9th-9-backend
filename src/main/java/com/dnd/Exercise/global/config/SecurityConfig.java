@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/health-check", "/auth/sign-up", "/auth/login", "/auth/id-available").permitAll()
+                .antMatchers("/health-check", "/auth/sign-up", "/auth/login", "/auth/id-available", "/auth/refresh").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
