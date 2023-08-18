@@ -5,6 +5,7 @@ import static com.dnd.Exercise.domain.field.entity.FieldSide.HOME;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.FieldType.*;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
@@ -17,6 +18,7 @@ import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.FieldMapper;
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
+import com.dnd.Exercise.domain.field.dto.request.FindAllFieldRecordsReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
 import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
@@ -25,9 +27,9 @@ import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
-import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes.GetFieldExerciseSummaryResBuilder;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.Field;
@@ -50,6 +52,7 @@ import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -202,7 +205,7 @@ public class FieldServiceImpl implements FieldService{
 
         List<Integer> mySummary = fetchFieldSummary(fieldId, targetDate);
 
-        GetFieldExerciseSummaryResBuilder summaryResBuilder = initSummaryBuilder(mySummary);
+        GetFieldExerciseSummaryRes.GetFieldExerciseSummaryResBuilder summaryResBuilder = initSummaryBuilder(mySummary);
 
         if (isHome(fieldSide) && opponentField != null) {
             List<Integer> opponentSummary = fetchFieldSummary(opponentField.getId(), targetDate);
@@ -240,6 +243,22 @@ public class FieldServiceImpl implements FieldService{
         List<Long> memberIds = List.of(memberId, opponentMemberId);
 
         return getGetRankingRes(date, memberIds);
+    }
+
+    @Override
+    public List<FindFieldRecordDto> findAllFieldRecords(User user, Long fieldId,
+            FindAllFieldRecordsReq recordsReq) {
+        Field field = validateFieldAccess(user, fieldId);
+        Long leaderId = field.getLeaderId();
+        if (recordsReq.getFieldType() == DUEL){
+            throw new BusinessException(INVALID_TYPE_VALUE);
+        }
+        Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
+        List<Long> memberIds = getMemberIds(fieldId);
+
+        return exerciseRepository.findAllWithUser(
+                recordsReq.getDate(), memberIds, pageable, leaderId);
+
     }
 
     private GetRankingRes getGetRankingRes(LocalDate date, List<Long> memberIds) {
@@ -284,7 +303,7 @@ public class FieldServiceImpl implements FieldService{
         return List.of(totalRecordCount, goalAchievementCount, totalExerciseTimeMinute, totalBurnedCalorie);
     }
 
-    private GetFieldExerciseSummaryResBuilder initSummaryBuilder(List<Integer> summary) {
+    private GetFieldExerciseSummaryRes.GetFieldExerciseSummaryResBuilder initSummaryBuilder(List<Integer> summary) {
         return GetFieldExerciseSummaryRes.builder()
                 .totalRecordCount(summary.get(0))
                 .goalAchievedCount(summary.get(1))

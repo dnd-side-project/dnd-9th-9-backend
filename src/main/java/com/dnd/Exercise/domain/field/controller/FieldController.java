@@ -8,7 +8,6 @@ import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
-import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
@@ -22,6 +21,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.time.LocalDate;
+import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -181,13 +181,15 @@ public class FieldController {
         return ResponseDto.ok(result);
     }
 
-    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회")
+    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회",
+            notes = " page 기본값: 0, size 기본값: 3")
     @GetMapping("{id}/record")
-    public ResponseEntity<FindAllFieldRecordsRes> findAllFieldRecords(
+    public ResponseEntity<List<FindFieldRecordDto>> findAllFieldRecords(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody FindAllFieldRecordsReq findAllFieldRecordsReq){
-        FindAllFieldRecordsRes findAllFieldRecordsRes = new FindAllFieldRecordsRes();
-        return ResponseDto.ok(findAllFieldRecordsRes);
+            @RequestBody @Valid FindAllFieldRecordsReq recordsReq){
+        List<FindFieldRecordDto> result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회", notes = "운동 내역 클릭시")
@@ -202,4 +204,5 @@ public class FieldController {
 
     //매치 종료 스케줄러
     //매치 종료 Get
+    //매치 상태값 Get
 }
