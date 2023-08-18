@@ -45,7 +45,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
         TokenRes token = TokenRes.builder()
-                .accessToken(jwtTokenProvider.createToken(user.getId()))
+                .accessToken(jwtTokenProvider.createAccessToken(user.getId()))
+                .refreshToken(jwtTokenProvider.createRefreshToken(user.getId()))
                 .build();
         return token;
     }

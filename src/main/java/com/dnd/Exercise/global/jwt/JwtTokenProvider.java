@@ -1,5 +1,6 @@
 package com.dnd.Exercise.global.jwt;
 
+import com.dnd.Exercise.domain.auth.repository.RefreshTokenRepository;
 import com.dnd.Exercise.domain.auth.service.CustomUserDetailsService;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
@@ -21,31 +22,47 @@ import java.util.Date;
 @Slf4j
 public class JwtTokenProvider {
 
-    // TODO: refresh 토큰 발급 추가
-
     @Value("${jwt.secret}")
     private String secretKey;
 
     @Value("${jwt.access-token-valid-minute}")
-    private long tokenValidTime;
+    private long accessTokenValidTime;
+    @Value("${jwt.refresh-token-valid-minute}")
+    private long refreshTokenValidTime;
 
     private final CustomUserDetailsService userDetailsService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @PostConstruct
     protected void init() {
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-        tokenValidTime = tokenValidTime * 60 * 1000L;
+        accessTokenValidTime = accessTokenValidTime * 60 * 1000L;
+        refreshTokenValidTime = refreshTokenValidTime * 60 * 1000L;
     }
 
-    public String createToken(Long id) {
+    public String createAccessToken(Long id) {
         Claims claims = Jwts.claims().setSubject(id.toString());
         Date now = new Date();
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + tokenValidTime))
+                .setExpiration(new Date(now.getTime() + accessTokenValidTime))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
+    }
+
+    public String createRefreshToken(Long id) {
+        Claims claims = Jwts.claims().setSubject(id.toString());
+        Date now = new Date();
+        String token = Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + refreshTokenValidTime))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+        RefreshToken refreshToken = new RefreshToken(token, id);
+        refreshTokenRepository.save(refreshToken);
+        return refreshToken.getRefreshToken();
     }
 
     public Authentication getAuthentication(String token) {
@@ -57,7 +74,7 @@ public class JwtTokenProvider {
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }
 
-    public String resolveToken(HttpServletRequest request) {
+    public String resolveAccessToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
         if (authorization == null) {
             return null;
