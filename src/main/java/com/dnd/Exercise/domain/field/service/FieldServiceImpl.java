@@ -205,16 +205,17 @@ public class FieldServiceImpl implements FieldService{
 
         List<Integer> mySummary = fetchFieldSummary(fieldId, targetDate);
 
-        GetFieldExerciseSummaryRes.GetFieldExerciseSummaryResBuilder summaryResBuilder = initSummaryBuilder(mySummary);
+        GetFieldExerciseSummaryRes summaryRes = initSummary(mySummary);
 
         if (isHome(fieldSide) && opponentField != null) {
             List<Integer> opponentSummary = fetchFieldSummary(opponentField.getId(), targetDate);
 
             WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
-            summaryResBuilder = summaryResBuilder.winStatus(winStatus).opponentFieldName(opponentField.getName());
+            summaryRes.setWinStatus(winStatus);
+            summaryRes.setOpponentFieldName(opponentField.getName());
         }
 
-        return summaryResBuilder.build();
+        return summaryRes;
     }
 
     @Override
@@ -316,12 +317,9 @@ public class FieldServiceImpl implements FieldService{
         return List.of(totalRecordCount, goalAchievementCount, totalExerciseTimeMinute, totalBurnedCalorie);
     }
 
-    private GetFieldExerciseSummaryRes.GetFieldExerciseSummaryResBuilder initSummaryBuilder(List<Integer> summary) {
-        return GetFieldExerciseSummaryRes.builder()
-                .totalRecordCount(summary.get(0))
-                .goalAchievedCount(summary.get(1))
-                .totalBurnedCalorie(summary.get(2))
-                .totalExerciseTimeMinute(summary.get(3));
+    private GetFieldExerciseSummaryRes initSummary(List<Integer> summary) {
+        return new GetFieldExerciseSummaryRes(
+                summary.get(0), summary.get(1), summary.get(3), summary.get(2));
     }
 
     private WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {

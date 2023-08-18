@@ -3,10 +3,11 @@ package com.dnd.Exercise.domain.field.dto.response;
 import com.dnd.Exercise.domain.field.entity.WinStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,4 +24,14 @@ public class GetFieldExerciseSummaryRes {
     private String opponentFieldName;
 
     private WinStatus winStatus;
+
+    public GetFieldExerciseSummaryRes(int totalRecordCount, int goalAchievedCount,
+            int totalBurnedCalorie, int totalExerciseTimeMinute) {
+        this.totalRecordCount = totalRecordCount;
+        this.goalAchievedCount = goalAchievedCount;
+        this.totalBurnedCalorie = totalBurnedCalorie;
+        this.totalExerciseTimeMinute = totalExerciseTimeMinute;
+        this.opponentFieldName = null;
+        this.winStatus = null;
+    }
 }
