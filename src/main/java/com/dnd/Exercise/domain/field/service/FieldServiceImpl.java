@@ -261,6 +261,19 @@ public class FieldServiceImpl implements FieldService{
 
     }
 
+    @Override
+    public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
+        Field field = validateFieldAccess(user, fieldId);
+        Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+        validateIsMember(exercise.getUser(), field);
+
+        FindFieldRecordDto findFieldRecordDto = fieldMapper.toFindFieldRecordDto(exercise);
+        findFieldRecordDto.setIsLeader(field.getLeaderId().equals(user.getId()));
+
+        return findFieldRecordDto;
+    }
+
     private GetRankingRes getGetRankingRes(LocalDate date, List<Long> memberIds) {
         return GetRankingRes.builder()
                 .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))

@@ -195,10 +195,11 @@ public class FieldController {
     @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회", notes = "운동 내역 클릭시")
     @GetMapping("{fieldId}/record/{exerciseId}")
     public ResponseEntity<FindFieldRecordDto> findFieldRecord(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("fieldId") Long fieldId,
             @Parameter(description = "운동 Id값") @PathVariable("exerciseId") Long exerciseId){
-        FindFieldRecordDto findFieldRecordDto = new FindFieldRecordDto();
-        return ResponseDto.ok(findFieldRecordDto);
+        FindFieldRecordDto result = fieldService.findFieldRecord(user, fieldId, exerciseId);
+        return ResponseDto.ok(result);
     }
 
 

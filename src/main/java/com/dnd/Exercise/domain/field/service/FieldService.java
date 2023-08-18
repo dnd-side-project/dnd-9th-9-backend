@@ -41,4 +41,6 @@ public interface FieldService {
     GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date);
 
     List<FindFieldRecordDto> findAllFieldRecords(User user, Long fieldId, FindAllFieldRecordsReq recordsReq);
+
+    FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId);
 }
