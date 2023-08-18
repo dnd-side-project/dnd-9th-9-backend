@@ -11,4 +11,5 @@ public interface AuthService {
     TokenRes login(LoginReq loginReq);
     boolean checkUidAvailable(String uid);
     AccessTokenRes refresh(RefreshReq refreshReq);
+    void logout(Long userId);
 }

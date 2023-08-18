@@ -13,6 +13,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -57,7 +58,8 @@ public class AuthController {
 
     @ApiOperation(value = "로그아웃 🔐", notes = "")
     @GetMapping("/logout")
-    public ResponseEntity<String> logout() {
+    public ResponseEntity<String> logout(@AuthenticationPrincipal Long userId) {
+        authService.logout(userId);
         return ResponseDto.ok("로그아웃 성공");
     }
 

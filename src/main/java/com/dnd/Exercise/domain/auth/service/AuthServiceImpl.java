@@ -78,4 +78,10 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         return newAccessToken;
     }
+
+    @Override
+    public void logout(Long userId) {
+        RefreshToken token = refreshTokenRedisRepository.findByUserId(userId);
+        refreshTokenRedisRepository.deleteById(token.getRefreshToken());
+    }
 }
