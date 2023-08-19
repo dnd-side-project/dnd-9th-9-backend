@@ -6,6 +6,7 @@ import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.domain.auth.service.AuthService;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
@@ -58,8 +59,8 @@ public class AuthController {
 
     @ApiOperation(value = "로그아웃 🔐", notes = "")
     @GetMapping("/logout")
-    public ResponseEntity<String> logout(@AuthenticationPrincipal Long userId) {
-        authService.logout(userId);
+    public ResponseEntity<String> logout(@AuthenticationPrincipal User user) {
+        authService.logout(user.getId());
         return ResponseDto.ok("로그아웃 성공");
     }
 
