@@ -3,16 +3,15 @@ package com.dnd.Exercise.domain.field.controller;
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldRecordsReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
+import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
-import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
-import com.dnd.Exercise.domain.field.entity.FieldSide;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.service.FieldService;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -22,6 +21,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.time.LocalDate;
+import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -143,18 +143,19 @@ public class FieldController {
         return ResponseDto.ok("배틀 중단 완료");
     }
 
-    // DB에서 SUM 연산해서 가져오기, 양방향 매핑 고려
+    //  양방향 매핑 고려
     @ApiOperation(value = " (대결 지표로 사용되는) 나의 필드 or 상대편 필드 하루 요약 조회 🔥",
             notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
-                    + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'홈화면', '하루 요약'에서 사용")
+                    + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'하루 요약'에서 사용 <br>"
+                    + "배틀 상대가 있는 필드로 HOME 조회 시 나의 승리 여부와 상대 필드 이름도 조회됩니다.")
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/rating-summary")
     public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date,
-            @RequestParam FieldSide fieldSide) {
-        GetFieldExerciseSummaryRes getFieldExerciseSummaryRes = new GetFieldExerciseSummaryRes();
-        return ResponseDto.ok(getFieldExerciseSummaryRes);
+            @RequestBody FieldSideDateReq summaryReq) {
+        GetFieldExerciseSummaryRes result = fieldService.getFieldExerciseSummary(user, fieldId, summaryReq);
+        return ResponseDto.ok(result);
     }
 
     // DB에서 RANK 사용해서 상위 3개만 추출
@@ -162,42 +163,47 @@ public class FieldController {
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/team/ranking")
     public ResponseEntity<GetRankingRes> getTeamRanking(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date,
-            @RequestParam FieldSide fieldSide){
-        GetRankingRes getTeamRankingRes = new GetRankingRes();
-        return ResponseDto.ok(getTeamRankingRes);
+            @RequestBody FieldSideDateReq teamRankingReq){
+        GetRankingRes result = fieldService.getTeamRanking(user, fieldId, teamRankingReq);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "1:1 배틀 랭킹 조회 🔥", notes = "1:1 배틀에서만 사용")
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/duel/ranking")
     public ResponseEntity<GetRankingRes> getDuelRanking(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date){
-        GetRankingRes getDuelRankingRes = new GetRankingRes();
-        return ResponseDto.ok(getDuelRankingRes);
+        GetRankingRes result = fieldService.getDuelRanking(user, fieldId, date);
+        return ResponseDto.ok(result);
     }
 
-    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회")
+    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회",
+            notes = " page 기본값: 0, size 기본값: 3")
     @GetMapping("{id}/record")
-    public ResponseEntity<FindAllFieldRecordsRes> findAllFieldRecords(
+    public ResponseEntity<List<FindFieldRecordDto>> findAllFieldRecords(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody FindAllFieldRecordsReq findAllFieldRecordsReq){
-        FindAllFieldRecordsRes findAllFieldRecordsRes = new FindAllFieldRecordsRes();
-        return ResponseDto.ok(findAllFieldRecordsRes);
+            @RequestBody @Valid FindAllFieldRecordsReq recordsReq){
+        List<FindFieldRecordDto> result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회", notes = "운동 내역 클릭시")
     @GetMapping("{fieldId}/record/{exerciseId}")
     public ResponseEntity<FindFieldRecordDto> findFieldRecord(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("fieldId") Long fieldId,
             @Parameter(description = "운동 Id값") @PathVariable("exerciseId") Long exerciseId){
-        FindFieldRecordDto findFieldRecordDto = new FindFieldRecordDto();
-        return ResponseDto.ok(findFieldRecordDto);
+        FindFieldRecordDto result = fieldService.findFieldRecord(user, fieldId, exerciseId);
+        return ResponseDto.ok(result);
     }
 
 
     //매치 종료 스케줄러
     //매치 종료 Get
+    //매치 상태값 Get
 }

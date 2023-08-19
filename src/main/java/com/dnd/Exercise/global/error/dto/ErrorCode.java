@@ -38,7 +38,9 @@ public enum ErrorCode {
 
     RECRUITING_YET(HttpStatus.BAD_REQUEST, "F-005", "현재 팀원 모집 중입니다."),
 
-    NO_SIMILAR_FIELD_FOUND(HttpStatus.NOT_FOUND, "F-006", "비슷한 조건의 필드가 없습니다.");
+    NO_SIMILAR_FIELD_FOUND(HttpStatus.NOT_FOUND, "F-006", "비슷한 조건의 필드가 없습니다."),
+
+    OPPONENT_NOT_FOUND(HttpStatus.NOT_FOUND, "F-007", "매칭된 상대 필드가 없습니다.");
 
     private final HttpStatus status;
     private final String code;
