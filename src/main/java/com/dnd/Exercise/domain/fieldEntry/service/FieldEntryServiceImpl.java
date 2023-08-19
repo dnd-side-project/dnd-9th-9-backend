@@ -117,4 +117,22 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                 .entrantField(myField).hostField(hostField).fieldType(fieldType).build();
         fieldEntryRepository.save(fieldEntry);
     }
+
+    @Transactional
+    @Override
+    public void deleteFieldEntry(User user, Long entryId) {
+        FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        if(fieldEntry.getEntrantField() == null){
+            if(!fieldEntry.getEntrantUser().equals(user)){
+                throw new BusinessException(BAD_REQUEST);
+            }
+        }else{
+            if(!fieldEntry.getEntrantField().getLeaderId().equals(user.getId())){
+                throw new BusinessException(FORBIDDEN);
+            }
+        }
+        fieldEntryRepository.deleteById(entryId);
+    }
 }

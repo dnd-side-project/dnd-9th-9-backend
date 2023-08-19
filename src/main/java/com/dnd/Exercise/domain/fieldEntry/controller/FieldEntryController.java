@@ -93,7 +93,9 @@ public class FieldEntryController {
             notes = "EntryId를 입력받아 본인이 신청했던 필드 신청 내역을 삭제한다")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteFieldEntry(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "EntryId값") @PathVariable("id") Long entryId){
+        fieldEntryService.deleteFieldEntry(user, entryId);
         return ResponseDto.ok("필드 신청 취소 완료");
     }
 
