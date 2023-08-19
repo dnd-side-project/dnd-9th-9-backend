@@ -19,6 +19,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String[] PERMIT_URLS = {
+            "/health-check",
+            /* swagger */
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources", "/swagger-resources/**",
+            "/configuration/ui", "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            /* apis */
+            "/auth/sign-up", "/auth/login", "/auth/id-available", "/auth/refresh"
+    };
+
     private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
@@ -34,7 +45,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/health-check", "/auth/sign-up", "/auth/login", "/auth/id-available", "/auth/refresh").permitAll()
+                .antMatchers(PERMIT_URLS).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
