@@ -1,16 +1,21 @@
 package com.dnd.Exercise.domain.fieldEntry.controller;
 
 import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllFieldEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
+import com.dnd.Exercise.domain.fieldEntry.service.FieldEntryService;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,8 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Api(tags = "필드 신청 내역 📬")
 @RestController
-@RequestMapping("/field/entry")
+@RequestMapping("/field-entry")
+@RequiredArgsConstructor
 public class FieldEntryController {
+
+    private final FieldEntryService fieldEntryService;
 
     @ApiOperation(value = "[팀 - 팀원] 페이지 - 팀 신청받은 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
     @GetMapping("/team/{id}")
@@ -62,13 +70,23 @@ public class FieldEntryController {
         return ResponseDto.ok(findAllFieldEntryRes);
     }
 
-    // AuthenticationPrinciple 을 통해 userId를 가져와서 필드 유무를 조회한다.
-    @ApiOperation(value = "필드 신청 📬", notes = "팀 신청시 myFieldId: null")
-    @PostMapping
-    public ResponseEntity<String> createFieldEntry(
-            // AuthenticationPrinciple 추가
-            @RequestBody @Valid FieldEntryReq fieldEntryReq){
-        return ResponseDto.ok("필드 신청 완료");
+
+    @ApiOperation(value = "팀 또는 팀 배틀 입장 신청 📬", notes = "유저 -> 필드")
+    @PostMapping("/team")
+    public ResponseEntity<String> createTeamFieldEntry(
+            @AuthenticationPrincipal User user,
+            @RequestBody @Valid TeamFieldEntryReq fieldEntryReq){
+        fieldEntryService.createTeamFieldEntry(user, fieldEntryReq);
+        return ResponseDto.ok("팀 신청 완료");
+    }
+
+    @ApiOperation(value = "1:1 배틀 또는 팀 배틀 신청 📬", notes = "필드 -> 필드")
+    @PostMapping("/battle")
+    public ResponseEntity<String> createBattleFieldEntry(
+            @AuthenticationPrincipal User user,
+            @RequestBody @Valid BattleFieldEntryReq fieldEntryReq){
+        fieldEntryService.createBattleFieldEntry(user, fieldEntryReq);
+        return ResponseDto.ok("배틀 신청 완료");
     }
 
     @ApiOperation(value = "필드 신청 취소 📬",

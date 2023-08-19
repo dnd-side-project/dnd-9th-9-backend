@@ -26,7 +26,7 @@ public enum ErrorCode {
 
     DELETE_FAILED(HttpStatus.BAD_REQUEST, "F-002", "완료된 필드에 대해서는 삭제가 불가능합니다."),
 
-    SHOULD_CREATE(HttpStatus.NOT_FOUND, "F-003", "자동매칭을 위해서는 해당 유형의 필드가 필요합니다."),
+    SHOULD_CREATE(HttpStatus.NOT_FOUND, "F-003", "매칭을 위해서는 해당 유형의 필드가 필요합니다."),
 
     ALREADY_IN_PROGRESS(HttpStatus.BAD_REQUEST, "F-004", "매치가 이미 진행 중입니다."),
 
@@ -34,7 +34,16 @@ public enum ErrorCode {
 
     NO_SIMILAR_FIELD_FOUND(HttpStatus.NOT_FOUND, "F-006", "비슷한 조건의 필드가 없습니다."),
 
-    OPPONENT_NOT_FOUND(HttpStatus.NOT_FOUND, "F-007", "매칭된 상대 필드가 없습니다.");
+    OPPONENT_NOT_FOUND(HttpStatus.NOT_FOUND, "F-007", "매칭된 상대 필드가 없습니다."),
+
+    ALREADY_APPLY(HttpStatus.NOT_FOUND, "FE-001", "이미 신청한 필드입니다."),
+
+    HAVING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "FE-002", "이미 해당 유형의 필드를 가지고 있습니다. "
+            + "가질 수 있는 최대 필드 수 : 1:1 배틀 1개, 팀 배틀 1개, 팀 1개"),
+
+    ALREADY_FULL(HttpStatus.BAD_REQUEST, "FE-003", "이미 팀원이 가득 찼습니다"),
+
+    PERIOD_NOT_MATCH(HttpStatus.BAD_REQUEST, "FE-004", "기간이 같아야 합니다.");
 
     private final HttpStatus status;
     private final String code;

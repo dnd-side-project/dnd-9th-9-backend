@@ -14,10 +14,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class FieldEntry {
 
     @Id
@@ -39,4 +44,12 @@ public class FieldEntry {
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "host_field_id")
     private Field hostField;
+
+    @Builder
+    public FieldEntry(FieldType fieldType, User entrantUser, Field entrantField, Field hostField) {
+        this.fieldType = fieldType;
+        this.entrantUser = entrantUser;
+        this.entrantField = entrantField;
+        this.hostField = hostField;
+    }
 }
