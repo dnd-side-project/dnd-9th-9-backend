@@ -1,35 +1,58 @@
 package com.dnd.Exercise.domain.field.service;
 
+import static com.dnd.Exercise.domain.field.entity.FieldSide.AWAY;
+import static com.dnd.Exercise.domain.field.entity.FieldSide.HOME;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.FieldType.*;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
+import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
+import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
+import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
+import com.dnd.Exercise.domain.exercise.entity.Exercise;
+import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.FieldMapper;
 import com.dnd.Exercise.domain.field.dto.request.CreateFieldReq;
+import com.dnd.Exercise.domain.field.dto.request.FindAllFieldRecordsReq;
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
+import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
+import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
+import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
+import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.FieldSide;
 import com.dnd.Exercise.domain.field.entity.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +66,8 @@ public class FieldServiceImpl implements FieldService{
     private final FieldRepository fieldRepository;
     private final UserFieldRepository userFieldRepository;
     private final FieldMapper fieldMapper;
+    private final ActivityRingRepository activityRingRepository;
+    private final ExerciseRepository exerciseRepository;
 
     @Transactional
     @Override
@@ -158,6 +183,185 @@ public class FieldServiceImpl implements FieldService{
                 .orElseThrow(() -> new BusinessException(NO_SIMILAR_FIELD_FOUND));
 
         return fieldMapper.toAutoMatchingRes(resultField);
+    }
+
+    /**
+     * HOME & opponent==null - 나의 필드 요약 정보 제공
+     * HOME & opponent!=null - 나의 필드 요약 정보, 승리 여부, 상대방 필드 이름 제공
+     * AWAY & opponent==null - 예외
+     * AWAY & opponent!=null - 상대 필드 요약 정보 제공
+     */
+    @Override
+    public GetFieldExerciseSummaryRes getFieldExerciseSummary(User user, Long fieldId, FieldSideDateReq summaryReq) {
+        Field field = validateFieldAccess(user, fieldId);
+        Field opponentField = field.getOpponent();
+
+        FieldSide fieldSide = summaryReq.getFieldSide();
+        LocalDate targetDate = summaryReq.getDate();
+
+        if (isAway(fieldSide) && opponentField == null) {
+            throw new BusinessException(OPPONENT_NOT_FOUND);
+        }
+
+        List<Integer> mySummary = fetchFieldSummary(fieldId, targetDate);
+
+        GetFieldExerciseSummaryRes summaryRes = initSummary(mySummary);
+
+        if (isHome(fieldSide) && opponentField != null) {
+            List<Integer> opponentSummary = fetchFieldSummary(opponentField.getId(), targetDate);
+
+            WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
+            summaryRes.setWinStatus(winStatus);
+            summaryRes.setOpponentFieldName(opponentField.getName());
+        }
+
+        return summaryRes;
+    }
+
+    @Override
+    public GetRankingRes getTeamRanking(User user, Long fieldId, FieldSideDateReq teamRankingReq) {
+        Field field = validateFieldAccess(user, fieldId);
+
+        LocalDate date = teamRankingReq.getDate();
+        FieldSide fieldSide = teamRankingReq.getFieldSide();
+
+        if (isAway(fieldSide)){
+            field = field.getOpponent();
+        }
+        Long targetId = field.getId();
+        List<Long> memberIds = getMemberIds(targetId);
+
+        return getGetRankingRes(date, memberIds);
+    }
+
+    @Override
+    public GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date) {
+        Field field = validateFieldAccess(user, fieldId);
+        Long opponentFieldId = field.getOpponent().getId();
+
+        Long memberId = getMemberIds(fieldId).get(0);
+        Long opponentMemberId = getMemberIds(opponentFieldId).get(0);
+        List<Long> memberIds = List.of(memberId, opponentMemberId);
+
+        return getGetRankingRes(date, memberIds);
+    }
+
+    @Override
+    public List<FindFieldRecordDto> findAllFieldRecords(User user, Long fieldId,
+            FindAllFieldRecordsReq recordsReq) {
+        Field field = validateFieldAccess(user, fieldId);
+        Long leaderId = field.getLeaderId();
+        if (recordsReq.getFieldType() == DUEL){
+            throw new BusinessException(INVALID_TYPE_VALUE);
+        }
+        Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
+        List<Long> memberIds = getMemberIds(fieldId);
+
+        return exerciseRepository.findAllWithUser(
+                recordsReq.getDate(), memberIds, pageable, leaderId);
+
+    }
+
+    @Override
+    public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
+        Field field = validateFieldAccess(user, fieldId);
+        Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+        validateIsMember(exercise.getUser(), field);
+
+        FindFieldRecordDto findFieldRecordDto = fieldMapper.toFindFieldRecordDto(exercise);
+        findFieldRecordDto.setIsLeader(field.getLeaderId().equals(user.getId()));
+
+        return findFieldRecordDto;
+    }
+
+    private GetRankingRes getGetRankingRes(LocalDate date, List<Long> memberIds) {
+        return GetRankingRes.builder()
+                .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
+                .exerciseTimeRanking(getRankingByCriteria(EXERCISE_TIME, date, memberIds))
+                .burnedCalorieRanking(getRankingByCriteria(BURNED_CALORIE, date, memberIds))
+                .goalAchievedCountRanking(getRankingByCriteria(GOAL_ACHIEVED, date, memberIds))
+                .build();
+    }
+
+    private List<RankingDto> getRankingByCriteria(RankCriterion criterion, LocalDate date, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
+            return activityRingRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+        } else {
+            return exerciseRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+        }
+    }
+
+    private boolean isAway(FieldSide fieldSide) {
+        return AWAY.equals(fieldSide);
+    }
+
+    private boolean isHome(FieldSide fieldSide) {
+        return HOME.equals(fieldSide);
+    }
+
+    private List<Integer> fetchFieldSummary(Long fieldId, LocalDate targetDate) {
+        List<Long> memberIds = getMemberIds(fieldId);
+        List<ActivityRing> activityRings = getActivityRings(targetDate, memberIds);
+        List<Exercise> exercises = getExercises(targetDate, memberIds);
+
+        return calculateSummary(activityRings, exercises);
+    }
+
+    private List<Integer> calculateSummary(List<ActivityRing> activityRings, List<Exercise> exercises) {
+        int totalRecordCount = exercises.size();
+        int goalAchievementCount = (int) activityRings.stream().filter(ActivityRing::getIsGoalAchieved).count();
+        int totalExerciseTimeMinute = exercises.stream().mapToInt(Exercise::getDurationMinute).sum();
+        int totalBurnedCalorie = activityRings.stream().mapToInt(ActivityRing::getBurnedCalorie).sum();
+
+        return List.of(totalRecordCount, goalAchievementCount, totalExerciseTimeMinute, totalBurnedCalorie);
+    }
+
+    private GetFieldExerciseSummaryRes initSummary(List<Integer> summary) {
+        return new GetFieldExerciseSummaryRes(
+                summary.get(0), summary.get(1), summary.get(3), summary.get(2));
+    }
+
+    private WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {
+        int result = IntStream.range(0, mySummary.size())
+                .map(i -> Integer.compare(mySummary.get(i), opponentSummary.get(i)))
+                .sum();
+
+        if (result > 0) return WinStatus.WIN;
+        if (result < 0) return WinStatus.LOSE;
+        return WinStatus.DRAW;
+    }
+
+    private Field validateFieldAccess(User user, Long fieldId) {
+        Field field = getField(fieldId);
+        validateIsMember(user, field);
+        validateFieldStatus(field);
+        return field;
+    }
+
+    private void validateIsMember(User user, Field field) {
+        if (!userFieldRepository.existsByFieldAndUser(field, user)) {
+            throw new BusinessException(FORBIDDEN);
+        }
+    }
+
+    private void validateFieldStatus(Field field) {
+        if (field.getFieldStatus() == RECRUITING) {
+            throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    private List<Long> getMemberIds(Long fieldId) {
+        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
+    }
+
+    private List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {
+        return activityRingRepository.findAllByDateAndUserIdIn(date, memberIds);
+    }
+
+    private List<Exercise> getExercises(LocalDate date, List<Long> memberIds) {
+        return exerciseRepository.findAllByExerciseDateAndUserIdIn(date, memberIds);
     }
 
     private Boolean isFull(Field field) {
