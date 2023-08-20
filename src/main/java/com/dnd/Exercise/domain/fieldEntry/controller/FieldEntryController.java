@@ -102,7 +102,9 @@ public class FieldEntryController {
     @ApiOperation(value = "필드 수락 📬")
     @PostMapping("/{id}/accept")
     public ResponseEntity<String> acceptFieldEntry(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "EntryId값") @PathVariable("id") Long entryId){
+        fieldEntryService.acceptFieldEntry(user, entryId);
         return ResponseDto.ok("필드 수락 완료");
     }
 }

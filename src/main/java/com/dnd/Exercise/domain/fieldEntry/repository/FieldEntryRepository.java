@@ -15,4 +15,8 @@ public interface FieldEntryRepository extends JpaRepository<FieldEntry, Long> {
 
     @EntityGraph(attributePaths = {"entrantUser", "entrantField", "hostField"})
     Optional<FieldEntry> findById(Long id);
+
+    void deleteAllByEntrantUser(User user);
+
+    void deleteAllByEntrantField(Field field);
 }

@@ -11,4 +11,6 @@ public interface FieldEntryService {
     void createBattleFieldEntry(User user, BattleFieldEntryReq fieldEntryReq);
 
     void deleteFieldEntry(User user, Long entryId);
+
+    void acceptFieldEntry(User user, Long entryId);
 }

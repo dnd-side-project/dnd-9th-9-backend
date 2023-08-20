@@ -124,15 +124,49 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
                 .orElseThrow(() -> new BusinessException(NOT_FOUND));
 
+        Field entrantField = fieldEntry.getEntrantField();
+        Field hostField = fieldEntry.getHostField();
+
+
         if(fieldEntry.getEntrantField() == null){
-            if(!fieldEntry.getEntrantUser().equals(user)){
+            if(!fieldEntry.getEntrantUser().equals(user) || !hostField.getLeaderId().equals(user.getId())){
                 throw new BusinessException(BAD_REQUEST);
             }
         }else{
-            if(!fieldEntry.getEntrantField().getLeaderId().equals(user.getId())){
+            if(!entrantField.getLeaderId().equals(user.getId()) || !hostField.getLeaderId().equals(user.getId())){
                 throw new BusinessException(FORBIDDEN);
             }
         }
         fieldEntryRepository.deleteById(entryId);
+    }
+
+    @Transactional
+    @Override
+    public void acceptFieldEntry(User user, Long entryId) {
+        FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        Field entrantField = fieldEntry.getEntrantField();
+        Field hostField = fieldEntry.getHostField();
+        User entrantUser = fieldEntry.getEntrantUser();
+
+        if(!hostField.getLeaderId().equals(user.getId())){
+            throw new BusinessException(FORBIDDEN);
+        }
+
+        if(entrantField == null) {
+            if (hostField.getCurrentSize() == hostField.getMaxSize()){
+                throw new BusinessException(ALREADY_FULL);
+            }
+            hostField.addMember();
+            UserField userField = new UserField(entrantUser, hostField);
+            userFieldRepository.save(userField);
+
+            fieldEntryRepository.deleteAllByEntrantUser(entrantUser);
+        }
+        else{
+            entrantField.changeOpponent(hostField);
+            fieldEntryRepository.deleteAllByEntrantField(entrantField);
+        }
     }
 }
