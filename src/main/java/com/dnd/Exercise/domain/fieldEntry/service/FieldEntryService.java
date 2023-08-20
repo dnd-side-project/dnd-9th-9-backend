@@ -1,7 +1,9 @@
 package com.dnd.Exercise.domain.fieldEntry.service;
 
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.util.List;
@@ -18,4 +20,6 @@ public interface FieldEntryService {
     void acceptFieldEntry(User user, Long entryId);
 
     List<FindAllTeamEntryRes> findAllTeamEntries(User user, Long fieldId, Pageable pageable);
+
+    List<FindAllBattleEntryRes> findAllBattleEntries(User user, Long fieldId, FieldDirection fieldDirection, Pageable pageable);
 }

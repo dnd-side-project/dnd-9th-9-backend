@@ -4,7 +4,7 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
-import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllFieldEntryRes;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.service.FieldEntryService;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -49,22 +49,24 @@ public class FieldEntryController {
     @ApiOperation(value = "[매치 - 매칭] 페이지 - 배틀 신청 내역 조회 📬",
             notes = "EntryDirection을 통해 요청 받은 내역과 요청한 내역 구분 <br> 페이지 기본값: 0, 사이즈 기본값: 3")
     @GetMapping("/battle/{id}")
-    public ResponseEntity<FindAllFieldEntryRes> findAllBattleEntriesByDirection(
+    public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByDirection(
+            //@AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @RequestParam(value = "fieldDirection") FieldDirection fieldDirection,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        FindAllFieldEntryRes findAllFieldEntryRes = new FindAllFieldEntryRes();
-        return ResponseDto.ok(findAllFieldEntryRes);
+        User user = User.builder().id(1L).age(123).height(312).weight(32).calorieGoal(12).teamworkRate(321).build();
+        List<FindAllBattleEntryRes> result = fieldEntryService.findAllBattleEntries(user, fieldId, fieldDirection, pageable);
+        return ResponseDto.ok(result);
     }
 
 
     @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 필드 신청한 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
     @GetMapping
-    public ResponseEntity<FindAllFieldEntryRes> findAllBattleEntriesByType(
+    public ResponseEntity<FindAllBattleEntryRes> findAllBattleEntriesByType(
             // AuthenticationPrinciple 추가
             @RequestParam(value = "fieldType") FieldType fieldType,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        FindAllFieldEntryRes findAllFieldEntryRes = new FindAllFieldEntryRes();
+        FindAllBattleEntryRes findAllFieldEntryRes = new FindAllBattleEntryRes();
         return ResponseDto.ok(findAllFieldEntryRes);
     }
 

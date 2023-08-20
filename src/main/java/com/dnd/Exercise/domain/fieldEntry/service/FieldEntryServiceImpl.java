@@ -17,7 +17,9 @@ import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
@@ -182,5 +184,17 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             throw new BusinessException(FORBIDDEN);
         }
         return fieldEntryRepository.findAllTeamEntryByHostField(field, pageable);
+    }
+
+    @Override
+    public List<FindAllBattleEntryRes> findAllBattleEntries(User user, Long fieldId,
+            FieldDirection fieldDirection, Pageable pageable) {
+        Field field = fieldRepository.findById(fieldId)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        if (!userFieldRepository.existsByFieldAndUser(field, user)) {
+            throw new BusinessException(FORBIDDEN);
+        }
+        return fieldEntryRepository.findAllBattleByField(field, fieldDirection, pageable);
     }
 }
