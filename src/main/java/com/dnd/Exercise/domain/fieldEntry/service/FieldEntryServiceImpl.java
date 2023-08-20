@@ -47,7 +47,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         Field hostField = fieldRepository.findByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType)
                 .orElseThrow(() -> new BusinessException(NOT_FOUND));
 
-        if(!RECRUITING.equals(hostField.getFieldStatus())){
+        if(hostField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
         }
 
@@ -89,7 +89,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             throw new BusinessException(FORBIDDEN);
         }
 
-        if(!RECRUITING.equals(myField.getFieldStatus())){
+        if(myField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
         }
 
@@ -97,7 +97,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             throw new BusinessException(RECRUITING_YET);
         }
 
-        if(!RECRUITING.equals(hostField.getFieldStatus())){
+        if(hostField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
         }
 
