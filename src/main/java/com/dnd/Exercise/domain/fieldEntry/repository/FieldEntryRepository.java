@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FieldEntryRepository extends JpaRepository<FieldEntry, Long> {
+public interface FieldEntryRepository extends JpaRepository<FieldEntry, Long>, FieldEntryRepositoryCustom {
 
     Boolean existsByEntrantUserAndHostField(User user, Field field);
 

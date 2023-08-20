@@ -18,6 +18,7 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -27,6 +28,7 @@ import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -168,5 +170,17 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             entrantField.changeOpponent(hostField);
             fieldEntryRepository.deleteAllByEntrantField(entrantField);
         }
+    }
+
+    @Override
+    public List<FindAllTeamEntryRes> findAllTeamEntries(User user, Long fieldId,
+            Pageable pageable) {
+        Field field = fieldRepository.findById(fieldId)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        if (!userFieldRepository.existsByFieldAndUser(field, user)) {
+            throw new BusinessException(FORBIDDEN);
+        }
+        return fieldEntryRepository.findAllTeamEntryByHostField(field, pageable);
     }
 }
