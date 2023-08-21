@@ -5,33 +5,46 @@ import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByAppleReq;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByCommonReq;
 import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
 import com.dnd.Exercise.domain.exercise.dto.response.*;
+import com.dnd.Exercise.domain.exercise.service.ExerciseService;
+import com.dnd.Exercise.domain.sports.entity.Sports;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 
 @Api(tags = "운동 기록 (기록하기, 요악, 칼로리 정보) 📝")
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/exercise")
 public class ExerciseController {
+
+    private final ExerciseService exerciseService;
 
     @ApiOperation(value = "오늘 하루 나의 모든 운동 상세 기록 불러오기 📝", notes = "개인 운동기록 조회")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("")
     public ResponseEntity<FindAllExerciseDetailsOfDayRes> findAllExerciseDetailsOfDay(
             @DateTimeFormat(pattern = "yyyy-MM-dd")
-            @RequestParam LocalDate date) {
-        return ResponseDto.ok(new FindAllExerciseDetailsOfDayRes());
+            @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
+        FindAllExerciseDetailsOfDayRes data = exerciseService.findAllExerciseDetailsOfDay(date, user.getId());
+        return ResponseDto.ok(data);
     }
 
-    @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 📝", notes = "")
+    @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 📝", notes = "운동 종목들은 애플 health kit 의 종목들과 동일합니다. <br> '대문자 + 카멜케이스' 형태")
     @PostMapping("")
-    public ResponseEntity<String> postExerciseByCommon (@RequestBody PostExerciseByCommonReq postExerciseByCommonReq) {
+    public ResponseEntity<String> postExerciseByCommon (@RequestBody @Valid PostExerciseByCommonReq postExerciseByCommonReq, @AuthenticationPrincipal User user) {
+        // TODO: 이미지 업로드 추가
+
+        exerciseService.postExerciseByCommon(postExerciseByCommonReq, user);
         return ResponseDto.ok("운동기록 등록 성공");
     }
 
@@ -53,7 +66,8 @@ public class ExerciseController {
     @ApiOperation(value = "매치업 서비스 내에서 운동기록 수정 📝", notes = "")
     @ApiImplicitParam(name = "id", value = "운동 기록 id", required = true, dataType = "long")
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateExercise (@PathVariable("id") Long exerciseId, @RequestBody UpdateExerciseReq updateExerciseReq) {
+    public ResponseEntity<String> updateExercise (@PathVariable("id") Long exerciseId, @RequestBody @Valid UpdateExerciseReq updateExerciseReq) {
+        exerciseService.updateExercise(exerciseId, updateExerciseReq);
         return ResponseDto.ok("운동기록 수정 성공");
     }
 
@@ -61,6 +75,7 @@ public class ExerciseController {
     @ApiImplicitParam(name = "id", value = "운동 기록 id", required = true, dataType = "long")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteExercise (@PathVariable("id") Long exerciseId) {
+        exerciseService.deleteExercise(exerciseId);
         return ResponseDto.ok("운동기록 삭제 성공");
     }
 
