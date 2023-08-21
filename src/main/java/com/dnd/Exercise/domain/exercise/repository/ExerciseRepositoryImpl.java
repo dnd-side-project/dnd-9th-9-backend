@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.QFindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -40,6 +41,24 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
                 .orderBy(aggregateExpression.desc())
                 .limit(3)
                 .fetch();
+    }
+
+    @Override
+    public TopPlayerDto findAccumulatedTopByDynamicCriteria(RankCriterion rankCriterion,
+            LocalDate date, List<Long> userIds) {
+
+        NumberExpression<?> aggregateExpression = getAggregateExpression(rankCriterion);
+
+        return queryFactory
+                .select(Projections.constructor(TopPlayerDto.class, exercise.user.name, aggregateExpression))
+                .from(exercise)
+                .join(exercise.user, user)
+                .where(exercise.exerciseDate.between(date, LocalDate.now())
+                        .and(exercise.user.id.in(userIds)))
+                .groupBy(user)
+                .orderBy(aggregateExpression.desc())
+                .limit(1)
+                .fetchFirst();
     }
 
     @Override
