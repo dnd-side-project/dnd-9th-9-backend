@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.fieldEntry.service;
 
+import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
@@ -21,5 +22,7 @@ public interface FieldEntryService {
 
     List<FindAllTeamEntryRes> findAllTeamEntries(User user, Long fieldId, Pageable pageable);
 
-    List<FindAllBattleEntryRes> findAllBattleEntries(User user, Long fieldId, FieldDirection fieldDirection, Pageable pageable);
+    List<FindAllBattleEntryRes> findAllBattleEntriesByDirection(User user, Long fieldId, FieldDirection fieldDirection, Pageable pageable);
+
+    List<FindAllBattleEntryRes> findAllBattleEntriesByType(User user, FieldType fieldType, Pageable pageable);
 }

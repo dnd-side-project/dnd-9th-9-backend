@@ -50,24 +50,23 @@ public class FieldEntryController {
             notes = "EntryDirection을 통해 요청 받은 내역과 요청한 내역 구분 <br> 페이지 기본값: 0, 사이즈 기본값: 3")
     @GetMapping("/battle/{id}")
     public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByDirection(
-            //@AuthenticationPrincipal User user,
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @RequestParam(value = "fieldDirection") FieldDirection fieldDirection,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        User user = User.builder().id(1L).age(123).height(312).weight(32).calorieGoal(12).teamworkRate(321).build();
-        List<FindAllBattleEntryRes> result = fieldEntryService.findAllBattleEntries(user, fieldId, fieldDirection, pageable);
+        List<FindAllBattleEntryRes> result = fieldEntryService.findAllBattleEntriesByDirection(user, fieldId, fieldDirection, pageable);
         return ResponseDto.ok(result);
     }
 
 
     @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 필드 신청한 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
     @GetMapping
-    public ResponseEntity<FindAllBattleEntryRes> findAllBattleEntriesByType(
-            // AuthenticationPrinciple 추가
+    public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByType(
+            @AuthenticationPrincipal User user,
             @RequestParam(value = "fieldType") FieldType fieldType,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        FindAllBattleEntryRes findAllFieldEntryRes = new FindAllBattleEntryRes();
-        return ResponseDto.ok(findAllFieldEntryRes);
+        List<FindAllBattleEntryRes> result = fieldEntryService.findAllBattleEntriesByType(user, fieldType, pageable);
+        return ResponseDto.ok(result);
     }
 
 

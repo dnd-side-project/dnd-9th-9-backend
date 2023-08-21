@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -43,4 +44,7 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long> {
      )
      Optional<UserField> findByUserAndStatusAndType(@Param("user") User user,
              @Param("fieldStatuses") List<FieldStatus> fieldStatuses, @Param("fieldType") FieldType fieldType);
+
+     @EntityGraph(attributePaths = "field")
+     List<UserField> findAllByUser(User user);
 }

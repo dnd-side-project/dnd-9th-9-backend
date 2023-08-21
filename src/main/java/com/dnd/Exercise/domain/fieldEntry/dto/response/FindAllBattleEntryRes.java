@@ -4,10 +4,11 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.Period;
 import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class FindAllBattleEntryRes {
@@ -20,9 +21,9 @@ public class FindAllBattleEntryRes {
 
     private FieldType fieldType;
 
-    private int memberCount;
+    private int currentSize;
 
-    private int memberMaxCount;
+    private int maxSize;
 
     private SkillLevel skillLevel;
 

@@ -16,6 +16,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
+import com.dnd.Exercise.domain.fieldEntry.dto.FieldEntryMapper;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
@@ -28,6 +29,7 @@ import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +45,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     private final FieldEntryRepository fieldEntryRepository;
     private final FieldRepository fieldRepository;
     private final UserFieldRepository userFieldRepository;
+    private final FieldEntryMapper fieldEntryMapper;
 
     @Transactional
     @Override
@@ -187,7 +190,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     }
 
     @Override
-    public List<FindAllBattleEntryRes> findAllBattleEntries(User user, Long fieldId,
+    public List<FindAllBattleEntryRes> findAllBattleEntriesByDirection(User user, Long fieldId,
             FieldDirection fieldDirection, Pageable pageable) {
         Field field = fieldRepository.findById(fieldId)
                 .orElseThrow(() -> new BusinessException(NOT_FOUND));
@@ -196,5 +199,33 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             throw new BusinessException(FORBIDDEN);
         }
         return fieldEntryRepository.findAllBattleByField(field, fieldDirection, pageable);
+    }
+
+    @Override
+    public List<FindAllBattleEntryRes> findAllBattleEntriesByType(User user, FieldType fieldType,
+            Pageable pageable) {
+        List<FieldEntry> entryList = null;
+        if(List.of(FieldType.DUEL, FieldType.TEAM_BATTLE).contains(fieldType)){
+            List<UserField> userFields = userFieldRepository.findAllByUser(user);
+
+            UserField myUserField = userFields.stream().filter(userField -> {
+                Field field = userField.getField();
+                return field.getFieldType().equals(fieldType)
+                        && field.getOpponent() == null
+                        && field.getCurrentSize() == field.getMaxSize();
+            }).findFirst().orElse(null);
+
+            if(myUserField == null){
+                return null;
+            }
+
+            entryList = fieldEntryRepository.findByEntrantField(myUserField.getField(), pageable);
+
+        } else {
+            entryList = fieldEntryRepository.findByEntrantUser(user, pageable);
+        }
+        return entryList.stream()
+                .map(fieldEntryMapper::toFindAllBattleEntryRes).collect(
+                        Collectors.toList());
     }
 }
