@@ -77,9 +77,10 @@ public class UserFieldController {
 
     @ApiOperation(value = "홈화면 나의 배틀 현황 조회 (팀 제외) 📜", notes = "데이터: 매치 시작일부터 특정 날짜까지의 누적 데이터")
     @GetMapping("/home/battle")
-    public ResponseEntity<FindMyBattleStatusRes> findMyBattleStatus(){
-        FindMyBattleStatusRes findMyBattleStatusRes = new FindMyBattleStatusRes();
-        return ResponseDto.ok(findMyBattleStatusRes);
+    public ResponseEntity<FindMyBattleStatusRes> findMyBattleStatus(
+            @AuthenticationPrincipal User user){
+        FindMyBattleStatusRes result = userFieldService.findMyBattleStatus(user);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "홈화면 나의 팀 현황 조회 (팀배틀, 1:1 배틀 제외)", notes = "데이터: 매치 시작일부터 오늘까지의 누적 데이터")
