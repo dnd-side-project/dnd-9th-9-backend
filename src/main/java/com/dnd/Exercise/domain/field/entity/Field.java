@@ -95,4 +95,13 @@ public class Field extends BaseEntity {
     public void removeOpponent(){
         this.opponent = null;
     }
+
+    public void changeOpponent(Field field){
+        this.opponent = field;
+        field.opponent = this;
+    }
+
+    public void addMember(){
+        this.currentSize += 1;
+    }
 }

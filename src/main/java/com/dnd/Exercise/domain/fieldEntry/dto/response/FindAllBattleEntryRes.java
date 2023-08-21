@@ -3,23 +3,27 @@ package com.dnd.Exercise.domain.fieldEntry.dto.response;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.Period;
 import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class FindAllFieldEntryDto {
+@AllArgsConstructor
+public class FindAllBattleEntryRes {
+
     private Long entryId;
 
-    private Long matchId;
+    private Long fieldId;
 
     private String name;
 
     private FieldType fieldType;
 
-    private int memberCount;
+    private int currentSize;
 
-    private int memberMaxCount;
+    private int maxSize;
 
     private SkillLevel skillLevel;
 
