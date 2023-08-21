@@ -6,9 +6,10 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_APPLY;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
@@ -52,7 +53,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     public void createTeamFieldEntry(User user, TeamFieldEntryReq fieldEntryReq) {
         FieldType fieldType = fieldEntryReq.getTeamType().toFieldType();
         Field hostField = fieldRepository.findByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
 
         if(hostField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
@@ -81,7 +82,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     public void createBattleFieldEntry(User user, BattleFieldEntryReq fieldEntryReq) {
         FieldType fieldType = fieldEntryReq.getBattleType().toFieldType();
         Field hostField = fieldRepository.findByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
 
         UserField myUserField = userFieldRepository.findByUserAndStatusAndType(
                         user, List.of(IN_PROGRESS, RECRUITING), fieldType)
@@ -93,7 +94,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         }
 
         if(!user.getId().equals(myField.getLeaderId())){
-            throw new BusinessException(FORBIDDEN);
+            throw new BusinessException(NOT_LEADER);
         }
 
         if(myField.getOpponent() != null){
@@ -129,7 +130,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     @Override
     public void deleteFieldEntry(User user, Long entryId) {
         FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
 
         Field entrantField = fieldEntry.getEntrantField();
         Field hostField = fieldEntry.getHostField();
@@ -151,14 +152,14 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     @Override
     public void acceptFieldEntry(User user, Long entryId) {
         FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
 
         Field entrantField = fieldEntry.getEntrantField();
         Field hostField = fieldEntry.getHostField();
         User entrantUser = fieldEntry.getEntrantUser();
 
         if(!hostField.getLeaderId().equals(user.getId())){
-            throw new BusinessException(FORBIDDEN);
+            throw new BusinessException(NOT_LEADER);
         }
 
         if(entrantField == null) {
@@ -181,7 +182,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     public List<FindAllTeamEntryRes> findAllTeamEntries(User user, Long fieldId,
             Pageable pageable) {
         Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
 
         if (!userFieldRepository.existsByFieldAndUser(field, user)) {
             throw new BusinessException(FORBIDDEN);
@@ -193,7 +194,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     public List<FindAllBattleEntryRes> findAllBattleEntriesByDirection(User user, Long fieldId,
             FieldDirection fieldDirection, Pageable pageable) {
         Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
 
         if (!userFieldRepository.existsByFieldAndUser(field, user)) {
             throw new BusinessException(FORBIDDEN);
