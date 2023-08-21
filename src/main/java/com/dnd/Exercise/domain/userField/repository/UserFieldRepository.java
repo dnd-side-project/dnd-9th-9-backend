@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserFieldRepository extends JpaRepository<UserField, Long> {
+public interface UserFieldRepository extends JpaRepository<UserField, Long>, UserFieldRepositoryCustom {
 
 
      Boolean existsByFieldAndUser(Field field, User user);

@@ -5,6 +5,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +58,18 @@ public class UserFieldServiceImpl implements UserFieldService {
                 })
                 .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FindAllFieldsDto> findAllMyCompletedFields(User user, FieldType fieldType,
+            Pageable pageable) {
+        List<UserField> myUserFields = userFieldRepository.findCompletedFieldByUserAndType(
+                user, fieldType, pageable);
+
+        return myUserFields.stream()
+                .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
+                .collect(Collectors.toList());
+
     }
 
     private Field getField(Long id) {

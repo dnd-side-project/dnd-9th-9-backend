@@ -14,6 +14,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,14 +49,15 @@ public class UserFieldController {
         return ResponseDto.ok(result);
     }
 
-    @ApiOperation(value = "종료된 나의 필드 조회 📜", notes = "페이지 기본값: 0, 사이즈 기본값: 5")
+    @ApiOperation(value = "종료된 나의 필드 조회 📜",
+            notes = "페이지 기본값: 0, 사이즈 기본값: 5, fieldType = null 일 경우 전체 조회")
     @GetMapping("/completed")
-    public ResponseEntity<FindAllFieldsRes> findAllMyCompletedFields(
-            @RequestParam(value = "fieldType") FieldType fieldType,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "5") int size){
-        FindAllFieldsRes findAllMyCompletedFieldsRes = new FindAllFieldsRes();
-        return ResponseDto.ok(findAllMyCompletedFieldsRes);
+    public ResponseEntity<List<FindAllFieldsDto>> findAllMyCompletedFields(
+            @AuthenticationPrincipal User user,
+            @RequestParam(value = "fieldType", required = false) FieldType fieldType,
+            @PageableDefault(page = 0, size = 5) Pageable pageable){
+        List<FindAllFieldsDto> result = userFieldService.findAllMyCompletedFields(user, fieldType, pageable);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "팀원 내보내기 📜")
