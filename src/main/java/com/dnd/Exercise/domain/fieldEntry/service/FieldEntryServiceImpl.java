@@ -48,20 +48,45 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     private final UserFieldRepository userFieldRepository;
     private final FieldEntryMapper fieldEntryMapper;
 
+    
+    private void validateIsFull(Field field) {
+        if(field.getCurrentSize() == field.getMaxSize()){
+            throw new BusinessException(ALREADY_FULL);
+        }
+    }
+
+    private void validateIsNotFull(Field field) {
+        if(field.getCurrentSize() != field.getMaxSize()){
+            throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    private void validateHaveOpponent(Field field) {
+        if(field.getOpponent() != null){
+            throw new BusinessException(ALREADY_IN_PROGRESS);
+        }
+    }
+
+    private Field getFieldByIdAndFieldType(Long fieldId, FieldType fieldType) {
+        return fieldRepository.findByIdAndFieldType(fieldId, fieldType)
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+    }
+
+    private void validateIsLeader(Long id, Long leaderId) {
+        if(!id.equals(leaderId)){
+            throw new BusinessException(NOT_LEADER);
+        }
+    }
+
     @Transactional
     @Override
     public void createTeamFieldEntry(User user, TeamFieldEntryReq fieldEntryReq) {
         FieldType fieldType = fieldEntryReq.getTeamType().toFieldType();
-        Field hostField = fieldRepository.findByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+        Field hostField = getFieldByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType);
 
-        if(hostField.getOpponent() != null){
-            throw new BusinessException(ALREADY_IN_PROGRESS);
-        }
+        validateHaveOpponent(hostField);
 
-        if(hostField.getCurrentSize() == hostField.getMaxSize()){
-            throw new BusinessException(ALREADY_FULL);
-        }
+        validateIsFull(hostField);
 
         if(fieldEntryRepository.existsByEntrantUserAndHostField(user, hostField)){
             throw new BusinessException(ALREADY_APPLY);
@@ -81,37 +106,27 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     @Override
     public void createBattleFieldEntry(User user, BattleFieldEntryReq fieldEntryReq) {
         FieldType fieldType = fieldEntryReq.getBattleType().toFieldType();
-        Field hostField = fieldRepository.findByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+        Field hostField = getFieldByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType);
 
         UserField myUserField = userFieldRepository.findByUserAndStatusAndType(
                         user, List.of(IN_PROGRESS, RECRUITING), fieldType)
                 .orElseThrow(() -> new BusinessException(SHOULD_CREATE));
+        
         Field myField = myUserField.getField();
 
         if(myField.equals(hostField)){
             throw new BusinessException(BAD_REQUEST);
         }
 
-        if(!user.getId().equals(myField.getLeaderId())){
-            throw new BusinessException(NOT_LEADER);
-        }
+        validateIsLeader(user.getId(), myField.getLeaderId());
 
-        if(myField.getOpponent() != null){
-            throw new BusinessException(ALREADY_IN_PROGRESS);
-        }
+        validateHaveOpponent(myField);
 
-        if(myField.getCurrentSize() != myField.getMaxSize()){
-            throw new BusinessException(RECRUITING_YET);
-        }
+        validateIsNotFull(myField);
 
-        if(hostField.getOpponent() != null){
-            throw new BusinessException(ALREADY_IN_PROGRESS);
-        }
+        validateHaveOpponent(hostField);
 
-        if(hostField.getCurrentSize() != hostField.getMaxSize()){
-            throw new BusinessException(RECRUITING_YET);
-        }
+        validateIsNotFull(hostField);
 
         if(fieldEntryRepository.existsByEntrantFieldAndHostField(myField, hostField)){
             throw new BusinessException(ALREADY_APPLY);
@@ -125,6 +140,9 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                 .entrantField(myField).hostField(hostField).fieldType(fieldType).build();
         fieldEntryRepository.save(fieldEntry);
     }
+
+
+
 
     @Transactional
     @Override
@@ -158,14 +176,10 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         Field hostField = fieldEntry.getHostField();
         User entrantUser = fieldEntry.getEntrantUser();
 
-        if(!hostField.getLeaderId().equals(user.getId())){
-            throw new BusinessException(NOT_LEADER);
-        }
+        validateIsLeader(user.getId(), hostField.getLeaderId());
 
         if(entrantField == null) {
-            if (hostField.getCurrentSize() == hostField.getMaxSize()){
-                throw new BusinessException(ALREADY_FULL);
-            }
+            validateIsFull(hostField);
             hostField.addMember();
             UserField userField = new UserField(entrantUser, hostField);
             userFieldRepository.save(userField);
