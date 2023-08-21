@@ -1,9 +1,12 @@
 package com.dnd.Exercise.domain.userField.service;
 
+import static com.dnd.Exercise.domain.field.entity.FieldStatus.*;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
 import com.dnd.Exercise.domain.userField.entity.UserField;
@@ -38,6 +41,20 @@ public class UserFieldServiceImpl implements UserFieldService {
                     findAllMembersRes.setIsLeader(leaderId.equals(findAllMembersRes.getId()));
                     return findAllMembersRes;
                 })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FindAllFieldsDto> findAllMyInProgressFields(User user) {
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusIn(user,
+                List.of(RECRUITING, IN_PROGRESS));
+
+        return myUserFields.stream()
+                .filter(userField -> {
+                    Field field = userField.getField();
+                    return !(RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() == null);
+                })
+                .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
                 .collect(Collectors.toList());
     }
 

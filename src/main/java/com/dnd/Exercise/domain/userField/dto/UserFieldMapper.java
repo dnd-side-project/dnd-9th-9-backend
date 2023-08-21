@@ -1,5 +1,7 @@
 package com.dnd.Exercise.domain.userField.dto;
 
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
+import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
 import com.dnd.Exercise.domain.userField.entity.UserField;
@@ -11,4 +13,6 @@ public interface UserFieldMapper {
 
     @Mapping(source = "user.id", target = "id")
     FindAllMembersRes toFindAllMembersRes(UserField userField, User user);
+
+    FindAllFieldsDto toFindAllFieldsDto(Field field);
 }

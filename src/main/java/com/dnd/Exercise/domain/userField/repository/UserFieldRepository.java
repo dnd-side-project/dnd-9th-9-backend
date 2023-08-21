@@ -47,4 +47,15 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long> {
 
      @EntityGraph(attributePaths = "field")
      List<UserField> findAllByUser(User user);
+
+     @Query(value =
+             "select uf from UserField uf "
+                     + "join fetch uf.field "
+                     + "where uf.user = :user "
+                     + "and uf.field.fieldStatus in :fieldStatuses "
+     )
+     List<UserField> findByUserAndStatusIn(@Param("user") User user,
+             @Param("fieldStatuses") List<FieldStatus> fieldStatuses);
+
+
 }

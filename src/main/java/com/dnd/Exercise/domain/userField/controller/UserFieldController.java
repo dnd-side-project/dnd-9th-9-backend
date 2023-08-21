@@ -3,6 +3,7 @@ package com.dnd.Exercise.domain.userField.controller;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
@@ -11,10 +12,10 @@ import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,9 +41,10 @@ public class UserFieldController {
 
     @ApiOperation(value = "진행 중인 나의 필드 조회 📜", notes = "진행완료를 제외한 속해있는 모든 필드 조회")
     @GetMapping("/progress")
-    public ResponseEntity<List<FindAllFieldsDto>> findAllMyInProgressFields(){
-        List<FindAllFieldsDto> findAllMyInProgressFieldsRes = new ArrayList<FindAllFieldsDto>();
-        return ResponseDto.ok(findAllMyInProgressFieldsRes);
+    public ResponseEntity<List<FindAllFieldsDto>> findAllMyInProgressFields(
+            @AuthenticationPrincipal User user){
+        List<FindAllFieldsDto> result = userFieldService.findAllMyInProgressFields(user);
+        return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "종료된 나의 필드 조회 📜", notes = "페이지 기본값: 0, 사이즈 기본값: 5")
