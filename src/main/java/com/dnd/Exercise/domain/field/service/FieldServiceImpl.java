@@ -284,7 +284,7 @@ public class FieldServiceImpl implements FieldService{
     public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
         Field field = validateFieldAccess(user, fieldId);
         Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(EXERCISE_NOT_FOUND));
         validateIsMember(exercise.getUser(), field);
 
         FindFieldRecordDto findFieldRecordDto = fieldMapper.toFindFieldRecordDto(exercise);
@@ -400,6 +400,6 @@ public class FieldServiceImpl implements FieldService{
 
     private Field getField(Long id) {
         return fieldRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 }
