@@ -153,7 +153,7 @@ public class FieldServiceImpl implements FieldService{
         if (myField.getFieldStatus().equals(COMPLETED)){
             throw new BusinessException(DELETE_FAILED);
         }
-        if (myField.getFieldStatus().equals(IN_PROGRESS)){
+        if (myField.getOpponent() != null){
             Field opponentField = getField(myField.getOpponent().getId());
             opponentField.removeOpponent();
         }
@@ -173,7 +173,7 @@ public class FieldServiceImpl implements FieldService{
         Field myField = userField.getField();
         FieldStatus fieldStatus = myField.getFieldStatus();
 
-        if (fieldStatus == IN_PROGRESS){
+        if (myField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
         }
 
@@ -388,7 +388,7 @@ public class FieldServiceImpl implements FieldService{
     }
 
     private void isRecruiting(Field field) {
-        if (Arrays.asList(IN_PROGRESS, COMPLETED).contains(field.getFieldStatus())){
+        if (field.getOpponent() != null){
             throw new BusinessException(INVALID_STATUS);
         }
     }
