@@ -6,15 +6,13 @@ import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 
 import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
-import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
-import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldType;
@@ -208,6 +206,6 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     private Field getField(Long id) {
         return fieldRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 }
