@@ -1,5 +1,7 @@
 package com.dnd.Exercise.domain.exercise.service;
 
+import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
+import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.dto.ExerciseMapper;
 import com.dnd.Exercise.domain.exercise.dto.request.AppleWorkoutDto;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByAppleReq;
@@ -7,6 +9,7 @@ import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByCommonReq;
 import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
 import com.dnd.Exercise.domain.exercise.dto.response.ExerciseDetailDto;
 import com.dnd.Exercise.domain.exercise.dto.response.FindAllExerciseDetailsOfDayRes;
+import com.dnd.Exercise.domain.exercise.dto.response.GetCalorieStateRes;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -27,6 +30,8 @@ import java.util.stream.Collectors;
 public class ExerciseServiceImpl implements ExerciseService{
 
     private final ExerciseRepository exerciseRepository;
+    private final ActivityRingRepository activityRingRepository;
+
     private final ExerciseMapper exerciseMapper;
 
     @Override
@@ -86,5 +91,16 @@ public class ExerciseServiceImpl implements ExerciseService{
                 .map(workout -> workout.getAppleUid())
                 .collect(Collectors.toList());
         exerciseRepository.deleteAppleWorkouts(existingAppleUids);
+    }
+
+    @Override
+    public GetCalorieStateRes getCalorieState(LocalDate date, User user) {
+        ActivityRing activityRing= activityRingRepository.findByDateAndUserId(date,user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVITY_RING_NOT_FOUND));
+
+        return GetCalorieStateRes.builder()
+                .goalCalorie(user.getCalorieGoal())
+                .burnedCalorie(activityRing.getBurnedCalorie())
+                .build();
     }
 }

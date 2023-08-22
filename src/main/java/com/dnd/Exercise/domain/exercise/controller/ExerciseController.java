@@ -89,13 +89,14 @@ public class ExerciseController {
         return ResponseDto.ok(new GetMyExerciseSummaryRes());
     }
 
-    @ApiOperation(value = "칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝", notes = "특정 하루에 대한 나의 소모칼로리, 목표칼로리값을 불러옵니다.")
+    @ApiOperation(value = "칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝", notes = "특정 하루에 대한 나의 소모칼로리, 목표칼로리값을 불러옵니다. <br> 이때 '소모칼로리' 는 '활동링에서의 소모칼로리 (activeEnergyBurned 값)' 을 뜻합니다.")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/calorie-state")
     public ResponseEntity<GetCalorieStateRes> getCalorieState (
             @DateTimeFormat(pattern = "yyyy-MM-dd")
-            @RequestParam LocalDate date) {
-        return ResponseDto.ok(new GetCalorieStateRes());
+            @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
+        GetCalorieStateRes data = exerciseService.getCalorieState(date, user);
+        return ResponseDto.ok(data);
     }
 
     @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면'")

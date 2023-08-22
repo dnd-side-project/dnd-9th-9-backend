@@ -4,6 +4,7 @@ import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByAppleReq;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByCommonReq;
 import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
 import com.dnd.Exercise.domain.exercise.dto.response.FindAllExerciseDetailsOfDayRes;
+import com.dnd.Exercise.domain.exercise.dto.response.GetCalorieStateRes;
 import com.dnd.Exercise.domain.user.entity.User;
 
 import java.time.LocalDate;
@@ -14,4 +15,5 @@ public interface ExerciseService {
     void updateExercise(long exerciseId, UpdateExerciseReq updateExerciseReq);
     void deleteExercise(long exerciseId);
     void postExerciseByApple(PostExerciseByAppleReq postExerciseByAppleReq, User user);
+    GetCalorieStateRes getCalorieState(LocalDate date, User user);
 }
