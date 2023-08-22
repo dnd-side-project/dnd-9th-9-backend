@@ -33,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,8 +56,7 @@ public class FieldController {
     public ResponseEntity<String> createField(
             @AuthenticationPrincipal User user,
             @RequestBody @Valid CreateFieldReq createFieldReq){
-        Long userId = user.getId();
-        fieldService.createField(createFieldReq, userId);
+        fieldService.createField(createFieldReq, user);
         return ResponseDto.ok("필드 생성 완료");
     }
 
@@ -67,7 +67,7 @@ public class FieldController {
                     + "배제하고 page, size만 넣으면 페이징됩니다")
     @GetMapping
     public ResponseEntity<FindAllFieldsRes> findAllFields(
-            @RequestBody FindAllFieldsCond findAllFieldsCond,
+            @ModelAttribute FindAllFieldsCond findAllFieldsCond,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
         FindAllFieldsRes result = fieldService.findAllFields(findAllFieldsCond, pageable);
         return ResponseDto.ok(result);
@@ -153,7 +153,7 @@ public class FieldController {
     public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody FieldSideDateReq summaryReq) {
+            @ModelAttribute FieldSideDateReq summaryReq) {
         GetFieldExerciseSummaryRes result = fieldService.getFieldExerciseSummary(user, fieldId, summaryReq);
         return ResponseDto.ok(result);
     }
@@ -165,7 +165,7 @@ public class FieldController {
     public ResponseEntity<GetRankingRes> getTeamRanking(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody FieldSideDateReq teamRankingReq){
+            @ModelAttribute FieldSideDateReq teamRankingReq){
         GetRankingRes result = fieldService.getTeamRanking(user, fieldId, teamRankingReq);
         return ResponseDto.ok(result);
     }
@@ -187,7 +187,7 @@ public class FieldController {
     public ResponseEntity<List<FindFieldRecordDto>> findAllFieldRecords(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody @Valid FindAllFieldRecordsReq recordsReq){
+            @ModelAttribute FindAllFieldRecordsReq recordsReq){
         List<FindFieldRecordDto> result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
         return ResponseDto.ok(result);
     }
