@@ -264,11 +264,13 @@ public class FieldServiceImpl implements FieldService{
             FindAllFieldRecordsReq recordsReq) {
         Field field = validateFieldAccess(user, fieldId);
         Long leaderId = field.getLeaderId();
-        if (recordsReq.getFieldType() == DUEL){
-            throw new BusinessException(INVALID_TYPE_VALUE);
-        }
+
         Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
+
         List<Long> memberIds = getMemberIds(fieldId);
+        if (recordsReq.getFieldType() == DUEL){
+            memberIds.addAll(getMemberIds(field.getOpponent().getId()));
+        }
 
         return exerciseRepository.findAllWithUser(
                 recordsReq.getDate(), memberIds, pageable, leaderId);
