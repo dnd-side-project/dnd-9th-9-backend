@@ -1,7 +1,7 @@
 package com.dnd.Exercise.domain.activityRing.entity;
 
 import com.dnd.Exercise.domain.user.entity.User;
-import lombok.Getter;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -11,6 +11,8 @@ import static javax.persistence.FetchType.LAZY;
 
 @Entity
 @Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ActivityRing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,4 +28,12 @@ public class ActivityRing {
     private int burnedCalorie;
 
     private Boolean isGoalAchieved;
+
+    @Builder
+    public ActivityRing(User user, LocalDate date, int burnedCalorie, Boolean isGoalAchieved) {
+        this.user = user;
+        this.date = date;
+        this.burnedCalorie = burnedCalorie;
+        this.isGoalAchieved = isGoalAchieved;
+    }
 }
