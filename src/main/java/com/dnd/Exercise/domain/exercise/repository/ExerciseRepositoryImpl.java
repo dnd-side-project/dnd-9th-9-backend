@@ -76,6 +76,15 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
                 throw new IllegalArgumentException("Invalid criterion: " + criterion);
         }
     }
+
+    @Override
+    public void deleteAppleWorkouts(List<String> existingAppleUids) {
+       queryFactory
+                .delete(exercise)
+                .where(exercise.appleUid.isNotNull(),
+                        exercise.appleUid.notIn(existingAppleUids))
+                .execute();
+    }
 }
 
 

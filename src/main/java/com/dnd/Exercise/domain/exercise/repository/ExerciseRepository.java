@@ -21,4 +21,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long>, Exerc
     List<Exercise> findAllExercisesByDateAndUser(@Param("exerciseDate") LocalDate exerciseDate, @Param("userId") Long userId);
 
     Optional<Exercise> findById(long id);
+
+    Optional<Exercise> findByAppleUidAndUserId(String appleUid, Long userId);
 }

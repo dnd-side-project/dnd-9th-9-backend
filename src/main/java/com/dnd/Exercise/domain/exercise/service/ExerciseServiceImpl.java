@@ -1,6 +1,8 @@
 package com.dnd.Exercise.domain.exercise.service;
 
 import com.dnd.Exercise.domain.exercise.dto.ExerciseMapper;
+import com.dnd.Exercise.domain.exercise.dto.request.AppleWorkoutDto;
+import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByAppleReq;
 import com.dnd.Exercise.domain.exercise.dto.request.PostExerciseByCommonReq;
 import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
 import com.dnd.Exercise.domain.exercise.dto.response.ExerciseDetailDto;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,5 +64,27 @@ public class ExerciseServiceImpl implements ExerciseService{
                 exerciseRepository.findById(exerciseId)
                         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND))
         );
+    }
+
+    @Override
+    @Transactional
+    public void postExerciseByApple(PostExerciseByAppleReq postExerciseByAppleReq, User user) {
+        List<AppleWorkoutDto> appleWorkouts = postExerciseByAppleReq.getAppleWorkouts();
+
+        List<Exercise> newWorkOuts = new ArrayList<>();
+        appleWorkouts.forEach(workout -> {
+            Exercise exercise = exerciseRepository.findByAppleUidAndUserId(workout.getAppleUid(), user.getId()).orElse(null);
+            if (exercise != null) {
+                exercise.updateAppleWorkout(workout);
+            } else {
+                newWorkOuts.add(workout.toEntityWithUser(user));
+            }
+        });
+        exerciseRepository.saveAll(newWorkOuts);
+
+        List<String> existingAppleUids = appleWorkouts.stream()
+                .map(workout -> workout.getAppleUid())
+                .collect(Collectors.toList());
+        exerciseRepository.deleteAppleWorkouts(existingAppleUids);
     }
 }
