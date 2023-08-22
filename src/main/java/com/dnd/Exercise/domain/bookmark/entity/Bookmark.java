@@ -2,7 +2,7 @@ package com.dnd.Exercise.domain.bookmark.entity;
 
 import com.dnd.Exercise.domain.sports.entity.Sports;
 import com.dnd.Exercise.domain.user.entity.User;
-import lombok.Getter;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -10,6 +10,7 @@ import static javax.persistence.FetchType.LAZY;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Bookmark {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,4 +23,10 @@ public class Bookmark {
 
     @Enumerated(EnumType.STRING)
     private Sports sports;
+
+    @Builder
+    public Bookmark(User user, Sports sports) {
+        this.user = user;
+        this.sports = sports;
+    }
 }
