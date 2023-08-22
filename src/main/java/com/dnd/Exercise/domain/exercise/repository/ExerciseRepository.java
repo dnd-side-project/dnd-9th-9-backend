@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ExerciseRepository extends JpaRepository<Exercise, Long>, ExerciseRepositoryCustom {
     List<Exercise> findAllByExerciseDateAndUserIdIn(LocalDate exerciseDate, List<Long> userIds);
 
+    List<Exercise> findAllByExerciseDateBetweenAndUserIdIn(LocalDate startDate, LocalDate endDate, List<Long> ids);
+
     @EntityGraph(attributePaths = "user")
     Optional<Exercise> findWithUserById(Long exerciseId);
 }

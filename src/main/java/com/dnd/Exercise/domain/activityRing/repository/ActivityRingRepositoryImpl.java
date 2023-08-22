@@ -1,12 +1,11 @@
 package com.dnd.Exercise.domain.activityRing.repository;
 
 import static com.dnd.Exercise.domain.activityRing.entity.QActivityRing.activityRing;
-import static com.dnd.Exercise.domain.exercise.entity.QExercise.exercise;
 import static com.dnd.Exercise.domain.user.entity.QUser.user;
 
-import com.dnd.Exercise.domain.activityRing.entity.QActivityRing;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -38,6 +37,23 @@ public class ActivityRingRepositoryImpl implements ActivityRingRepositoryCustom{
                 .orderBy(aggregateExpression.desc())
                 .limit(3)
                 .fetch();
+    }
+
+    @Override
+    public TopPlayerDto findAccumulatedTopByDynamicCriteria(RankCriterion rankCriterion,
+            LocalDate date, List<Long> userIds) {
+        NumberExpression<?> aggregateExpression = getAggregateExpression(rankCriterion);
+
+        return queryFactory
+                .select(Projections.constructor(TopPlayerDto.class, activityRing.user.name, aggregateExpression))
+                .from(activityRing)
+                .join(activityRing.user, user)
+                .where(activityRing.date.between(date, LocalDate.now())
+                        .and(activityRing.user.id.in(userIds)))
+                .groupBy(user)
+                .orderBy(aggregateExpression.desc())
+                .limit(1)
+                .fetchFirst();
     }
 
     private NumberExpression<?> getAggregateExpression(RankCriterion criterion) {
