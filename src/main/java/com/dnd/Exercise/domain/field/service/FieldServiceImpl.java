@@ -39,12 +39,12 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
+import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,13 +68,29 @@ public class FieldServiceImpl implements FieldService{
     private final FieldMapper fieldMapper;
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
+    private final FieldEntryRepository fieldEntryRepository;
 
     @Transactional
     @Override
-    public void createField(CreateFieldReq createFieldReq, Long userId) {
-        // 이미 진행 중인 필드가 있을 경우 예외 발생 로직 추가
+    public void createField(CreateFieldReq createFieldReq, User user) {
+        userFieldRepository.findByUserAndStatusAndType(user, List.of(RECRUITING, IN_PROGRESS),
+                createFieldReq.getFieldType())
+                .ifPresent(u -> {
+                    throw new BusinessException(HAVING_IN_PROGRESS);
+                });
+
+        if (DUEL.equals(createFieldReq.getFieldType()) && createFieldReq.getMaxSize() != 1) {
+            throw new BusinessException(DUEL_MAX_ONE);
+        }
+
+        Long userId = user.getId();
         Field field = createFieldReq.toEntity(userId);
-        fieldRepository.save(field);
+        Field savedField = fieldRepository.save(field);
+
+        UserField userField = new UserField(user, savedField);
+        userFieldRepository.save(userField);
+
+        fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
     }
 
     @Override
@@ -140,7 +156,7 @@ public class FieldServiceImpl implements FieldService{
         if (myField.getFieldStatus().equals(COMPLETED)){
             throw new BusinessException(DELETE_FAILED);
         }
-        if (myField.getFieldStatus().equals(IN_PROGRESS)){
+        if (myField.getOpponent() != null){
             Field opponentField = getField(myField.getOpponent().getId());
             opponentField.removeOpponent();
         }
@@ -160,7 +176,7 @@ public class FieldServiceImpl implements FieldService{
         Field myField = userField.getField();
         FieldStatus fieldStatus = myField.getFieldStatus();
 
-        if (fieldStatus == IN_PROGRESS){
+        if (myField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
         }
 
@@ -251,11 +267,13 @@ public class FieldServiceImpl implements FieldService{
             FindAllFieldRecordsReq recordsReq) {
         Field field = validateFieldAccess(user, fieldId);
         Long leaderId = field.getLeaderId();
-        if (recordsReq.getFieldType() == DUEL){
-            throw new BusinessException(INVALID_TYPE_VALUE);
-        }
+
         Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
+
         List<Long> memberIds = getMemberIds(fieldId);
+        if (recordsReq.getFieldType() == DUEL){
+            memberIds.addAll(getMemberIds(field.getOpponent().getId()));
+        }
 
         return exerciseRepository.findAllWithUser(
                 recordsReq.getDate(), memberIds, pageable, leaderId);
@@ -266,7 +284,7 @@ public class FieldServiceImpl implements FieldService{
     public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
         Field field = validateFieldAccess(user, fieldId);
         Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(EXERCISE_NOT_FOUND));
         validateIsMember(exercise.getUser(), field);
 
         FindFieldRecordDto findFieldRecordDto = fieldMapper.toFindFieldRecordDto(exercise);
@@ -375,13 +393,13 @@ public class FieldServiceImpl implements FieldService{
     }
 
     private void isRecruiting(Field field) {
-        if (Arrays.asList(IN_PROGRESS, COMPLETED).contains(field.getFieldStatus())){
+        if (field.getOpponent() != null){
             throw new BusinessException(INVALID_STATUS);
         }
     }
 
     private Field getField(Long id) {
         return fieldRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 }
