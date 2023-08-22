@@ -45,7 +45,6 @@ import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -79,6 +78,10 @@ public class FieldServiceImpl implements FieldService{
                 .ifPresent(u -> {
                     throw new BusinessException(HAVING_IN_PROGRESS);
                 });
+
+        if (DUEL.equals(createFieldReq.getFieldType()) && createFieldReq.getMaxSize() != 1) {
+            throw new BusinessException(DUEL_MAX_ONE);
+        }
 
         Long userId = user.getId();
         Field field = createFieldReq.toEntity(userId);

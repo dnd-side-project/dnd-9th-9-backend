@@ -46,6 +46,8 @@ public enum ErrorCode {
 
     NOT_LEADER(HttpStatus.FORBIDDEN, "F-009", "팀장 권한이 필요합니다."),
 
+    DUEL_MAX_ONE(HttpStatus.BAD_REQUEST, "F-010", "1:1 배틀의 최대 인원은 1명입니다."),
+
     ALREADY_APPLY(HttpStatus.BAD_REQUEST, "FE-001", "이미 신청한 필드입니다."),
 
     HAVING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "FE-002", "이미 해당 유형의 필드를 가지고 있습니다. "
