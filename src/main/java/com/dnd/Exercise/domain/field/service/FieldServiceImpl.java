@@ -39,6 +39,7 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
+import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
@@ -68,13 +69,25 @@ public class FieldServiceImpl implements FieldService{
     private final FieldMapper fieldMapper;
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
+    private final FieldEntryRepository fieldEntryRepository;
 
     @Transactional
     @Override
-    public void createField(CreateFieldReq createFieldReq, Long userId) {
-        // 이미 진행 중인 필드가 있을 경우 예외 발생 로직 추가
+    public void createField(CreateFieldReq createFieldReq, User user) {
+        userFieldRepository.findByUserAndStatusAndType(user, List.of(RECRUITING, IN_PROGRESS),
+                createFieldReq.getFieldType())
+                .ifPresent(u -> {
+                    throw new BusinessException(HAVING_IN_PROGRESS);
+                });
+
+        Long userId = user.getId();
         Field field = createFieldReq.toEntity(userId);
-        fieldRepository.save(field);
+        Field savedField = fieldRepository.save(field);
+
+        UserField userField = new UserField(user, savedField);
+        userFieldRepository.save(userField);
+
+        fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
     }
 
     @Override

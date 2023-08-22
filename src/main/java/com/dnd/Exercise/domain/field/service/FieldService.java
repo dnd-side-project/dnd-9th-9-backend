@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface FieldService {
 
-    void createField(CreateFieldReq createFieldReq, Long userId);
+    void createField(CreateFieldReq createFieldReq, User user);
 
     FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond, Pageable pageable);
 
