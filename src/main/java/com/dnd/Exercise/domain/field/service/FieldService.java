@@ -43,4 +43,6 @@ public interface FieldService {
     FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId, FindAllFieldRecordsReq recordsReq);
 
     FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId);
+
+    void checkFieldStatus();
 }

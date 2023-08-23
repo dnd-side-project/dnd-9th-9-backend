@@ -33,6 +33,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -261,7 +262,12 @@ public class FieldController {
         return ResponseDto.ok(result);
     }
 
+    @Scheduled(cron = "0 0 0 * * *")
+    public void checkFieldStatus(){
+        fieldService.checkFieldStatus();
+    }
 
+    //매치 시작 스케쥴러
     //매치 종료 스케줄러
     //매치 종료 Get
     //매치 상태값 Get

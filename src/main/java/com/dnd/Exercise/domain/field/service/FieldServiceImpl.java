@@ -327,6 +327,21 @@ public class FieldServiceImpl implements FieldService{
         return findFieldRecordDto;
     }
 
+    @Transactional
+    @Override
+    public void checkFieldStatus() {
+        List<Field> fieldList = fieldRepository.findAll();
+        for (Field field : fieldList) {
+            if (RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() != null) {
+                field.changeFieldStatus(IN_PROGRESS);
+                field.updateDate(field.getPeriod());
+            } else if (IN_PROGRESS.equals(field.getFieldStatus()) && LocalDate.now()
+                    .equals(field.getEndDate())) {
+                field.changeFieldStatus(COMPLETED);
+            }
+        }
+    }
+
     private GetRankingRes getGetRankingRes(LocalDate date, List<Long> memberIds) {
         return GetRankingRes.builder()
                 .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
