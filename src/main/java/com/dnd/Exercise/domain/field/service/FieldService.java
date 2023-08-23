@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
@@ -15,7 +16,6 @@ import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.time.LocalDate;
-import java.util.List;
 import org.springframework.data.domain.Pageable;
 
 public interface FieldService {
@@ -40,7 +40,7 @@ public interface FieldService {
 
     GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date);
 
-    List<FindFieldRecordDto> findAllFieldRecords(User user, Long fieldId, FindAllFieldRecordsReq recordsReq);
+    FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId, FindAllFieldRecordsReq recordsReq);
 
     FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId);
 }

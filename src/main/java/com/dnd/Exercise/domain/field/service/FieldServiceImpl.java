@@ -25,6 +25,7 @@ import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
@@ -46,6 +47,7 @@ import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.s3.AwsS3Service;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -277,10 +279,11 @@ public class FieldServiceImpl implements FieldService{
     }
 
     @Override
-    public List<FindFieldRecordDto> findAllFieldRecords(User user, Long fieldId,
+    public FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId,
             FindAllFieldRecordsReq recordsReq) {
         Field field = validateFieldAccess(user, fieldId);
         Long leaderId = field.getLeaderId();
+        LocalDate targetDate = recordsReq.getDate();
 
         Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
 
@@ -289,9 +292,26 @@ public class FieldServiceImpl implements FieldService{
             memberIds.addAll(getMemberIds(field.getOpponent().getId()));
         }
 
-        return exerciseRepository.findAllWithUser(
-                recordsReq.getDate(), memberIds, pageable, leaderId);
+        List<FindFieldRecordDto> recordList = exerciseRepository.findAllWithUser(
+                targetDate, memberIds, pageable, leaderId);
 
+        long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), field.getEndDate());
+
+        FindAllFieldRecordsRes.FindAllFieldRecordsResBuilder resBuilder =
+                FindAllFieldRecordsRes.builder()
+                .recordList(recordList)
+                .rule(field.getRule())
+                .daysLeft(daysLeft);
+
+        if (recordsReq.getFieldType() != TEAM){
+            List<Integer> mySummary = fetchFieldSummary(fieldId, targetDate);
+            List<Integer> opponentSummary = fetchFieldSummary(field.getOpponent().getId(), targetDate);
+
+            WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
+            resBuilder.winStatus(winStatus);
+        }
+
+        return resBuilder.build();
     }
 
     @Override
