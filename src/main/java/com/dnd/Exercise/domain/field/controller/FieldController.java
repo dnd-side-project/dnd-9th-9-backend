@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
@@ -237,11 +238,11 @@ public class FieldController {
             @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
     })
     @GetMapping("{id}/record")
-    public ResponseEntity<List<FindFieldRecordDto>> findAllFieldRecords(
+    public ResponseEntity<FindAllFieldRecordsRes> findAllFieldRecords(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @ModelAttribute FindAllFieldRecordsReq recordsReq){
-        List<FindFieldRecordDto> result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
+        FindAllFieldRecordsRes result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
         return ResponseDto.ok(result);
     }
 
