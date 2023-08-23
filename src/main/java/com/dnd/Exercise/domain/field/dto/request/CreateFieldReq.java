@@ -9,18 +9,24 @@ import com.dnd.Exercise.domain.field.entity.Strength;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Range;
+import org.springframework.web.multipart.MultipartFile;
 
 
-@Getter
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CreateFieldReq {
 
     @NotBlank
     @ApiModelProperty(notes = "이름", required = true)
     private String name;
-    @ApiModelProperty(notes = "프로필 이미지")
-    private String profileImg;
+
+    @ApiModelProperty(notes = "프로필 이미지, MultipartFile")
+    private MultipartFile profileImg;
 
     @NotNull
     @ApiModelProperty(notes = "운동강도", required = true, example = "LOW | MODERATE | HIGH")
@@ -54,7 +60,7 @@ public class CreateFieldReq {
             example = "BEGINNER | INTERMEDIATE | ADVANCED_INTERMEDIATE | EXPERT")
     private SkillLevel skillLevel;
 
-    public Field toEntity(Long leaderId){
+    public Field toEntity(Long leaderId, String profileImg){
         return Field.builder()
                 .name(name)
                 .profileImg(profileImg)
