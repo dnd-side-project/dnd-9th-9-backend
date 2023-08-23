@@ -10,10 +10,6 @@ import lombok.Data;
 public class FindAllFieldRecordsRes {
     private List<FindFieldRecordDto> recordList;
 
-    private String myFieldName;
-
-    private String opponentFieldName;
-
     private WinStatus winStatus;
 
     private Long daysLeft;

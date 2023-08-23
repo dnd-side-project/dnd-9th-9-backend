@@ -304,15 +304,11 @@ public class FieldServiceImpl implements FieldService{
                 .daysLeft(daysLeft);
 
         if (recordsReq.getFieldType() != TEAM){
-            Field opponentField = field.getOpponent();
-
             List<Integer> mySummary = fetchFieldSummary(fieldId, targetDate);
-            List<Integer> opponentSummary = fetchFieldSummary(opponentField.getId(), targetDate);
+            List<Integer> opponentSummary = fetchFieldSummary(field.getOpponent().getId(), targetDate);
 
             WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
-            resBuilder.myFieldName(field.getName())
-                    .opponentFieldName(opponentField.getName())
-                    .winStatus(winStatus);
+            resBuilder.winStatus(winStatus);
         }
 
         return resBuilder.build();
