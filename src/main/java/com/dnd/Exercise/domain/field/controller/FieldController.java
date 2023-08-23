@@ -53,7 +53,7 @@ public class FieldController {
 
     private final FieldService fieldService;
 
-    @ApiOperation(value = "필드 생성 🔥", notes = "프로필 사진 업로드가 먼저 진행되어야 합니다")
+    @ApiOperation(value = "필드 생성 🔥")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 생성 완료"),
             @ApiResponse(code=400, message="이미 해당 유형의 필드를 가지고 있습니다. "
@@ -63,7 +63,7 @@ public class FieldController {
     @PostMapping
     public ResponseEntity<String> createField(
             @AuthenticationPrincipal User user,
-            @RequestBody @Valid CreateFieldReq createFieldReq){
+            @ModelAttribute @Valid CreateFieldReq createFieldReq){
         fieldService.createField(createFieldReq, user);
         return ResponseDto.ok("필드 생성 완료");
     }
@@ -104,7 +104,7 @@ public class FieldController {
     public ResponseEntity<String> updateFieldProfile(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
-            @RequestBody @Valid UpdateFieldProfileReq updateFieldProfileReq){
+            @ModelAttribute @Valid UpdateFieldProfileReq updateFieldProfileReq){
         fieldService.updateFieldProfile(id, user, updateFieldProfileReq);
         return ResponseDto.ok("필드 프로필 수정 완료");
     }

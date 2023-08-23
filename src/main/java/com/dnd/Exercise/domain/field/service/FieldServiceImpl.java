@@ -44,6 +44,7 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.s3.AwsS3Service;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -56,6 +57,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -69,10 +71,13 @@ public class FieldServiceImpl implements FieldService{
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
     private final FieldEntryRepository fieldEntryRepository;
+    private final AwsS3Service awsS3Service;
+    private final String S3_FOLDER = "field-profile";
 
     @Transactional
     @Override
     public void createField(CreateFieldReq createFieldReq, User user) {
+
         userFieldRepository.findByUserAndStatusAndType(user, List.of(RECRUITING, IN_PROGRESS),
                 createFieldReq.getFieldType())
                 .ifPresent(u -> {
@@ -84,7 +89,9 @@ public class FieldServiceImpl implements FieldService{
         }
 
         Long userId = user.getId();
-        Field field = createFieldReq.toEntity(userId);
+        String profileImg = s3Upload(createFieldReq.getProfileImg());
+
+        Field field = createFieldReq.toEntity(userId, profileImg);
         Field savedField = fieldRepository.save(field);
 
         UserField userField = new UserField(user, savedField);
@@ -92,6 +99,7 @@ public class FieldServiceImpl implements FieldService{
 
         fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
     }
+
 
     @Override
     public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond, Pageable pageable) {
@@ -133,7 +141,13 @@ public class FieldServiceImpl implements FieldService{
         Field field = getField(id);
         isLeader(user, field);
         isRecruiting(field);
-        fieldMapper.updateFromDto(updateFieldProfileReq, field);
+
+        if(field.getProfileImg() != null){
+            awsS3Service.deleteImage(field.getProfileImg());
+        }
+        String imgUrl = s3Upload(updateFieldProfileReq.getProfileImg());
+        fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
+        field.changeProfileImg(imgUrl);
     }
 
 
@@ -401,5 +415,13 @@ public class FieldServiceImpl implements FieldService{
     private Field getField(Long id) {
         return fieldRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+    }
+
+    private String s3Upload(MultipartFile profileImg) {
+        String imgUrl = null;
+        if (profileImg != null) {
+            imgUrl = awsS3Service.upload(profileImg, S3_FOLDER);
+        }
+        return imgUrl;
     }
 }
