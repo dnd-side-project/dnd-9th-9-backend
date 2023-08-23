@@ -25,6 +25,7 @@ import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
@@ -39,12 +40,14 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
+import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.s3.AwsS3Service;
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,6 +59,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -68,14 +72,36 @@ public class FieldServiceImpl implements FieldService{
     private final FieldMapper fieldMapper;
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
+    private final FieldEntryRepository fieldEntryRepository;
+    private final AwsS3Service awsS3Service;
+    private final String S3_FOLDER = "field-profile";
 
     @Transactional
     @Override
-    public void createField(CreateFieldReq createFieldReq, Long userId) {
-        // 이미 진행 중인 필드가 있을 경우 예외 발생 로직 추가
-        Field field = createFieldReq.toEntity(userId);
-        fieldRepository.save(field);
+    public void createField(CreateFieldReq createFieldReq, User user) {
+
+        userFieldRepository.findByUserAndStatusAndType(user, List.of(RECRUITING, IN_PROGRESS),
+                createFieldReq.getFieldType())
+                .ifPresent(u -> {
+                    throw new BusinessException(HAVING_IN_PROGRESS);
+                });
+
+        if (DUEL.equals(createFieldReq.getFieldType()) && createFieldReq.getMaxSize() != 1) {
+            throw new BusinessException(DUEL_MAX_ONE);
+        }
+
+        Long userId = user.getId();
+        String profileImg = s3Upload(createFieldReq.getProfileImg());
+
+        Field field = createFieldReq.toEntity(userId, profileImg);
+        Field savedField = fieldRepository.save(field);
+
+        UserField userField = new UserField(user, savedField);
+        userFieldRepository.save(userField);
+
+        fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
     }
+
 
     @Override
     public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond, Pageable pageable) {
@@ -117,7 +143,13 @@ public class FieldServiceImpl implements FieldService{
         Field field = getField(id);
         isLeader(user, field);
         isRecruiting(field);
-        fieldMapper.updateFromDto(updateFieldProfileReq, field);
+
+        if(field.getProfileImg() != null){
+            awsS3Service.deleteImage(field.getProfileImg());
+        }
+        String imgUrl = s3Upload(updateFieldProfileReq.getProfileImg());
+        fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
+        field.changeProfileImg(imgUrl);
     }
 
 
@@ -140,7 +172,7 @@ public class FieldServiceImpl implements FieldService{
         if (myField.getFieldStatus().equals(COMPLETED)){
             throw new BusinessException(DELETE_FAILED);
         }
-        if (myField.getFieldStatus().equals(IN_PROGRESS)){
+        if (myField.getOpponent() != null){
             Field opponentField = getField(myField.getOpponent().getId());
             opponentField.removeOpponent();
         }
@@ -160,7 +192,7 @@ public class FieldServiceImpl implements FieldService{
         Field myField = userField.getField();
         FieldStatus fieldStatus = myField.getFieldStatus();
 
-        if (fieldStatus == IN_PROGRESS){
+        if (myField.getOpponent() != null){
             throw new BusinessException(ALREADY_IN_PROGRESS);
         }
 
@@ -247,26 +279,46 @@ public class FieldServiceImpl implements FieldService{
     }
 
     @Override
-    public List<FindFieldRecordDto> findAllFieldRecords(User user, Long fieldId,
+    public FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId,
             FindAllFieldRecordsReq recordsReq) {
         Field field = validateFieldAccess(user, fieldId);
         Long leaderId = field.getLeaderId();
-        if (recordsReq.getFieldType() == DUEL){
-            throw new BusinessException(INVALID_TYPE_VALUE);
-        }
+        LocalDate targetDate = recordsReq.getDate();
+
         Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
+
         List<Long> memberIds = getMemberIds(fieldId);
+        if (recordsReq.getFieldType() == DUEL){
+            memberIds.addAll(getMemberIds(field.getOpponent().getId()));
+        }
 
-        return exerciseRepository.findAllWithUser(
-                recordsReq.getDate(), memberIds, pageable, leaderId);
+        List<FindFieldRecordDto> recordList = exerciseRepository.findAllWithUser(
+                targetDate, memberIds, pageable, leaderId);
 
+        long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), field.getEndDate());
+
+        FindAllFieldRecordsRes.FindAllFieldRecordsResBuilder resBuilder =
+                FindAllFieldRecordsRes.builder()
+                .recordList(recordList)
+                .rule(field.getRule())
+                .daysLeft(daysLeft);
+
+        if (recordsReq.getFieldType() != TEAM){
+            List<Integer> mySummary = fetchFieldSummary(fieldId, targetDate);
+            List<Integer> opponentSummary = fetchFieldSummary(field.getOpponent().getId(), targetDate);
+
+            WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
+            resBuilder.winStatus(winStatus);
+        }
+
+        return resBuilder.build();
     }
 
     @Override
     public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
         Field field = validateFieldAccess(user, fieldId);
         Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(EXERCISE_NOT_FOUND));
         validateIsMember(exercise.getUser(), field);
 
         FindFieldRecordDto findFieldRecordDto = fieldMapper.toFindFieldRecordDto(exercise);
@@ -375,13 +427,21 @@ public class FieldServiceImpl implements FieldService{
     }
 
     private void isRecruiting(Field field) {
-        if (Arrays.asList(IN_PROGRESS, COMPLETED).contains(field.getFieldStatus())){
+        if (field.getOpponent() != null){
             throw new BusinessException(INVALID_STATUS);
         }
     }
 
     private Field getField(Long id) {
         return fieldRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+    }
+
+    private String s3Upload(MultipartFile profileImg) {
+        String imgUrl = null;
+        if (profileImg != null) {
+            imgUrl = awsS3Service.upload(profileImg, S3_FOLDER);
+        }
+        return imgUrl;
     }
 }

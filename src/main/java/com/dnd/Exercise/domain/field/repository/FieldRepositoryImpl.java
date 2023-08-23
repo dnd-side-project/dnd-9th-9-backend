@@ -53,11 +53,11 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
         return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
     }
 
-    private <T> BooleanExpression evaluateEq(SimpleExpression<T> path, T value) {
+    public static <T> BooleanExpression evaluateEq(SimpleExpression<T> path, T value) {
         return value == null ? null : path.eq(value);
     }
 
-    private <T> BooleanExpression evaluateIn(SimpleExpression<T> path, Collection<T> values) {
+    public static <T> BooleanExpression evaluateIn(SimpleExpression<T> path, Collection<T> values) {
         return values == null ? null : path.in(values);
     }
 

@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserFieldRepository extends JpaRepository<UserField, Long> {
+public interface UserFieldRepository extends JpaRepository<UserField, Long>, UserFieldRepositoryCustom {
 
 
      Boolean existsByFieldAndUser(Field field, User user);
@@ -47,4 +47,17 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long> {
 
      @EntityGraph(attributePaths = "field")
      List<UserField> findAllByUser(User user);
+
+     @Query(value =
+             "select uf from UserField uf "
+                     + "join fetch uf.field "
+                     + "where uf.user = :user "
+                     + "and uf.field.fieldStatus in :fieldStatuses "
+                     + "and uf.field.fieldType in :fieldTypes"
+     )
+     List<UserField> findByUserAndStatusIn(@Param("user") User user,
+             @Param("fieldStatuses") List<FieldStatus> fieldStatuses,
+             @Param("fieldTypes") List<FieldType> fieldTypes);
+
+
 }

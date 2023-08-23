@@ -1,14 +1,17 @@
 package com.dnd.Exercise.domain.field.dto.request;
 
 import javax.validation.constraints.NotBlank;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class UpdateFieldProfileReq {
     @NotBlank
     private String name;
 
-    private String profileImg;
+    private MultipartFile profileImg;
 
     private String rule;
 

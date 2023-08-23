@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
+import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
@@ -19,6 +20,8 @@ import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,6 +36,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,13 +54,18 @@ public class FieldController {
 
     private final FieldService fieldService;
 
-    @ApiOperation(value = "필드 생성 🔥", notes = "프로필 사진 업로드가 먼저 진행되어야 합니다")
+    @ApiOperation(value = "필드 생성 🔥")
+    @ApiResponses({
+            @ApiResponse(code=200, message="필드 생성 완료"),
+            @ApiResponse(code=400, message="이미 해당 유형의 필드를 가지고 있습니다. "
+                    + "가질 수 있는 최대 필드 수 : 1:1 배틀 1개, 팀 배틀 1개, 팀 1개 "
+                    + "| 1:1 배틀의 최대 인원은 1명입니다.")
+    })
     @PostMapping
     public ResponseEntity<String> createField(
             @AuthenticationPrincipal User user,
-            @RequestBody @Valid CreateFieldReq createFieldReq){
-        Long userId = user.getId();
-        fieldService.createField(createFieldReq, userId);
+            @ModelAttribute @Valid CreateFieldReq createFieldReq){
+        fieldService.createField(createFieldReq, user);
         return ResponseDto.ok("필드 생성 완료");
     }
 
@@ -67,7 +76,7 @@ public class FieldController {
                     + "배제하고 page, size만 넣으면 페이징됩니다")
     @GetMapping
     public ResponseEntity<FindAllFieldsRes> findAllFields(
-            @RequestBody FindAllFieldsCond findAllFieldsCond,
+            @ModelAttribute FindAllFieldsCond findAllFieldsCond,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
         FindAllFieldsRes result = fieldService.findAllFields(findAllFieldsCond, pageable);
         return ResponseDto.ok(result);
@@ -87,17 +96,27 @@ public class FieldController {
 
 
     @ApiOperation(value = "필드 프로필 수정 🔥")
+    @ApiResponses({
+            @ApiResponse(code=200, message="필드 프로필 수정 완료"),
+            @ApiResponse(code=400, message="진행 중, 완료된 필드에 대해서는 수정이 불가능합니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다.")
+    })
     @PatchMapping("/{id}/profile")
     public ResponseEntity<String> updateFieldProfile(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
-            @RequestBody @Valid UpdateFieldProfileReq updateFieldProfileReq){
+            @ModelAttribute @Valid UpdateFieldProfileReq updateFieldProfileReq){
         fieldService.updateFieldProfile(id, user, updateFieldProfileReq);
         return ResponseDto.ok("필드 프로필 수정 완료");
     }
 
 
     @ApiOperation(value = "필드 정보 수정 🔥")
+    @ApiResponses({
+            @ApiResponse(code=200, message="필드 정보 수정 완료"),
+            @ApiResponse(code=400, message="진행 중, 완료된 필드에 대해서는 수정이 불가능합니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다.")
+    })
     @PatchMapping("/{id}/info")
     public ResponseEntity<String> updateFieldInfo(
             @AuthenticationPrincipal User user,
@@ -109,6 +128,11 @@ public class FieldController {
 
 
     @ApiOperation(value = "필드 삭제 🔥")
+    @ApiResponses({
+            @ApiResponse(code=200, message="필드 삭제 완료"),
+            @ApiResponse(code=400, message="완료된 필드에 대해서는 삭제가 불가능합니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다.")
+    })
     @DeleteMapping("{id}")
     public ResponseEntity<String> deleteField(
             @AuthenticationPrincipal User user,
@@ -117,7 +141,14 @@ public class FieldController {
         return ResponseDto.ok("필드 삭제 완료");
     }
 
+
     @ApiOperation(value = "자동 매칭 🔥")
+    @ApiResponses({
+            @ApiResponse(code=400, message="매치가 이미 진행 중입니다. "
+                    + "| 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=404, message="매칭을 위해서는 해당 유형의 필드가 필요합니다. "
+                    + "| 비슷한 조건의 필드가 없습니다.")
+    })
     @GetMapping("/auto")
     public ResponseEntity<AutoMatchingRes> autoMatching(
             @AuthenticationPrincipal User user,
@@ -127,6 +158,7 @@ public class FieldController {
         return ResponseDto.ok(result);
     }
 
+
     @ApiOperation(value = "방장 넘기기 🔥")
     @PatchMapping("/{id}/change-leader")
     public ResponseEntity<String> changeLeader(
@@ -134,6 +166,7 @@ public class FieldController {
             @Parameter(description = "새로운 리더 Id값") @RequestParam("id") Long id){
         return ResponseDto.ok("팀장 변경 완료");
     }
+
 
     @ApiOperation(value = "배틀 중단하기 🔥",
             notes = "배틀 중단 시 정책 결정(필드 삭제 혹은 필드 간의 연결만 끊기) <br> **Delete or Patch**")
@@ -143,34 +176,50 @@ public class FieldController {
         return ResponseDto.ok("배틀 중단 완료");
     }
 
+
     //  양방향 매핑 고려
     @ApiOperation(value = " (대결 지표로 사용되는) 나의 필드 or 상대편 필드 하루 요약 조회 🔥",
             notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
                     + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'하루 요약'에서 사용 <br>"
                     + "배틀 상대가 있는 필드로 HOME 조회 시 나의 승리 여부와 상대 필드 이름도 조회됩니다.")
-    @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
+    @ApiResponses({
+            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다. | 매칭된 상대 필드가 없습니다.")
+    })
     @GetMapping("/{id}/rating-summary")
     public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody FieldSideDateReq summaryReq) {
+            @ModelAttribute FieldSideDateReq summaryReq) {
         GetFieldExerciseSummaryRes result = fieldService.getFieldExerciseSummary(user, fieldId, summaryReq);
         return ResponseDto.ok(result);
     }
 
+
     // DB에서 RANK 사용해서 상위 3개만 추출
     @ApiOperation(value = "나의 필드 or 상대편 필드 팀원별 랭킹 조회 🔥", notes = "팀과 팀배틀에서만 사용")
-    @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
+    @ApiResponses({
+            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+    })
     @GetMapping("/{id}/team/ranking")
     public ResponseEntity<GetRankingRes> getTeamRanking(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody FieldSideDateReq teamRankingReq){
+            @ModelAttribute FieldSideDateReq teamRankingReq){
         GetRankingRes result = fieldService.getTeamRanking(user, fieldId, teamRankingReq);
         return ResponseDto.ok(result);
     }
 
+
     @ApiOperation(value = "1:1 배틀 랭킹 조회 🔥", notes = "1:1 배틀에서만 사용")
+    @ApiResponses({
+            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+    })
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/duel/ranking")
     public ResponseEntity<GetRankingRes> getDuelRanking(
@@ -181,18 +230,28 @@ public class FieldController {
         return ResponseDto.ok(result);
     }
 
-    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회",
-            notes = " page 기본값: 0, size 기본값: 3")
+    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회 🔥",
+            notes = " page 기본값: 0, size 기본값: 3 <br> DUEL 일 경우 상대방 기록까지 조회")
+    @ApiResponses({
+            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+    })
     @GetMapping("{id}/record")
-    public ResponseEntity<List<FindFieldRecordDto>> findAllFieldRecords(
+    public ResponseEntity<FindAllFieldRecordsRes> findAllFieldRecords(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @RequestBody @Valid FindAllFieldRecordsReq recordsReq){
-        List<FindFieldRecordDto> result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
+            @ModelAttribute FindAllFieldRecordsReq recordsReq){
+        FindAllFieldRecordsRes result = fieldService.findAllFieldRecords(user, fieldId, recordsReq);
         return ResponseDto.ok(result);
     }
 
-    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회", notes = "운동 내역 클릭시")
+    @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회 🔥", notes = "운동 내역 클릭시")
+    @ApiResponses({
+            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="접근 권한이 없습니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다. | 운동 정보를 찾을 수 없습니다.")
+    })
     @GetMapping("{fieldId}/record/{exerciseId}")
     public ResponseEntity<FindFieldRecordDto> findFieldRecord(
             @AuthenticationPrincipal User user,

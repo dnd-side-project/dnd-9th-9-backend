@@ -1,17 +1,19 @@
 package com.dnd.Exercise.domain.userField.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class BattleStatusDto {
 
     private String name;
 
-    private int totalRecordCount;
+    private Integer totalRecordCount;
 
-    private int goalAchievedCount;
+    private Integer goalAchievedCount;
 
-    private int totalBurnedCalorie;
+    private Integer totalBurnedCalorie;
 
-    private int totalExerciseTimeMinute;
+    private Integer totalExerciseTimeMinute;
 }

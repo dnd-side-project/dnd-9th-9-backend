@@ -6,12 +6,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ActivityRingRepository
         extends JpaRepository<ActivityRing, Long>, ActivityRingRepositoryCustom {
 
     List<ActivityRing> findAllByDateAndUserIdIn(LocalDate date, Collection<Long> id);
+
+    List<ActivityRing> findAllByDateBetweenAndUserIdIn(LocalDate startDate, LocalDate endDate, List<Long> ids);
 
     Optional<ActivityRing> findByDateAndUserId(LocalDate date, long userId);
 }

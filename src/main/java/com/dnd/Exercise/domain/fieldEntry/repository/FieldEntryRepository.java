@@ -1,6 +1,7 @@
 package com.dnd.Exercise.domain.fieldEntry.repository;
 
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.util.List;
@@ -27,4 +28,6 @@ public interface FieldEntryRepository extends JpaRepository<FieldEntry, Long>, F
 
     @EntityGraph(attributePaths = "hostField")
     List<FieldEntry> findByEntrantField(Field field, Pageable pageable);
+
+    void deleteAllByEntrantUserAndFieldType(User user, FieldType fieldType);
 }

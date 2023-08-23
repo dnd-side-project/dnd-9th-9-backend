@@ -6,10 +6,10 @@ import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.Strength;
 import javax.validation.constraints.NotNull;
-import lombok.Getter;
+import lombok.Data;
 import org.hibernate.validator.constraints.Range;
 
-@Getter
+@Data
 public class UpdateFieldInfoReq {
     @NotNull
     private Strength strength;

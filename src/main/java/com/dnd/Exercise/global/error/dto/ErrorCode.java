@@ -46,6 +46,8 @@ public enum ErrorCode {
 
     NOT_LEADER(HttpStatus.FORBIDDEN, "F-009", "팀장 권한이 필요합니다."),
 
+    DUEL_MAX_ONE(HttpStatus.BAD_REQUEST, "F-010", "1:1 배틀의 최대 인원은 1명입니다."),
+
     ALREADY_APPLY(HttpStatus.BAD_REQUEST, "FE-001", "이미 신청한 필드입니다."),
 
     HAVING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "FE-002", "이미 해당 유형의 필드를 가지고 있습니다. "
@@ -55,7 +57,15 @@ public enum ErrorCode {
 
     PERIOD_NOT_MATCH(HttpStatus.BAD_REQUEST, "FE-004", "기간이 같아야 합니다."),
 
-    ACTIVITY_RING_NOT_FOUND(HttpStatus.NOT_FOUND, "AR-001", "해당 날짜에 대한 활동링 소모칼로리 정보가 존재하지 않습니다.");
+    ACTIVITY_RING_NOT_FOUND(HttpStatus.NOT_FOUND, "AR-001", "해당 날짜에 대한 활동링 소모칼로리 정보가 존재하지 않습니다."),
+
+    PERIOD_NOT_MATCH(HttpStatus.BAD_REQUEST, "FE-004", "기간이 같아야 합니다."),
+
+    EXERCISE_NOT_FOUND(HttpStatus.NOT_FOUND, "E-001", "운동 정보를 찾을 수 없습니다."),
+
+    UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),
+
+    FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "S-002", "파일 삭제 중 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String code;

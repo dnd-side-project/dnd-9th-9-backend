@@ -104,4 +104,8 @@ public class Field extends BaseEntity {
     public void addMember(){
         this.currentSize += 1;
     }
+
+    public void changeProfileImg(String imgUrl){
+        this.profileImg = imgUrl;
+    }
 }
