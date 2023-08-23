@@ -10,6 +10,7 @@ import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
 import com.dnd.Exercise.domain.exercise.dto.response.ExerciseDetailDto;
 import com.dnd.Exercise.domain.exercise.dto.response.FindAllExerciseDetailsOfDayRes;
 import com.dnd.Exercise.domain.exercise.dto.response.GetCalorieStateRes;
+import com.dnd.Exercise.domain.exercise.dto.response.GetMyExerciseSummaryRes;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -101,6 +102,26 @@ public class ExerciseServiceImpl implements ExerciseService{
         return GetCalorieStateRes.builder()
                 .goalCalorie(user.getCalorieGoal())
                 .burnedCalorie(activityRing.getBurnedCalorie())
+                .build();
+    }
+
+    @Override
+    public GetMyExerciseSummaryRes getMyExerciseSummary(LocalDate date, User user) {
+        int totalBurnedCalorie = 0;
+        ActivityRing activityRing = activityRingRepository.findByDateAndUserId(date,user.getId()).orElse(null);
+        if (activityRing != null) {
+            totalBurnedCalorie = activityRing.getBurnedCalorie();
+        }
+
+        int totalExerciseCalorie = exerciseRepository.sumDailyBurnedCalorieOfUser(date,user.getId());
+        int totalExerciseTimeMinute = exerciseRepository.sumDailyDurationMinuteOfUser(date,user.getId());
+        int totalRecordCount = exerciseRepository.countByExerciseDateAndUserId(date,user.getId());
+
+        return GetMyExerciseSummaryRes.builder()
+                .totalBurnedCalorie(totalBurnedCalorie)
+                .totalExerciseCalorie(totalExerciseCalorie)
+                .totalExerciseTimeMinute(totalExerciseTimeMinute)
+                .totalRecordCount(totalRecordCount)
                 .build();
     }
 }

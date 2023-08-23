@@ -23,4 +23,16 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long>, Exerc
     Optional<Exercise> findById(long id);
 
     Optional<Exercise> findByAppleUidAndUserId(String appleUid, Long userId);
+
+    @Query("select coalesce(sum(e.burnedCalorie),0) " +
+            "from Exercise e " +
+            "where e.user.id = :userId and e.exerciseDate = :exerciseDate")
+    int sumDailyBurnedCalorieOfUser(LocalDate exerciseDate, long userId);
+
+    @Query("select coalesce(sum(e.durationMinute),0) " +
+            "from Exercise e " +
+            "where e.user.id = :userId and e.exerciseDate = :exerciseDate")
+    int sumDailyDurationMinuteOfUser(LocalDate exerciseDate, long userId);
+
+    int countByExerciseDateAndUserId(LocalDate exerciseDate, long userId);
 }
