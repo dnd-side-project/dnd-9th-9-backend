@@ -100,12 +100,13 @@ public class ExerciseController {
         return ResponseDto.ok(data);
     }
 
-    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면'")
+    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면' 의 '최근 많이 한 운동' 에서 사용합니다. <br> - 운동시간 총합이 큰 종목 우선 정렬, 운동시간이 같을 경우 소비 칼로리 총합 순 정렬")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/recent")
     public ResponseEntity<GetRecentsRes> getRecents (
             @DateTimeFormat(pattern = "yyyy-MM-dd")
-            @RequestParam LocalDate date) {
-        return ResponseDto.ok(new GetRecentsRes());
+            @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
+        GetRecentsRes getRecentsRes = exerciseService.getRecent(date,user);
+        return ResponseDto.ok(getRecentsRes);
     }
 }
