@@ -11,6 +11,7 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.FieldType;
@@ -262,13 +263,20 @@ public class FieldController {
         return ResponseDto.ok(result);
     }
 
+
     @Scheduled(cron = "0 0 0 * * *")
     public void checkFieldStatus(){
         fieldService.checkFieldStatus();
     }
 
-    //매치 시작 스케쥴러
-    //매치 종료 스케줄러
-    //매치 종료 Get
-    //매치 상태값 Get
+
+    @ApiOperation(value = "[필드 - 매칭] 종료된 필드 매칭 결과 조회 🔥"
+            , notes = "매칭 결과, 점수 분석, 받은 뱃지를 반환합니다.")
+    @GetMapping("{id}/result")
+    public ResponseEntity<FindFieldResultRes> findFieldResult(
+            @AuthenticationPrincipal User user,
+            @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId){
+        FindFieldResultRes result = fieldService.findFieldResult(user, fieldId);
+        return ResponseDto.ok(result);
+    }
 }
