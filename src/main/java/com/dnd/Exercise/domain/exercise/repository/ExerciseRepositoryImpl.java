@@ -3,6 +3,7 @@ package com.dnd.Exercise.domain.exercise.repository;
 import static com.dnd.Exercise.domain.exercise.entity.QExercise.exercise;
 import static com.dnd.Exercise.domain.user.entity.QUser.user;
 
+import com.dnd.Exercise.domain.exercise.dto.response.RecentSportsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.QFindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
@@ -94,6 +95,30 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
             default:
                 throw new IllegalArgumentException("Invalid criterion: " + criterion);
         }
+    }
+
+    @Override
+    public void deleteAppleWorkouts(List<String> existingAppleUids) {
+       queryFactory
+                .delete(exercise)
+                .where(exercise.appleUid.isNotNull(),
+                        exercise.appleUid.notIn(existingAppleUids))
+                .execute();
+    }
+
+    @Override
+    public List<RecentSportsDto> getDailyRecentSports(LocalDate date, Long userId) {
+        return queryFactory
+                .select(Projections.fields(RecentSportsDto.class,
+                        exercise.sports.as("sports"),
+                        exercise.durationMinute.sum().as("exerciseMinute"),
+                        exercise.burnedCalorie.sum().as("burnedCalorie")
+                        ))
+                .from(exercise)
+                .groupBy(exercise.sports)
+                .orderBy(exercise.durationMinute.sum().desc(), exercise.burnedCalorie.sum().desc())
+                .limit(4)
+                .fetch();
     }
 }
 
