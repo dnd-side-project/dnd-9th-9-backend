@@ -6,13 +6,16 @@ import com.dnd.Exercise.domain.sports.entity.Sports;
 import com.dnd.Exercise.domain.user.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class PostExerciseByCommonReq {
     @NotNull(message = "운동 종목을 입력해주세요.")
@@ -25,11 +28,11 @@ public class PostExerciseByCommonReq {
     @NotNull(message = "소모 칼로리를 입력해주세요.")
     private int burnedCalorie;
 
-    private String memoImg;
+    private MultipartFile memoImgFile;
     private String memoContent;
     private Boolean isMemoPublic;
 
-    public Exercise toEntityWithUser(User user) {
+    public Exercise toEntityWithUserAndMemoImg(User user, String memoImg) {
         return Exercise.builder()
                 .user(user)
                 .sports(sports)

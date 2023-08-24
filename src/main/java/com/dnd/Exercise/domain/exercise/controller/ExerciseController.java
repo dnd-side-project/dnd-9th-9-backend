@@ -39,11 +39,9 @@ public class ExerciseController {
         return ResponseDto.ok(data);
     }
 
-    @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 📝", notes = "운동 종목들은 애플 health kit 의 종목들과 동일합니다. <br> '대문자 + 카멜케이스' 형태")
+    @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 📝", notes = "운동 종목들은 애플 health kit 의 종목들과 동일합니다. <br> 현재 운동기록 한개 당 이미지 한개만 등록이 가능합니다.")
     @PostMapping("")
-    public ResponseEntity<String> postExerciseByCommon (@RequestBody @Valid PostExerciseByCommonReq postExerciseByCommonReq, @AuthenticationPrincipal User user) {
-        // TODO: 이미지 업로드 추가
-
+    public ResponseEntity<String> postExerciseByCommon (@ModelAttribute @Valid PostExerciseByCommonReq postExerciseByCommonReq, @AuthenticationPrincipal User user) {
         exerciseService.postExerciseByCommon(postExerciseByCommonReq, user);
         return ResponseDto.ok("운동기록 등록 성공");
     }
@@ -66,8 +64,8 @@ public class ExerciseController {
 
     @ApiOperation(value = "매치업 서비스 내에서 운동기록 수정 📝", notes = "")
     @ApiImplicitParam(name = "id", value = "운동 기록 id", required = true, dataType = "long")
-    @PutMapping("/{id}")
-    public ResponseEntity<String> updateExercise (@PathVariable("id") Long exerciseId, @RequestBody @Valid UpdateExerciseReq updateExerciseReq) {
+    @PostMapping("/{id}")
+    public ResponseEntity<String> updateExercise (@PathVariable("id") Long exerciseId, @ModelAttribute @Valid UpdateExerciseReq updateExerciseReq) {
         exerciseService.updateExercise(exerciseId, updateExerciseReq);
         return ResponseDto.ok("운동기록 수정 성공");
     }

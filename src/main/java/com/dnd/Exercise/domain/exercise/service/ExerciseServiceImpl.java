@@ -13,9 +13,11 @@ import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.s3.AwsS3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,6 +33,9 @@ public class ExerciseServiceImpl implements ExerciseService{
     private final ActivityRingRepository activityRingRepository;
 
     private final ExerciseMapper exerciseMapper;
+
+    private final AwsS3Service awsS3Service;
+    private final String S3_FOLDER = "exercise-memo";
 
     @Override
     public FindAllExerciseDetailsOfDayRes findAllExerciseDetailsOfDay(LocalDate date, Long userId) {
@@ -48,25 +53,35 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Override
     @Transactional
     public void postExerciseByCommon(PostExerciseByCommonReq postExerciseByCommonReq, User user) {
-        Exercise exercise = postExerciseByCommonReq.toEntityWithUser(user);
+        String imgUrl = postMemoImgAtS3(postExerciseByCommonReq.getMemoImgFile());
+        Exercise exercise = postExerciseByCommonReq.toEntityWithUserAndMemoImg(user,imgUrl);
         exerciseRepository.save(exercise);
     }
 
     @Override
     @Transactional
     public void updateExercise(long exerciseId, UpdateExerciseReq updateExerciseReq) {
-        Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        Exercise exercise = findExerciseById(exerciseId);
+
+        if (updateExerciseReq.getDeletePrevImg() == true) {
+            deleteMemoImgAtS3(exercise.getMemoImg());
+            exercise.updateMemoImgUrl(null);
+        }
+
+        if (updateExerciseReq.getNewMemoImgFile() != null) {
+            String newImgUrl = awsS3Service.upload(updateExerciseReq.getNewMemoImgFile(), S3_FOLDER);
+            exercise.updateMemoImgUrl(newImgUrl);
+        }
+
         exerciseMapper.updateFromDto(updateExerciseReq,exercise);
     }
 
     @Override
     @Transactional
     public void deleteExercise(long exerciseId) {
-        exerciseRepository.delete(
-                exerciseRepository.findById(exerciseId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND))
-        );
+        Exercise exercise = findExerciseById(exerciseId);
+        deleteMemoImgAtS3(exercise.getMemoImg());
+        exerciseRepository.delete(exercise);
     }
 
     @Override
@@ -141,5 +156,25 @@ public class ExerciseServiceImpl implements ExerciseService{
             totalBurnedCalorie = activityRing.getBurnedCalorie();
         }
         return totalBurnedCalorie;
+    }
+
+    public Exercise findExerciseById(long exerciseId) {
+        Exercise exercise = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        return exercise;
+    }
+
+    public String postMemoImgAtS3(MultipartFile memoImg) {
+        String imgUrl = null;
+        if (memoImg != null) {
+            imgUrl = awsS3Service.upload(memoImg,S3_FOLDER);
+        }
+        return imgUrl;
+    }
+
+    public void deleteMemoImgAtS3(String fileName) {
+        if(fileName != null) {
+            awsS3Service.deleteImage(fileName);
+        }
     }
 }

@@ -59,4 +59,8 @@ public class Exercise extends BaseEntity {
         this.durationMinute = Long.valueOf(ChronoUnit.MINUTES.between(appleWorkout.getStartDateTime(),appleWorkout.getEndDateTime())).intValue();
         this.burnedCalorie = appleWorkout.getBurnedCalorie();
     }
+
+    public void updateMemoImgUrl(String imgUrl) {
+        this.memoImg = imgUrl;
+    }
 }
