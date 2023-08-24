@@ -4,14 +4,15 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.entity.RecordProvider;
 import com.dnd.Exercise.domain.sports.entity.Sports;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class ExerciseDetailDto {
 
     private Long id;

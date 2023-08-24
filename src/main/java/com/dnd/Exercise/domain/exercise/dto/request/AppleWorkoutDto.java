@@ -1,25 +1,45 @@
 package com.dnd.Exercise.domain.exercise.dto.request;
 
+import com.dnd.Exercise.domain.exercise.entity.Exercise;
+import com.dnd.Exercise.domain.exercise.entity.RecordProvider;
 import com.dnd.Exercise.domain.sports.entity.Sports;
-import io.swagger.annotations.ApiModelProperty;
+import com.dnd.Exercise.domain.user.entity.User;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class AppleWorkoutDto {
     private String appleUid;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startDateTime;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDateTime;
 
     private Sports sports;
 
     private int burnedCalorie;
+
+    public Exercise toEntityWithUser(User user) {
+        return Exercise.builder()
+                .user(user)
+
+                .sports(sports)
+                .exerciseDate(endDateTime.toLocalDate())
+                .recordingDateTime(endDateTime)
+                .durationMinute(Long.valueOf(ChronoUnit.MINUTES.between(startDateTime,endDateTime)).intValue())
+                .burnedCalorie(burnedCalorie)
+
+                .recordProvider(RecordProvider.APPLE)
+                .appleUid(appleUid)
+                .build();
+    }
 }
