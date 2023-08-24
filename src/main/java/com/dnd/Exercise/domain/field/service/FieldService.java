@@ -11,6 +11,7 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.FieldType;
@@ -43,4 +44,8 @@ public interface FieldService {
     FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId, FindAllFieldRecordsReq recordsReq);
 
     FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId);
+
+    void checkFieldStatus();
+
+    FindFieldResultRes findFieldResult(User user, Long fieldId);
 }

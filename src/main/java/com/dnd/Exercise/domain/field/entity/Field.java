@@ -1,5 +1,8 @@
 package com.dnd.Exercise.domain.field.entity;
 
+import static com.dnd.Exercise.domain.field.entity.Period.ONE_WEEK;
+import static com.dnd.Exercise.domain.field.entity.Period.THREE_WEEKS;
+import static com.dnd.Exercise.domain.field.entity.Period.TWO_WEEKS;
 import static javax.persistence.FetchType.LAZY;
 
 import com.dnd.Exercise.global.common.BaseEntity;
@@ -107,5 +110,20 @@ public class Field extends BaseEntity {
 
     public void changeProfileImg(String imgUrl){
         this.profileImg = imgUrl;
+    }
+
+    public void changeFieldStatus(FieldStatus fieldStatus){ this.fieldStatus = fieldStatus; }
+
+    public void updateDate(Period period){
+        long plusDays = 0;
+        if (ONE_WEEK.equals(period)){
+            plusDays = 7;
+        } else if (TWO_WEEKS.equals(period)) {
+            plusDays = 14;
+        } else if(THREE_WEEKS.equals(period)){
+            plusDays = 21;
+        }
+        this.startDate = LocalDate.now();
+        this.endDate = LocalDate.now().plusDays(plusDays);
     }
 }

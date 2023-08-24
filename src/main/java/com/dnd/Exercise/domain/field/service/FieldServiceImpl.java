@@ -30,6 +30,8 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldResultDto;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
@@ -327,6 +329,74 @@ public class FieldServiceImpl implements FieldService{
         return findFieldRecordDto;
     }
 
+    @Transactional
+    @Override
+    public void checkFieldStatus() {
+        List<Field> fieldList = fieldRepository.findAll();
+        for (Field field : fieldList) {
+            if (RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() != null) {
+                field.changeFieldStatus(IN_PROGRESS);
+                field.updateDate(field.getPeriod());
+            } else if (IN_PROGRESS.equals(field.getFieldStatus()) && LocalDate.now()
+                    .equals(field.getEndDate())) {
+                field.changeFieldStatus(COMPLETED);
+            }
+        }
+    }
+
+    //Badge 구현 후 BadgeList 불러오는 로직 추가 필요
+    @Override
+    public FindFieldResultRes findFieldResult(User user, Long fieldId) {
+        Field myField = getField(fieldId);
+        validateIsMember(user, myField);
+        if(!COMPLETED.equals(myField.getFieldStatus())){
+            throw new BusinessException(NOT_COMPLETED);
+        }
+
+        LocalDate startDate = myField.getStartDate();
+        LocalDate endDate = myField.getEndDate();
+
+        List<Long> memberIds = getMemberIds(myField.getId());
+        List<ActivityRing> activityRings = getActivityRings(startDate, endDate, memberIds);
+        List<Exercise> exercises = getExercises(startDate, endDate, memberIds);
+        List<Integer> status = calculateSummary(activityRings, exercises);
+        FindFieldResultDto home = FindFieldResultDto.builder()
+                .name(myField.getName())
+                .profileImg(myField.getProfileImg())
+                .totalRecordCount(status.get(0))
+                .goalAchievedCount(status.get(1))
+                .totalExerciseTimeMinute(status.get(2))
+                .totalBurnedCalorie(status.get(3))
+                .build();
+        FindFieldResultRes.FindFieldResultResBuilder resBuilder= FindFieldResultRes.builder()
+                .period(myField.getPeriod())
+                .home(home);
+
+        if (!TEAM.equals(myField.getFieldType())){
+            Field opponentField = myField.getOpponent();
+            List<Long> opponentMemberIds = getMemberIds(opponentField.getId());
+            List<ActivityRing> opponentActivityRings = getActivityRings(startDate, endDate, opponentMemberIds);
+            List<Exercise> opponentExercises = getExercises(startDate, endDate, opponentMemberIds);
+            List<Integer> opponentStatus = calculateSummary(opponentActivityRings, opponentExercises);
+            FindFieldResultDto away = FindFieldResultDto.builder()
+                    .name(opponentField.getName())
+                    .profileImg(opponentField.getProfileImg())
+                    .totalRecordCount(opponentStatus.get(0))
+                    .goalAchievedCount(opponentStatus.get(1))
+                    .totalExerciseTimeMinute(opponentStatus.get(2))
+                    .totalBurnedCalorie(opponentStatus.get(3))
+                    .build();
+            resBuilder.away(away);
+        }
+
+        return resBuilder.build();
+    }
+
+
+
+
+
+
     private GetRankingRes getGetRankingRes(LocalDate date, List<Long> memberIds) {
         return GetRankingRes.builder()
                 .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
@@ -414,6 +484,16 @@ public class FieldServiceImpl implements FieldService{
 
     private List<Exercise> getExercises(LocalDate date, List<Long> memberIds) {
         return exerciseRepository.findAllByExerciseDateAndUserIdIn(date, memberIds);
+    }
+
+    private List<ActivityRing> getActivityRings(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
+        return activityRingRepository.findAllByDateBetweenAndUserIdIn(
+                startDate, endDate, memberIds);
+    }
+
+    private List<Exercise> getExercises(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
+        return exerciseRepository.findAllByExerciseDateBetweenAndUserIdIn(
+                startDate, endDate, memberIds);
     }
 
     private Boolean isFull(Field field) {
