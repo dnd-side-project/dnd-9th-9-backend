@@ -6,18 +6,14 @@ import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 
-import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
-import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.entity.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
-import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
 import com.dnd.Exercise.domain.userField.dto.response.BattleStatusDto;
@@ -27,12 +23,10 @@ import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
-import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.util.field.FieldUtil;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,14 +41,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserFieldServiceImpl implements UserFieldService {
 
     private final UserFieldRepository userFieldRepository;
-    private final FieldRepository fieldRepository;
     private final UserFieldMapper userFieldMapper;
     private final ExerciseRepository exerciseRepository;
     private final ActivityRingRepository activityRingRepository;
+    private final FieldUtil fieldUtil;
+
+    private TopPlayerDto getTopUserByCriteria(
+            RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
+            return activityRingRepository.findAccumulatedTopByDynamicCriteria(
+                    criterion, startDate, memberIds);
+        } else {
+            return exerciseRepository.findAccumulatedTopByDynamicCriteria(
+                    criterion, startDate, memberIds);
+        }
+    }
 
     @Override
     public List<FindAllMembersRes> findAllMembers(Long fieldId) {
-        Field field = getField(fieldId);
+        Field field = fieldUtil.getField(fieldId);
         Long leaderId = field.getLeaderId();
         List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
 
@@ -69,7 +74,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public List<FindAllFieldsDto> findAllMyInProgressFields(User user) {
-        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusIn(user,
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
                 List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE, DUEL));
 
         return myUserFields.stream()
@@ -95,8 +100,9 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public FindMyBattleStatusRes findMyBattleStatus(User user, BattleType battleType) {
-        List<UserField> inProgressUserField = userFieldRepository.findByUserAndStatusIn(user,
+        List<UserField> inProgressUserField = userFieldRepository.findByUserAndStatusInAndType(user,
                 List.of(IN_PROGRESS), List.of(battleType.toFieldType()));
+
         if (inProgressUserField.isEmpty()){
             return null;
         }
@@ -105,20 +111,11 @@ public class UserFieldServiceImpl implements UserFieldService {
 
         LocalDate startDate = myField.getStartDate();
 
-        List<Long> memberIds = getMemberIds(myField.getId());
-        List<Long> opponentMemberIds = getMemberIds(opponentField.getId());
+        List<Integer> score = fieldUtil.getFieldSummary(myField.getId(), startDate, LocalDate.now());
+        List<Integer> opponentScore = fieldUtil.getFieldSummary(opponentField.getId(), startDate, LocalDate.now());
 
-        List<ActivityRing> activityRings = getActivityRings(startDate, memberIds);
-        List<ActivityRing> opponentActivityRings = getActivityRings(startDate, opponentMemberIds);
-
-        List<Exercise> exercises = getExercises(startDate, memberIds);
-        List<Exercise> opponentExercises = getExercises(startDate, opponentMemberIds);
-
-        List<Integer> status = calculateSummary(activityRings, exercises);
-        List<Integer> opponentStatus = calculateSummary(opponentActivityRings, opponentExercises);
-
-        BattleStatusDto home = initStatus(myField.getName(), status);
-        BattleStatusDto away = initStatus(opponentField.getName(), opponentStatus);
+        BattleStatusDto home = new BattleStatusDto(myField.getName(), score);
+        BattleStatusDto away = new BattleStatusDto(opponentField.getName(), opponentScore);
 
         long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), myField.getEndDate());
 
@@ -132,13 +129,14 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public FindMyTeamStatusRes findMyTeamStatus(User user) {
-        List<UserField> inProgressUserField = userFieldRepository.findByUserAndStatusIn(user,
+        List<UserField> inProgressUserField = userFieldRepository.findByUserAndStatusInAndType(user,
                 List.of(IN_PROGRESS), List.of(TEAM));
+
         if (inProgressUserField.isEmpty()){
             return null;
         }
         Field myField = inProgressUserField.get(0).getField();
-        List<Long> memberIds = getMemberIds(myField.getId());
+        List<Long> memberIds = fieldUtil.getMemberIds(myField.getId());
 
         LocalDate startDate = myField.getStartDate();
         LocalDate endDate = myField.getEndDate();
@@ -156,56 +154,5 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .burnedCalorie(getTopUserByCriteria(BURNED_CALORIE, startDate, memberIds))
                 .goalAchievedCount(getTopUserByCriteria(GOAL_ACHIEVED, startDate, memberIds))
                 .build();
-    }
-
-
-
-    private TopPlayerDto getTopUserByCriteria(
-            RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
-        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
-            return activityRingRepository.findAccumulatedTopByDynamicCriteria(
-                    criterion, startDate, memberIds);
-        } else {
-            return exerciseRepository.findAccumulatedTopByDynamicCriteria(
-                    criterion, startDate, memberIds);
-        }
-    }
-
-    private BattleStatusDto initStatus(String name, List<Integer> status) {
-        return new BattleStatusDto(
-                name,
-                status.get(0),
-                status.get(1),
-                status.get(3),
-                status.get(2));
-    }
-
-    private List<Integer> calculateSummary(List<ActivityRing> activityRings, List<Exercise> exercises) {
-        int totalRecordCount = exercises.size();
-        int goalAchievementCount = (int) activityRings.stream().filter(ActivityRing::getIsGoalAchieved).count();
-        int totalExerciseTimeMinute = exercises.stream().mapToInt(Exercise::getDurationMinute).sum();
-        int totalBurnedCalorie = activityRings.stream().mapToInt(ActivityRing::getBurnedCalorie).sum();
-
-        return List.of(totalRecordCount, goalAchievementCount, totalExerciseTimeMinute, totalBurnedCalorie);
-    }
-
-    private List<ActivityRing> getActivityRings(LocalDate startDate, List<Long> memberIds) {
-        return activityRingRepository.findAllByDateBetweenAndUserIdIn(
-                startDate, LocalDate.now(), memberIds);
-    }
-
-    private List<Exercise> getExercises(LocalDate startDate, List<Long> memberIds) {
-        return exerciseRepository.findAllByExerciseDateBetweenAndUserIdIn(
-                startDate, LocalDate.now(), memberIds);
-    }
-
-    private List<Long> getMemberIds(Long fieldId) {
-        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
-        return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
-    }
-
-    private Field getField(Long id) {
-        return fieldRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 }

@@ -1,18 +1,13 @@
 package com.dnd.Exercise.domain.fieldEntry.service;
 
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.FieldType.DUEL;
+import static com.dnd.Exercise.domain.field.entity.FieldType.TEAM_BATTLE;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_APPLY;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldType;
@@ -29,6 +24,7 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.util.field.FieldUtil;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -47,23 +43,12 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     private final FieldRepository fieldRepository;
     private final UserFieldRepository userFieldRepository;
     private final FieldEntryMapper fieldEntryMapper;
+    private final FieldUtil fieldUtil;
 
     
-    private void validateIsFull(Field field) {
+    private void validateIsNotFull(Field field) {
         if(field.getCurrentSize() == field.getMaxSize()){
             throw new BusinessException(ALREADY_FULL);
-        }
-    }
-
-    private void validateIsNotFull(Field field) {
-        if(field.getCurrentSize() != field.getMaxSize()){
-            throw new BusinessException(RECRUITING_YET);
-        }
-    }
-
-    private void validateHaveOpponent(Field field) {
-        if(field.getOpponent() != null){
-            throw new BusinessException(ALREADY_IN_PROGRESS);
         }
     }
 
@@ -72,11 +57,6 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                 .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 
-    private void validateIsLeader(Long id, Long leaderId) {
-        if(!id.equals(leaderId)){
-            throw new BusinessException(NOT_LEADER);
-        }
-    }
 
     @Transactional
     @Override
@@ -84,18 +64,15 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         FieldType fieldType = fieldEntryReq.getTeamType().toFieldType();
         Field hostField = getFieldByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType);
 
-        validateHaveOpponent(hostField);
+        fieldUtil.validateHaveOpponent(hostField);
 
-        validateIsFull(hostField);
+        validateIsNotFull(hostField);
 
         if(fieldEntryRepository.existsByEntrantUserAndHostField(user, hostField)){
             throw new BusinessException(ALREADY_APPLY);
         }
 
-        if(userFieldRepository.findByUserAndStatusAndType(user, List.of(IN_PROGRESS, RECRUITING),
-                fieldType).isPresent()){
-            throw new BusinessException(HAVING_IN_PROGRESS);
-        }
+        fieldUtil.validateNotHavingField(user, fieldType);
 
         FieldEntry fieldEntry = FieldEntry.builder()
                 .entrantUser(user).hostField(hostField).fieldType(fieldType).build();
@@ -108,9 +85,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         FieldType fieldType = fieldEntryReq.getBattleType().toFieldType();
         Field hostField = getFieldByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType);
 
-        UserField myUserField = userFieldRepository.findByUserAndStatusAndType(
-                        user, List.of(IN_PROGRESS, RECRUITING), fieldType)
-                .orElseThrow(() -> new BusinessException(SHOULD_CREATE));
+        UserField myUserField = fieldUtil.validateHavingField(user, fieldType);
         
         Field myField = myUserField.getField();
 
@@ -118,15 +93,12 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             throw new BusinessException(BAD_REQUEST);
         }
 
-        validateIsLeader(user.getId(), myField.getLeaderId());
+        fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
+        fieldUtil.validateHaveOpponent(myField);
+        fieldUtil.validateIsFull(myField);
 
-        validateHaveOpponent(myField);
-
-        validateIsNotFull(myField);
-
-        validateHaveOpponent(hostField);
-
-        validateIsNotFull(hostField);
+        fieldUtil.validateHaveOpponent(hostField);
+        fieldUtil.validateIsFull(hostField);
 
         if(fieldEntryRepository.existsByEntrantFieldAndHostField(myField, hostField)){
             throw new BusinessException(ALREADY_APPLY);
@@ -155,11 +127,13 @@ public class FieldEntryServiceImpl implements FieldEntryService {
 
 
         if(fieldEntry.getEntrantField() == null){
-            if(!fieldEntry.getEntrantUser().equals(user) || !hostField.getLeaderId().equals(user.getId())){
+            if(!fieldEntry.getEntrantUser().equals(user)
+                    || !hostField.getLeaderId().equals(user.getId())){
                 throw new BusinessException(BAD_REQUEST);
             }
         }else{
-            if(!entrantField.getLeaderId().equals(user.getId()) || !hostField.getLeaderId().equals(user.getId())){
+            if(!entrantField.getLeaderId().equals(user.getId())
+                    || !hostField.getLeaderId().equals(user.getId())){
                 throw new BusinessException(FORBIDDEN);
             }
         }
@@ -176,10 +150,10 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         Field hostField = fieldEntry.getHostField();
         User entrantUser = fieldEntry.getEntrantUser();
 
-        validateIsLeader(user.getId(), hostField.getLeaderId());
+        fieldUtil.validateIsLeader(user.getId(), hostField.getLeaderId());
 
         if(entrantField == null) {
-            validateIsFull(hostField);
+            validateIsNotFull(hostField);
             hostField.addMember();
             UserField userField = new UserField(entrantUser, hostField);
             userFieldRepository.save(userField);
@@ -195,24 +169,18 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     @Override
     public List<FindAllTeamEntryRes> findAllTeamEntries(User user, Long fieldId,
             Pageable pageable) {
-        Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+        Field field = fieldUtil.getField(fieldId);
+        fieldUtil.validateIsMember(user, field);
 
-        if (!userFieldRepository.existsByFieldAndUser(field, user)) {
-            throw new BusinessException(FORBIDDEN);
-        }
         return fieldEntryRepository.findAllTeamEntryByHostField(field, pageable);
     }
 
     @Override
     public List<FindAllBattleEntryRes> findAllBattleEntriesByDirection(User user, Long fieldId,
             FieldDirection fieldDirection, Pageable pageable) {
-        Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+        Field field = fieldUtil.getField(fieldId);
+        fieldUtil.validateIsMember(user, field);
 
-        if (!userFieldRepository.existsByFieldAndUser(field, user)) {
-            throw new BusinessException(FORBIDDEN);
-        }
         return fieldEntryRepository.findAllBattleByField(field, fieldDirection, pageable);
     }
 
@@ -220,7 +188,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     public List<FindAllBattleEntryRes> findAllBattleEntriesByType(User user, FieldType fieldType,
             Pageable pageable) {
         List<FieldEntry> entryList = null;
-        if(List.of(FieldType.DUEL, FieldType.TEAM_BATTLE).contains(fieldType)){
+        if(List.of(DUEL, TEAM_BATTLE).contains(fieldType)){
             List<UserField> userFields = userFieldRepository.findAllByUser(user);
 
             UserField myUserField = userFields.stream().filter(userField -> {
@@ -235,10 +203,10 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             }
 
             entryList = fieldEntryRepository.findByEntrantField(myUserField.getField(), pageable);
-
         } else {
             entryList = fieldEntryRepository.findByEntrantUser(user, pageable);
         }
+
         return entryList.stream()
                 .map(fieldEntryMapper::toFindAllBattleEntryRes).collect(
                         Collectors.toList());
