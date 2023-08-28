@@ -6,6 +6,7 @@ import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
@@ -160,6 +161,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .build();
     }
 
+    @Transactional
     @Override
     public void ejectMember(User user, Long fieldId, List<Long> ids) {
         Field field = fieldUtil.getField(fieldId);
@@ -174,5 +176,17 @@ public class UserFieldServiceImpl implements UserFieldService {
         }
 
         userFieldRepository.deleteAllByFieldAndUserIn(field, targetUsers);
+    }
+
+    @Transactional
+    @Override
+    public void exitField(User user, Long id) {
+        Field field = fieldUtil.getField(id);
+        fieldUtil.validateHaveOpponent(field);
+        fieldUtil.validateIsMember(user, field);
+        if(user.getId().equals(field.getLeaderId())){
+            throw new BusinessException(MUST_NOT_LEADER);
+        }
+        userFieldRepository.deleteByFieldAndUser(field, user);
     }
 }

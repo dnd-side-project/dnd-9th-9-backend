@@ -23,4 +23,6 @@ public interface UserFieldService {
     FindMyTeamStatusRes findMyTeamStatus(User user);
 
     void ejectMember(User user, Long fieldId, List<Long> ids);
+
+    void exitField(User user, Long id);
 }

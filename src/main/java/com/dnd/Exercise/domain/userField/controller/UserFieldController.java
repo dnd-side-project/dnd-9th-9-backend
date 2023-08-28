@@ -78,7 +78,9 @@ public class UserFieldController {
     @ApiOperation(value = "필드 나가기 📜")
     @DeleteMapping("{id}/exit")
     public ResponseEntity<String> exitField(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id){
+        userFieldService.exitField(user, id);
         return ResponseDto.ok("필드 나가기 완료");
     }
 
