@@ -68,8 +68,10 @@ public class UserFieldController {
     @ApiOperation(value = "팀원 내보내기 📜")
     @DeleteMapping("/{id}/eject")
     public ResponseEntity<String> ejectMember(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @Parameter(description = "내보낼 팀원 ID 리스트") @RequestParam("ids") List<Long> ids){
+        userFieldService.ejectMember(user, fieldId, ids);
         return ResponseDto.ok("팀원 내보내기 완료");
     }
 

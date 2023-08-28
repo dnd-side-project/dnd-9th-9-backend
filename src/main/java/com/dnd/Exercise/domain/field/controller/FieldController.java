@@ -172,15 +172,6 @@ public class FieldController {
     }
 
 
-    @ApiOperation(value = "배틀 중단하기 🔥",
-            notes = "배틀 중단 시 정책 결정(필드 삭제 혹은 필드 간의 연결만 끊기) <br> **Delete or Patch**")
-    @DeleteMapping("/{id}/terminate")
-    public ResponseEntity<String> terminateBattle(
-            @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId){
-        return ResponseDto.ok("배틀 중단 완료");
-    }
-
-
     //  양방향 매핑 고려
     @ApiOperation(value = " (대결 지표로 사용되는) 나의 필드 or 상대편 필드 하루 요약 조회 🔥",
             notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
