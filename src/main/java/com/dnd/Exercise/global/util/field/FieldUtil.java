@@ -4,9 +4,9 @@ import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 
@@ -81,7 +81,7 @@ public class FieldUtil {
 
     public void validateIsMember(User user, Field field) {
         if (!userFieldRepository.existsByFieldAndUser(field, user)) {
-            throw new BusinessException(FORBIDDEN);
+            throw new BusinessException(NOT_MEMBER);
         }
     }
 

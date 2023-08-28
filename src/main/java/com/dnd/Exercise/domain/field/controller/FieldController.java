@@ -164,8 +164,10 @@ public class FieldController {
     @ApiOperation(value = "방장 넘기기 🔥")
     @PatchMapping("/{id}/change-leader")
     public ResponseEntity<String> changeLeader(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @Parameter(description = "새로운 리더 Id값") @RequestParam("id") Long id){
+        fieldService.changeLeader(user, fieldId, id);
         return ResponseDto.ok("팀장 변경 완료");
     }
 

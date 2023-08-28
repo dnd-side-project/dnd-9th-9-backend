@@ -48,4 +48,6 @@ public interface FieldService {
     void checkFieldStatus();
 
     FindFieldResultRes findFieldResult(User user, Long fieldId);
+
+    void changeLeader(User user, Long fieldId, Long id);
 }

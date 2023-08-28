@@ -42,6 +42,7 @@ import com.dnd.Exercise.domain.field.entity.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
@@ -76,6 +77,7 @@ public class FieldServiceImpl implements FieldService{
     private final FieldEntryRepository fieldEntryRepository;
     private final AwsS3Service awsS3Service;
     private final FieldUtil fieldUtil;
+    private final UserRepository userRepository;
     private final String S3_FOLDER = "field-profile";
 
 
@@ -422,5 +424,19 @@ public class FieldServiceImpl implements FieldService{
         }
 
         return resBuilder.build();
+    }
+
+    @Transactional
+    @Override
+    public void changeLeader(User user, Long fieldId, Long id) {
+        Field field = fieldUtil.getField(fieldId);
+        fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
+
+        User newLeader = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        fieldUtil.validateIsMember(newLeader, field);
+
+        field.changeLeader(newLeader.getId());
     }
 }
