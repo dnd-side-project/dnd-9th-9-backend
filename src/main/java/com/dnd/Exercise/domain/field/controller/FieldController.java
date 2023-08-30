@@ -72,7 +72,7 @@ public class FieldController {
     }
 
 
-    @ApiOperation(value = "조건에 따른 모든 필드 조회 🔥",
+    @ApiOperation(value = "조건에 따른 모든 필드 조회 및 검색 🔥",
             notes = "페이지 기본값: 0, 사이즈 기본값: 10 <br> Swagger의 page 관련 "
                     + "request 인자(offset, pageNumber, pageSize, paged, sort.sorted, sort.unsorted, unpaged)는 "
                     + "배제하고 page, size만 넣으면 페이징됩니다")

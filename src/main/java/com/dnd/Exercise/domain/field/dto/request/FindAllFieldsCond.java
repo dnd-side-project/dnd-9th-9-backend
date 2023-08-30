@@ -7,10 +7,12 @@ import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.Strength;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
-import lombok.Getter;
+import lombok.Data;
 
-@Getter
+@Data
 public class FindAllFieldsCond {
+    @ApiModelProperty(notes = "검색어")
+    private String keyword;
     @ApiModelProperty(notes = "매칭유형", required = true, example = "DUEL | TEAM_BATTLE | TEAM")
     private FieldType fieldType;
     @ApiModelProperty(notes = "팀 인원수 - 최소 1, 최대 10")
