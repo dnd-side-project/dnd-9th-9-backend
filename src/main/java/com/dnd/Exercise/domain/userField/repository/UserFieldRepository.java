@@ -42,4 +42,7 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long>, Use
              @Param("fieldTypes") List<FieldType> fieldTypes);
 
 
+    void deleteAllByFieldAndUserIn(Field field, List<User> targetUsers);
+
+    void deleteByFieldAndUser(Field field, User user);
 }

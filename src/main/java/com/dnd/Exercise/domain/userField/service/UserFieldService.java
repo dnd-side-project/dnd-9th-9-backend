@@ -21,4 +21,8 @@ public interface UserFieldService {
     FindMyBattleStatusRes findMyBattleStatus(User user, BattleType battleType);
 
     FindMyTeamStatusRes findMyTeamStatus(User user);
+
+    void ejectMember(User user, Long fieldId, List<Long> ids);
+
+    void exitField(User user, Long id);
 }

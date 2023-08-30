@@ -50,6 +50,10 @@ public enum ErrorCode {
 
     NOT_COMPLETED(HttpStatus.BAD_REQUEST, "F-011", "완료된 필드가 아닙니다."),
 
+    NOT_MEMBER(HttpStatus.FORBIDDEN, "F-012", "팀 멤버가 아닙니다."),
+
+    MUST_NOT_LEADER(HttpStatus.FORBIDDEN, "F-013", "팀 리더가 아니어야 합니다."),
+
     ALREADY_APPLY(HttpStatus.BAD_REQUEST, "FE-001", "이미 신청한 필드입니다."),
 
     HAVING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "FE-002", "이미 해당 유형의 필드를 가지고 있습니다. "

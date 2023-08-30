@@ -114,6 +114,10 @@ public class Field extends BaseEntity {
 
     public void changeFieldStatus(FieldStatus fieldStatus){ this.fieldStatus = fieldStatus; }
 
+    public void changeLeader(Long leaderId){
+        this.leaderId = leaderId;
+    }
+
     public void updateDate(Period period){
         long plusDays = 0;
         if (ONE_WEEK.equals(period)){

@@ -6,6 +6,8 @@ import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
@@ -15,6 +17,7 @@ import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.FieldType;
 import com.dnd.Exercise.domain.field.entity.RankCriterion;
 import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
 import com.dnd.Exercise.domain.userField.dto.response.BattleStatusDto;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
@@ -23,6 +26,7 @@ import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.util.field.FieldUtil;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -44,6 +48,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final UserFieldMapper userFieldMapper;
     private final ExerciseRepository exerciseRepository;
     private final ActivityRingRepository activityRingRepository;
+    private final UserRepository userRepository;
     private final FieldUtil fieldUtil;
 
     private TopPlayerDto getTopUserByCriteria(
@@ -154,5 +159,34 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .burnedCalorie(getTopUserByCriteria(BURNED_CALORIE, startDate, memberIds))
                 .goalAchievedCount(getTopUserByCriteria(GOAL_ACHIEVED, startDate, memberIds))
                 .build();
+    }
+
+    @Transactional
+    @Override
+    public void ejectMember(User user, Long fieldId, List<Long> ids) {
+        Field field = fieldUtil.getField(fieldId);
+        fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
+        fieldUtil.validateHaveOpponent(field);
+
+        List<User> targetUsers = userRepository.findByIdIn(ids);
+        List<Long> memberIds = fieldUtil.getMemberIds(fieldId);
+
+        if (targetUsers.stream().anyMatch(targetUser -> !memberIds.contains(targetUser.getId()))) {
+            throw new BusinessException(NOT_MEMBER);
+        }
+
+        userFieldRepository.deleteAllByFieldAndUserIn(field, targetUsers);
+    }
+
+    @Transactional
+    @Override
+    public void exitField(User user, Long id) {
+        Field field = fieldUtil.getField(id);
+        fieldUtil.validateHaveOpponent(field);
+        fieldUtil.validateIsMember(user, field);
+        if(user.getId().equals(field.getLeaderId())){
+            throw new BusinessException(MUST_NOT_LEADER);
+        }
+        userFieldRepository.deleteByFieldAndUser(field, user);
     }
 }
