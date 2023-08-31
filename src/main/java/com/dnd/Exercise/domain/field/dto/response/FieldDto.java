@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
+import com.dnd.Exercise.domain.field.entity.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.Period;
 import com.dnd.Exercise.domain.field.entity.Goal;
 import com.dnd.Exercise.domain.field.entity.FieldType;
@@ -37,4 +38,8 @@ public class FieldDto {
     private FieldType fieldType;
 
     private SkillLevel skillLevel;
+
+    private FieldStatus fieldStatus;
+
+    private FieldRole fieldRole;
 }
