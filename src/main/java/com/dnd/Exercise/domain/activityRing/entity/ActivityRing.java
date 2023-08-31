@@ -36,4 +36,8 @@ public class ActivityRing {
         this.burnedCalorie = burnedCalorie;
         this.isGoalAchieved = isGoalAchieved;
     }
+
+    public void updateIsGoalAchieved(Boolean isGoalAchieved) {
+        this.isGoalAchieved = isGoalAchieved;
+    }
 }

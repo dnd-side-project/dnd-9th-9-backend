@@ -65,6 +65,8 @@ public enum ErrorCode {
 
     ACTIVITY_RING_NOT_FOUND(HttpStatus.NOT_FOUND, "AR-001", "해당 날짜에 대한 활동링 소모칼로리 정보가 존재하지 않습니다."),
 
+    ACTIVITY_RING_UPDATE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "AR-002", "애플 연동 유저만 활동링을 업데이트 할 수 있습니다."),
+
     EXERCISE_NOT_FOUND(HttpStatus.NOT_FOUND, "E-001", "운동 정보를 찾을 수 없습니다."),
 
     UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),

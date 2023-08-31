@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @Api(tags = "활동링 💫")
 @RestController
 @RequiredArgsConstructor
@@ -29,10 +31,7 @@ public class ActivityRingController {
             @ApiResponse(code=400, message="애플 연동 유저만 활동링을 업데이트 할 수 있습니다.")
     })
     @PostMapping("")
-    public ResponseEntity<String> updateActivityRing(@RequestBody UpdateActivityRingReq updateActivityRingReq, @AuthenticationPrincipal User user) {
-        //TODO: 목표칼로리 달성 여부 확인 로직 추가
-        //TODO: 애플의 목표 데이터는 background 추적이 불가능한데, 유저의 목표 칼로리 데이터는 언제 가져올 것인가? 매칭 시작 시점? << 이에 대한 정책 확립 필요
-
+    public ResponseEntity<String> updateActivityRing(@RequestBody @Valid UpdateActivityRingReq updateActivityRingReq, @AuthenticationPrincipal User user) {
         activityRingService.updateActivityRing(updateActivityRingReq, user);
         return ResponseDto.ok("활동링 정보 업데이트 완료");
     }
