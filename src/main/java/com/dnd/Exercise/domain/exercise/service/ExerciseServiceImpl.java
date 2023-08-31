@@ -61,7 +61,7 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Override
     @Transactional
     public void updateExercise(long exerciseId, UpdateExerciseReq updateExerciseReq) {
-        Exercise exercise = findExerciseById(exerciseId);
+        Exercise exercise = getExercise(exerciseId);
 
         if (updateExerciseReq.getDeletePrevImg() == true) {
             deleteMemoImgAtS3(exercise.getMemoImg());
@@ -69,7 +69,7 @@ public class ExerciseServiceImpl implements ExerciseService{
         }
 
         if (updateExerciseReq.getNewMemoImgFile() != null) {
-            String newImgUrl = awsS3Service.upload(updateExerciseReq.getNewMemoImgFile(), S3_FOLDER);
+            String newImgUrl = postMemoImgAtS3(updateExerciseReq.getNewMemoImgFile());
             exercise.updateMemoImgUrl(newImgUrl);
         }
 
@@ -79,7 +79,7 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Override
     @Transactional
     public void deleteExercise(long exerciseId) {
-        Exercise exercise = findExerciseById(exerciseId);
+        Exercise exercise = getExercise(exerciseId);
         deleteMemoImgAtS3(exercise.getMemoImg());
         exerciseRepository.delete(exercise);
     }
@@ -88,22 +88,7 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Transactional
     public void postExerciseByApple(PostExerciseByAppleReq postExerciseByAppleReq, User user) {
         List<AppleWorkoutDto> appleWorkouts = postExerciseByAppleReq.getAppleWorkouts();
-
-        List<Exercise> newWorkOuts = new ArrayList<>();
-        appleWorkouts.forEach(workout -> {
-            Exercise exercise = exerciseRepository.findByAppleUidAndUserId(workout.getAppleUid(), user.getId()).orElse(null);
-            if (exercise != null) {
-                exercise.updateAppleWorkout(workout);
-            } else {
-                newWorkOuts.add(workout.toEntityWithUser(user));
-            }
-        });
-        exerciseRepository.saveAll(newWorkOuts);
-
-        List<String> existingAppleUids = appleWorkouts.stream()
-                .map(workout -> workout.getAppleUid())
-                .collect(Collectors.toList());
-        exerciseRepository.deleteAppleWorkouts(existingAppleUids);
+        syncAppleWorkouts(appleWorkouts,user);
     }
 
     @Override
@@ -119,7 +104,10 @@ public class ExerciseServiceImpl implements ExerciseService{
 
     @Override
     public GetMyExerciseSummaryRes getMyExerciseSummary(LocalDate date, User user) {
-        int totalBurnedCalorie = getTotalBurnedCalorie(date,user.getId());
+        // TODO: 연동유저 / 비연동유저 에 따라 칼로리 상태 다르게 반환
+        // TODO: 연동유저인 경우 '오늘 하루 총 소비 칼로리' 를 '활동링 칼로리' 로 취급하기 때문에, 연동유저이지만 워치가 없는 경우 '총 소비 칼로리 < 총 운동 칼로리' 일수도 있을것 같다.
+        // TODO: -> '총 소비 칼로리 < 총 운동 칼로리' 인 경우 워치가 없는 유저로 판단하고 '활동링 칼로리 + 운동 칼로리' 합산? 둘 사이에 겹치는 칼로리가 있진 않을지 고려해봐야 할 듯
+        int totalBurnedCalorie = getDailyTotalBurnedCalorie(date,user.getId());
         int totalExerciseCalorie = exerciseRepository.sumDailyBurnedCalorieOfUser(date,user.getId());
         int totalExerciseTimeMinute = exerciseRepository.sumDailyDurationMinuteOfUser(date,user.getId());
         int totalRecordCount = exerciseRepository.countByExerciseDateAndUserId(date,user.getId());
@@ -135,8 +123,8 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Override
     public GetRecentsRes getRecent(LocalDate date, User user) {
         int totalExerciseMinute = exerciseRepository.sumDailyDurationMinuteOfUser(date,user.getId());
-        int totalBurnedCalorie = getTotalBurnedCalorie(date, user.getId());
-        List<RecentSportsDto> recentSports = exerciseRepository.getDailyRecentSports(date,user.getId());
+        int totalBurnedCalorie = getDailyTotalBurnedCalorie(date, user.getId());
+        List<RecentSportsDto> recentSports = exerciseRepository.findDailyRecentSports(date,user.getId());
 
         return GetRecentsRes.builder()
                 .totalExerciseMinute(totalExerciseMinute)
@@ -145,7 +133,7 @@ public class ExerciseServiceImpl implements ExerciseService{
                 .build();
     }
 
-    public int getTotalBurnedCalorie(LocalDate date, long userId) {
+    private int getDailyTotalBurnedCalorie(LocalDate date, long userId) {
         // 현재 유저의 '특정 하루에 대한 총 소비 칼로리'는 애플 활동링 칼로리를 기준으로 함. 연동 유저 + 워치 소유자라고 가정.
         // -> TODO: 애플 연동/비연동 유저 구분 필요. 연동 유저인 경우 활동링 칼로리, 비연동 유저인 경우 exercise 테이블 합?
         // -> TODO: 워치 소유자가 아닌 연동 유저는...? 활동링 칼로리값 + exercise 테이블 합으로 나타나야 하는게 맞는데, 서비스 상에서 워치 소유자 구분 불가.
@@ -158,13 +146,13 @@ public class ExerciseServiceImpl implements ExerciseService{
         return totalBurnedCalorie;
     }
 
-    public Exercise findExerciseById(long exerciseId) {
+    private Exercise getExercise (long exerciseId) {
         Exercise exercise = exerciseRepository.findById(exerciseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         return exercise;
     }
 
-    public String postMemoImgAtS3(MultipartFile memoImg) {
+    private String postMemoImgAtS3(MultipartFile memoImg) {
         String imgUrl = null;
         if (memoImg != null) {
             imgUrl = awsS3Service.upload(memoImg,S3_FOLDER);
@@ -172,9 +160,34 @@ public class ExerciseServiceImpl implements ExerciseService{
         return imgUrl;
     }
 
-    public void deleteMemoImgAtS3(String fileName) {
+    private void deleteMemoImgAtS3(String fileName) {
         if(fileName != null) {
             awsS3Service.deleteImage(fileName);
         }
+    }
+
+    private void syncAppleWorkouts(List<AppleWorkoutDto> appleWorkouts, User user) {
+        saveOrUpdateWorkouts(appleWorkouts,user);
+        deleteFadedWorkouts(appleWorkouts);
+    }
+
+    private void saveOrUpdateWorkouts(List<AppleWorkoutDto> appleWorkouts, User user) {
+        List<Exercise> newWorkOuts = new ArrayList<>();
+        appleWorkouts.forEach(workout -> {
+            Exercise exercise = exerciseRepository.findByAppleUidAndUserId(workout.getAppleUid(), user.getId()).orElse(null);
+            if (exercise != null) {
+                exercise.updateAppleWorkout(workout);
+            } else {
+                newWorkOuts.add(workout.toEntityWithUser(user));
+            }
+        });
+        exerciseRepository.saveAll(newWorkOuts);
+    }
+
+    private void deleteFadedWorkouts(List<AppleWorkoutDto> appleWorkouts) {
+        List<String> existingAppleUids = appleWorkouts.stream()
+                .map(AppleWorkoutDto::getAppleUid)
+                .collect(Collectors.toList());
+        exerciseRepository.deleteUnexistingAppleWorkouts(existingAppleUids);
     }
 }

@@ -18,7 +18,8 @@ public interface ExerciseRepositoryCustom {
 
     List<FindFieldRecordDto> findAllWithUser(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId);
 
-    void deleteAppleWorkouts(List<String> existingAppleUids);
+    void deleteUnexistingAppleWorkouts(List<String> existingAppleUids);
 
-    List<RecentSportsDto> getDailyRecentSports(LocalDate date, Long userId);
+    List<RecentSportsDto> findDailyRecentSports(LocalDate date, Long userId);
 }
+
