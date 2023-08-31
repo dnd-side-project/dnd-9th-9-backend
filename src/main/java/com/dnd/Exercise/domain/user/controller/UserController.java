@@ -47,7 +47,9 @@ public class UserController {
         return ResponseDto.ok("프로필 수정 완료");
     }
 
-    @ApiOperation(value = "애플 연동 여부 수정 👤", notes = "애플 연동 설정/해제 시 해당 정보 업데이트")
+    @ApiOperation(value = "애플 연동 여부 수정 👤", notes = "애플 연동 설정/해제 시 '연동 여부 정보' 업데이트 " +
+            "<br> - 초기 회원가입 시 서버에 '유저의 애플 연동 여부' 는 기본적으로 false 로 설정됩니다." +
+            "<br> - 추후 유저가 애플 연동을 수행하거나, 되어있던 연동을 해제할 시 서버로 '연동 여부' 정보를 업데이트합니다.")
     @PatchMapping("/my/apple-linked")
     public ResponseEntity<String> updateAppleLinked(@RequestBody UpdateAppleLinkedReq updateAppleLinkedReq) {
         return ResponseDto.ok("연동 정보 수정 완료");
