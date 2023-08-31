@@ -9,5 +9,6 @@ public class BattleFieldEntryReq {
     @NotNull
     private Long targetFieldId;
 
+    @NotNull
     private BattleType battleType;
 }

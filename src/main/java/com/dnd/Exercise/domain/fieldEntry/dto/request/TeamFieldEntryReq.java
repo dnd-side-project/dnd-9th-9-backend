@@ -9,5 +9,6 @@ public class TeamFieldEntryReq {
     @NotNull
     private Long targetFieldId;
 
+    @NotNull
     private TeamType teamType;
 }
