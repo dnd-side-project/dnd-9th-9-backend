@@ -59,7 +59,7 @@ public class FieldUtil {
                 startDate, endDate, memberIds);
     }
 
-    public List<Integer> calculateScore(List<ActivityRing> activityRings, List<Exercise> exercises) {
+    public List<Integer> calculateRecord(List<ActivityRing> activityRings, List<Exercise> exercises) {
         int totalRecordCount = exercises.size();
         int goalAchievementCount = (int) activityRings.stream().filter(ActivityRing::getIsGoalAchieved).count();
         int totalBurnedCalorie = activityRings.stream().mapToInt(ActivityRing::getBurnedCalorie).sum();
@@ -102,7 +102,7 @@ public class FieldUtil {
         List<ActivityRing> activityRings = getActivityRings(targetDate, memberIds);
         List<Exercise> exercises = getExercises(targetDate, memberIds);
 
-        return calculateScore(activityRings, exercises);
+        return calculateRecord(activityRings, exercises);
     }
 
     public List<Integer> getFieldSummary(Long fieldId, LocalDate startDate, LocalDate endDate) {
@@ -110,7 +110,7 @@ public class FieldUtil {
         List<ActivityRing> activityRings = getActivityRings(startDate, endDate, memberIds);
         List<Exercise> exercises = getExercises(startDate, endDate, memberIds);
 
-        return calculateScore(activityRings, exercises);
+        return calculateRecord(activityRings, exercises);
     }
 
     public void validateNotHavingField(User user, FieldType fieldType){
