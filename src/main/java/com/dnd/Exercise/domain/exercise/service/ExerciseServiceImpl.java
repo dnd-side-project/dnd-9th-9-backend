@@ -93,21 +93,19 @@ public class ExerciseServiceImpl implements ExerciseService{
 
     @Override
     public GetCalorieStateRes getCalorieState(LocalDate date, User user) {
-        ActivityRing activityRing= activityRingRepository.findByDateAndUserId(date,user.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVITY_RING_NOT_FOUND));
+        int burnedCalorie = getDailyTotalBurnedCalorie(date,user);
 
         return GetCalorieStateRes.builder()
                 .goalCalorie(user.getCalorieGoal())
-                .burnedCalorie(activityRing.getBurnedCalorie())
+                .burnedCalorie(burnedCalorie)
                 .build();
     }
 
     @Override
     public GetMyExerciseSummaryRes getMyExerciseSummary(LocalDate date, User user) {
-        // TODO: 연동유저 / 비연동유저 에 따라 칼로리 상태 다르게 반환
-        // TODO: 연동유저인 경우 '오늘 하루 총 소비 칼로리' 를 '활동링 칼로리' 로 취급하기 때문에, 연동유저이지만 워치가 없는 경우 '총 소비 칼로리 < 총 운동 칼로리' 일수도 있을것 같다.
+        // TODO: 연동유저인 경우 '오늘 하루 총 소비 칼로리' 를 '활동링 칼로리' 로 취급하기 때문에, <연동유저이지만 워치가 없는 경우> '총 소비 칼로리 < 총 운동 칼로리' 일수도 있을것 같다.
         // TODO: -> '총 소비 칼로리 < 총 운동 칼로리' 인 경우 워치가 없는 유저로 판단하고 '활동링 칼로리 + 운동 칼로리' 합산? 둘 사이에 겹치는 칼로리가 있진 않을지 고려해봐야 할 듯
-        int totalBurnedCalorie = getDailyTotalBurnedCalorie(date,user.getId());
+        int totalBurnedCalorie = getDailyTotalBurnedCalorie(date,user);
         int totalExerciseCalorie = exerciseRepository.sumDailyBurnedCalorieOfUser(date,user.getId());
         int totalExerciseTimeMinute = exerciseRepository.sumDailyDurationMinuteOfUser(date,user.getId());
         int totalRecordCount = exerciseRepository.countByExerciseDateAndUserId(date,user.getId());
@@ -123,7 +121,7 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Override
     public GetRecentsRes getRecent(LocalDate date, User user) {
         int totalExerciseMinute = exerciseRepository.sumDailyDurationMinuteOfUser(date,user.getId());
-        int totalBurnedCalorie = getDailyTotalBurnedCalorie(date, user.getId());
+        int totalBurnedCalorie = getDailyTotalBurnedCalorie(date, user);
         List<RecentSportsDto> recentSports = exerciseRepository.findDailyRecentSports(date,user.getId());
 
         return GetRecentsRes.builder()
@@ -133,16 +131,18 @@ public class ExerciseServiceImpl implements ExerciseService{
                 .build();
     }
 
-    private int getDailyTotalBurnedCalorie(LocalDate date, long userId) {
-        // 현재 유저의 '특정 하루에 대한 총 소비 칼로리'는 애플 활동링 칼로리를 기준으로 함. 연동 유저 + 워치 소유자라고 가정.
-        // -> TODO: 애플 연동/비연동 유저 구분 필요. 연동 유저인 경우 활동링 칼로리, 비연동 유저인 경우 exercise 테이블 합?
-        // -> TODO: 워치 소유자가 아닌 연동 유저는...? 활동링 칼로리값 + exercise 테이블 합으로 나타나야 하는게 맞는데, 서비스 상에서 워치 소유자 구분 불가.
-
+    private int getDailyTotalBurnedCalorie(LocalDate date, User user) {
         int totalBurnedCalorie = 0;
-        ActivityRing activityRing = activityRingRepository.findByDateAndUserId(date,userId).orElse(null);
-        if (activityRing != null) {
-            totalBurnedCalorie = activityRing.getBurnedCalorie();
+
+        if (user.getIsAppleLinked() == true) {
+            ActivityRing activityRing = activityRingRepository.findByDateAndUserId(date,user.getId()).orElse(null);
+            if (activityRing != null) {
+                totalBurnedCalorie = activityRing.getBurnedCalorie();
+            }
+        } else {
+            totalBurnedCalorie = exerciseRepository.sumDailyBurnedCalorieOfUser(date,user.getId());
         }
+
         return totalBurnedCalorie;
     }
 

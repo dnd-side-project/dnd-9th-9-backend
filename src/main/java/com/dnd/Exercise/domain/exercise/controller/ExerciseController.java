@@ -78,7 +78,8 @@ public class ExerciseController {
         return ResponseDto.ok("운동기록 삭제 성공");
     }
 
-    @ApiOperation(value = " 오늘 하루 나의 운동기록 요약 📝", notes = "개인 운동기록 페이지의 <요약> 탭에서 확인 <br> - burnedCalorie(총 소비 칼로리) 는 애플의 activeEnergyBurned 에 해당합니다.")
+    @ApiOperation(value = " 오늘 하루 나의 운동기록 요약 📝 - [운동기록 '요약' 탭]", notes = "개인 운동기록 페이지의 <요약> 탭에서 확인 " +
+            "<br> - totalBurnedCalorie(총 소비 칼로리) 는 [ 연동유저인 경우 -> '활동링에서의 소모칼로리 (activeEnergyBurned 값)' / 비연동유저인 경우 -> '앱 내에서 기록한 운동 칼로리의 합산' ] 을 뜻합니다.")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/my-summary")
     public ResponseEntity<GetMyExerciseSummaryRes> getMyExerciseSummary (
@@ -88,7 +89,9 @@ public class ExerciseController {
         return ResponseDto.ok(getMyExerciseSummaryRes);
     }
 
-    @ApiOperation(value = "칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝", notes = "특정 하루에 대한 나의 소모칼로리, 목표칼로리값을 불러옵니다. <br> 이때 '소모칼로리' 는 '활동링에서의 소모칼로리 (activeEnergyBurned 값)' 을 뜻합니다.")
+    @ApiOperation(value = "특정 하루의 칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝 - [홈화면 '오늘 소모 칼로리']", notes = "특정 하루에 대한 나의 소모칼로리/목표칼로리값을 불러옵니다. " +
+            "<br> - <소모칼로리> 는 [ 연동유저인 경우 -> '활동링에서의 소모칼로리 (activeEnergyBurned 값)' / 비연동유저인 경우 -> '앱 내에서 기록한 운동 칼로리의 합산' ] 을 뜻합니다." +
+            "<br> - <목표칼로리> 는 [ 비연동유저인 경우 -> 목표칼로리를 설정할 수 없으므로, 0 으로 반환 ] ")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/calorie-state")
     public ResponseEntity<GetCalorieStateRes> getCalorieState (
