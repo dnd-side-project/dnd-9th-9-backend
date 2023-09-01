@@ -33,8 +33,8 @@ public class ExerciseController {
     public ResponseEntity<FindAllExerciseDetailsOfDayRes> findAllExerciseDetailsOfDay(
             @DateTimeFormat(pattern = "yyyy-MM-dd")
             @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
-        FindAllExerciseDetailsOfDayRes data = exerciseService.findAllExerciseDetailsOfDay(date, user.getId());
-        return ResponseDto.ok(data);
+        FindAllExerciseDetailsOfDayRes findAllExerciseDetailsOfDayRes = exerciseService.findAllExerciseDetailsOfDay(date, user.getId());
+        return ResponseDto.ok(findAllExerciseDetailsOfDayRes);
     }
 
     @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 📝", notes = "운동 종목들은 애플 health kit 의 종목들과 동일합니다. <br> 현재 운동기록 한개 당 이미지 한개만 등록이 가능합니다.")
@@ -102,8 +102,8 @@ public class ExerciseController {
     public ResponseEntity<GetCalorieStateRes> getCalorieState (
             @DateTimeFormat(pattern = "yyyy-MM-dd")
             @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
-        GetCalorieStateRes data = exerciseService.getCalorieState(date, user);
-        return ResponseDto.ok(data);
+        GetCalorieStateRes getCalorieStateRes = exerciseService.getCalorieState(date, user);
+        return ResponseDto.ok(getCalorieStateRes);
     }
 
     @ApiOperation(value = "최근 많이 한 운동 불러오기 📝 - [홈화면 '최근 많이 한 운동']", notes = "오늘 하루동안 가장 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. " +
