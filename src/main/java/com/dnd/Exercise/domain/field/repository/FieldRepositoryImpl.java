@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.field.entity.Field;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.SimpleExpression;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Collection;
@@ -34,7 +35,9 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
                 .and(evaluateIn(field.skillLevel, findAllFieldsCond.getSkillLevel()))
                 .and(evaluateIn(field.strength, findAllFieldsCond.getStrength()))
                 .and(evaluateIn(field.period, findAllFieldsCond.getPeriod()))
-                .and(evaluateIn(field.goal, findAllFieldsCond.getGoal()));
+                .and(evaluateIn(field.goal, findAllFieldsCond.getGoal()))
+                .and(evaluateLike(field.name, findAllFieldsCond.getKeyword()))
+                .and(field.opponent.isNull());
 
         JPAQuery<Long> countQuery = queryFactory
                 .select(field.count())
@@ -59,6 +62,10 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
 
     public static <T> BooleanExpression evaluateIn(SimpleExpression<T> path, Collection<T> values) {
         return values == null ? null : path.in(values);
+    }
+
+    public static BooleanExpression evaluateLike(StringPath path, String value) {
+        return value == null ? null : path.likeIgnoreCase("%" + value + "%");
     }
 
 

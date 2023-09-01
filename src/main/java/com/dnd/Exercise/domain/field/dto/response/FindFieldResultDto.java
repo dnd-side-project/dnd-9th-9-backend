@@ -14,6 +14,8 @@ public class FindFieldResultDto {
 
     private String profileImg;
 
+    private double totalScore;
+
     private Integer totalRecordCount;
 
     private Integer goalAchievedCount;
@@ -25,9 +27,14 @@ public class FindFieldResultDto {
     public FindFieldResultDto(Field field, List<Integer> score){
         this.name = field.getName();
         this.profileImg = field.getProfileImg();
+        this.totalScore = 0;
         this.totalRecordCount = score.get(0);
         this.goalAchievedCount = score.get(1);
         this.totalBurnedCalorie = score.get(2);
         this.totalExerciseTimeMinute = score.get(3);
+    }
+
+    public void addTotalScore(double score){
+        this.totalScore += score;
     }
 }

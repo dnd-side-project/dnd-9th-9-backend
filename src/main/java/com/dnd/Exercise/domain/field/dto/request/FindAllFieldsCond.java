@@ -7,13 +7,19 @@ import com.dnd.Exercise.domain.field.entity.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.Strength;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
-import lombok.Getter;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
+import org.hibernate.validator.constraints.Range;
 
-@Getter
+@Data
 public class FindAllFieldsCond {
+    @ApiModelProperty(notes = "검색어")
+    private String keyword;
     @ApiModelProperty(notes = "매칭유형", required = true, example = "DUEL | TEAM_BATTLE | TEAM")
+    @NotNull
     private FieldType fieldType;
     @ApiModelProperty(notes = "팀 인원수 - 최소 1, 최대 10")
+    @Range(min = 1, max = 10)
     private Integer memberCount;
     @ApiModelProperty(notes = "운동레벨", example = "[BEGINNER, INTERMEDIATE, ADVANCED_INTERMEDIATE, EXPERT]")
     private List<SkillLevel> skillLevel;

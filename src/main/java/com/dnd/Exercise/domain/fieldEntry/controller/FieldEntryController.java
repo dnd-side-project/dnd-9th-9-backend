@@ -40,8 +40,8 @@ public class FieldEntryController {
 
     @ApiOperation(value = "[팀 - 팀원] 페이지 - 팀 신청받은 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
     @ApiResponses({
-            @ApiResponse(code=400, message="필드를 찾을 수 없습니다."),
-            @ApiResponse(code=403, message="접근 권한이 없습니다.")
+            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
     })
     @GetMapping("/team/{id}")
     public ResponseEntity<List<FindAllTeamEntryRes>> findAllTeamEntries(
@@ -56,8 +56,8 @@ public class FieldEntryController {
     @ApiOperation(value = "[매치 - 매칭] 페이지 - 배틀 신청 내역 조회 📬",
             notes = "EntryDirection을 통해 요청 받은 내역과 요청한 내역 구분 <br> 페이지 기본값: 0, 사이즈 기본값: 3")
     @ApiResponses({
-            @ApiResponse(code=400, message="필드를 찾을 수 없습니다."),
-            @ApiResponse(code=403, message="접근 권한이 없습니다.")
+            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
     })
     @GetMapping("/battle/{id}")
     public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByDirection(
@@ -70,7 +70,8 @@ public class FieldEntryController {
     }
 
 
-    @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 필드 신청한 내역 조회 📬", notes = "페이지 기본값: 0, 사이즈 기본값: 3")
+    @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 필드 신청한 내역 조회 📬",
+            notes = "페이지 기본값: 0, 사이즈 기본값: 3 <br> 신청한 내역이 없을 경우 null 을 반환합니다.")
     @GetMapping
     public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByType(
             @AuthenticationPrincipal User user,
@@ -102,7 +103,7 @@ public class FieldEntryController {
             @ApiResponse(code=200, message="배틀 신청 완료"),
             @ApiResponse(code=400, message="필드를 찾을 수 없습니다. | 매치가 이미 진행 중입니다. "
                     + "| 이미 신청한 필드입니다. | 매칭을 위해서는 해당 유형의 필드가 필요합니다."
-                    + "| 현재 팀원 모집 중입니다. | 잘못된 요청"),
+                    + "| 현재 팀원 모집 중입니다. | 기간이 같아야 합니다. | 잘못된 요청"),
             @ApiResponse(code=403, message = "팀장 권한이 필요합니다.")
     })
     @PostMapping("/battle")

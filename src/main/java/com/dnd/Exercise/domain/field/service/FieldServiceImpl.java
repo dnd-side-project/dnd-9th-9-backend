@@ -1,5 +1,8 @@
 package com.dnd.Exercise.domain.field.service;
 
+import static com.dnd.Exercise.domain.field.dto.response.FieldRole.GUEST;
+import static com.dnd.Exercise.domain.field.dto.response.FieldRole.LEADER;
+import static com.dnd.Exercise.domain.field.dto.response.FieldRole.MEMBER;
 import static com.dnd.Exercise.domain.field.entity.FieldSide.AWAY;
 import static com.dnd.Exercise.domain.field.entity.FieldSide.HOME;
 import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
@@ -23,7 +26,9 @@ import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
+import com.dnd.Exercise.domain.field.dto.response.ElementWiseWinDto;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
+import com.dnd.Exercise.domain.field.dto.response.FieldRole;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
@@ -137,9 +142,53 @@ public class FieldServiceImpl implements FieldService{
         return WinStatus.DRAW;
     }
 
+    private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
+        if (winStatus == WinStatus.WIN) {
+            home.addTotalScore(25);
+        } else if (winStatus == WinStatus.LOSE) {
+            away.addTotalScore(25);
+        } else {
+            home.addTotalScore(12.5);
+            away.addTotalScore(12.5);
+        }
+    }
+
+    private List<WinStatus> elementWiseWinToList(List<Integer> myScores, List<Integer> opponentScores){
+        WinStatus recordCount = compareScore(myScores.get(0), opponentScores.get(0));
+        WinStatus goalAchievedCount = compareScore(myScores.get(1), opponentScores.get(1));
+        WinStatus burnedCalorie = compareScore(myScores.get(2), opponentScores.get(2));
+        WinStatus exerciseTimeMinute = compareScore(myScores.get(3), opponentScores.get(3));
+        return List.of(recordCount, goalAchievedCount, burnedCalorie, exerciseTimeMinute);
+    }
+
+    private WinStatus compareScore(Double myScore, Double opponentScore) {
+        if (myScore > opponentScore) {
+            return WinStatus.WIN;
+        } else if (myScore < opponentScore) {
+            return WinStatus.LOSE;
+        } else {
+            return WinStatus.DRAW;
+        }
+    }
+
+    private WinStatus compareScore(Integer myScore, Integer opponentScore) {
+        return compareScore(myScore.doubleValue(), opponentScore.doubleValue());
+    }
+
+
     private static void validateDuelMaxSize(FieldType fieldType, int maxSize) {
         if (DUEL.equals(fieldType) && maxSize != 1) {
             throw new BusinessException(DUEL_MAX_ONE);
+        }
+    }
+
+    private FieldRole determineFieldRole(User user, Field myField, Boolean isMember) {
+        if (user.getId().equals(myField.getLeaderId())){
+            return LEADER;
+        } else if (isMember) {
+            return MEMBER;
+        }else {
+            return GUEST;
         }
     }
 
@@ -188,6 +237,8 @@ public class FieldServiceImpl implements FieldService{
         Boolean isMember = userFieldRepository.existsByFieldAndUser(myField, user);
 
         FieldDto fieldDto = fieldMapper.toFieldDto(myField);
+        fieldDto.setFieldRole(determineFieldRole(user, myField, isMember));
+
         FindFieldRes.FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(fieldDto);
 
         if (isMember && myField.getFieldStatus() == IN_PROGRESS){
@@ -197,6 +248,7 @@ public class FieldServiceImpl implements FieldService{
         }
         return resBuilder.build();
     }
+
 
     @Transactional
     @Override
@@ -420,7 +472,14 @@ public class FieldServiceImpl implements FieldService{
             List<Integer> opponentScore = fieldUtil.getFieldSummary(opponentField.getId(), startDate, endDate);
 
             FindFieldResultDto away = new FindFieldResultDto(opponentField, opponentScore);
-            resBuilder.away(away);
+
+            List<WinStatus> elementWiseWinList = elementWiseWinToList(score, opponentScore);
+            ElementWiseWinDto elementWiseWin = new ElementWiseWinDto(elementWiseWinList);
+            elementWiseWinList.forEach(winStatus -> addTotalScore(winStatus, home, away));
+
+            WinStatus winStatus = compareScore(home.getTotalScore(), away.getTotalScore());
+
+            resBuilder.away(away).elementWiseWin(elementWiseWin).winStatus(winStatus);
         }
 
         return resBuilder.build();

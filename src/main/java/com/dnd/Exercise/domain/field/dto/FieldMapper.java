@@ -21,6 +21,8 @@ public interface FieldMapper{
 
     FindAllFieldsDto toFindAllFieldsDto(Field field);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = SET_TO_NULL,
+            unmappedTargetPolicy = ReportingPolicy.IGNORE)
     FieldDto toFieldDto(Field field);
 
     AutoMatchingRes toAutoMatchingRes(Field field);

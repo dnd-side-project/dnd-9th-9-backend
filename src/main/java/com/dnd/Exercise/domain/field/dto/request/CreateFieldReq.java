@@ -48,7 +48,7 @@ public class CreateFieldReq {
     @ApiModelProperty(notes = "진행기간", required = true, example = "ONE_WEEK | TWO_WEEKS | THREE_WEEKS")
     private Period period;
 
-    @ApiModelProperty(notes = "팀 소개", required = true)
+    @ApiModelProperty(notes = "팀 소개")
     private String description;
 
     @NotNull
