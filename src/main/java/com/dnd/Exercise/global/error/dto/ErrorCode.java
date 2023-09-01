@@ -69,6 +69,8 @@ public enum ErrorCode {
 
     EXERCISE_NOT_FOUND(HttpStatus.NOT_FOUND, "E-001", "운동 정보를 찾을 수 없습니다."),
 
+    APPLE_WORKOUTS_UPDATE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "E-002", "애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다."),
+
     UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),
 
     FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "S-002", "파일 삭제 중 오류가 발생했습니다.");

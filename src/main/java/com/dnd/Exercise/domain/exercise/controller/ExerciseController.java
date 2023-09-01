@@ -57,7 +57,7 @@ public class ExerciseController {
 
     @ApiOperation(value = "애플 데이터에서 운동기록 등록 📝", notes = "운동 리스트 등록 - getAnchoredWorkouts 리스트를 등록합니다 <br> (애플 측에서 데이터 '수정 또는 삭제' 발생한 경우에도 이 api 사용) <br> (request body 의 start/end DateTime 은 말씀해주신대로 yyyy-MM-dd HH:mm:ss String 입니다!)")
     @PostMapping("/apple-workouts")
-    public ResponseEntity<String> postExerciseByApple (@RequestBody PostExerciseByAppleReq postExerciseByAppleReq, @AuthenticationPrincipal User user) {
+    public ResponseEntity<String> postExerciseByApple (@RequestBody @Valid PostExerciseByAppleReq postExerciseByAppleReq, @AuthenticationPrincipal User user) {
         exerciseService.postExerciseByApple(postExerciseByAppleReq, user);
         return ResponseDto.ok("애플 운동기록 등록 성공");
     }

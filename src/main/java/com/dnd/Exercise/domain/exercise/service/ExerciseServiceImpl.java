@@ -87,6 +87,7 @@ public class ExerciseServiceImpl implements ExerciseService{
     @Override
     @Transactional
     public void postExerciseByApple(PostExerciseByAppleReq postExerciseByAppleReq, User user) {
+        validateIsAppleLinked(user);
         List<AppleWorkoutDto> appleWorkouts = postExerciseByAppleReq.getAppleWorkouts();
         syncAppleWorkouts(appleWorkouts,user);
     }
@@ -189,5 +190,11 @@ public class ExerciseServiceImpl implements ExerciseService{
                 .map(AppleWorkoutDto::getAppleUid)
                 .collect(Collectors.toList());
         exerciseRepository.deleteUnexistingAppleWorkouts(existingAppleUids);
+    }
+
+    private void validateIsAppleLinked(User user) {
+        if (!user.getIsAppleLinked()) {
+            throw new BusinessException(ErrorCode.APPLE_WORKOUTS_UPDATE_UNAVAILABLE);
+        }
     }
 }
