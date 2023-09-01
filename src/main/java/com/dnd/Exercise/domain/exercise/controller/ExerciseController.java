@@ -9,9 +9,7 @@ import com.dnd.Exercise.domain.exercise.service.ExerciseService;
 import com.dnd.Exercise.domain.sports.entity.Sports;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +33,8 @@ public class ExerciseController {
     public ResponseEntity<FindAllExerciseDetailsOfDayRes> findAllExerciseDetailsOfDay(
             @DateTimeFormat(pattern = "yyyy-MM-dd")
             @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
-        FindAllExerciseDetailsOfDayRes data = exerciseService.findAllExerciseDetailsOfDay(date, user.getId());
-        return ResponseDto.ok(data);
+        FindAllExerciseDetailsOfDayRes findAllExerciseDetailsOfDayRes = exerciseService.findAllExerciseDetailsOfDay(date, user.getId());
+        return ResponseDto.ok(findAllExerciseDetailsOfDayRes);
     }
 
     @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 📝", notes = "운동 종목들은 애플 health kit 의 종목들과 동일합니다. <br> 현재 운동기록 한개 당 이미지 한개만 등록이 가능합니다.")
@@ -55,9 +53,16 @@ public class ExerciseController {
         return ResponseDto.ok(257);
     }
 
-    @ApiOperation(value = "애플 데이터에서 운동기록 등록 📝", notes = "운동 리스트 등록 - getAnchoredWorkouts 리스트를 등록합니다 <br> (애플 측에서 데이터 '수정 또는 삭제' 발생한 경우에도 이 api 사용) <br> (request body 의 start/end DateTime 은 말씀해주신대로 yyyy-MM-dd HH:mm:ss String 입니다!)")
+    @ApiOperation(value = "애플 데이터에서 운동기록 등록 📝", notes = "운동 리스트 등록 - getAnchoredWorkouts 리스트를 등록합니다 " +
+            "<br> - (애플 측에서 데이터 '수정 또는 삭제' 발생한 경우에도 이 api 사용) " +
+            "<br> - getAnchoredWorkouts 리스트의 내용대로 서버 상태를 sync 합니다." +
+            "<br> - appleUid 는 '애플 데이터 상에서 해당 운동기록의 고유 id' 를 뜻합니다.")
+    @ApiResponses({
+            @ApiResponse(code=200, message="애플 운동기록 등록 성공"),
+            @ApiResponse(code=400, message="애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다.")
+    })
     @PostMapping("/apple-workouts")
-    public ResponseEntity<String> postExerciseByApple (@RequestBody PostExerciseByAppleReq postExerciseByAppleReq, @AuthenticationPrincipal User user) {
+    public ResponseEntity<String> postExerciseByApple (@RequestBody @Valid PostExerciseByAppleReq postExerciseByAppleReq, @AuthenticationPrincipal User user) {
         exerciseService.postExerciseByApple(postExerciseByAppleReq, user);
         return ResponseDto.ok("애플 운동기록 등록 성공");
     }
@@ -78,7 +83,8 @@ public class ExerciseController {
         return ResponseDto.ok("운동기록 삭제 성공");
     }
 
-    @ApiOperation(value = " 오늘 하루 나의 운동기록 요약 📝", notes = "개인 운동기록 페이지의 <요약> 탭에서 확인 <br> - burnedCalorie(총 소비 칼로리) 는 애플의 activeEnergyBurned 에 해당합니다.")
+    @ApiOperation(value = " 오늘 하루 나의 운동기록 요약 📝 - [운동기록 '요약' 탭]", notes = "개인 운동기록 페이지의 <요약> 탭에서 확인 " +
+            "<br> - totalBurnedCalorie(총 소비 칼로리) 는 [ 연동유저인 경우 -> '활동링에서의 소모칼로리 (activeEnergyBurned 값)' / 비연동유저인 경우 -> '앱 내에서 기록한 운동 칼로리의 합산' ] 을 뜻합니다.")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/my-summary")
     public ResponseEntity<GetMyExerciseSummaryRes> getMyExerciseSummary (
@@ -88,17 +94,21 @@ public class ExerciseController {
         return ResponseDto.ok(getMyExerciseSummaryRes);
     }
 
-    @ApiOperation(value = "칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝", notes = "특정 하루에 대한 나의 소모칼로리, 목표칼로리값을 불러옵니다. <br> 이때 '소모칼로리' 는 '활동링에서의 소모칼로리 (activeEnergyBurned 값)' 을 뜻합니다.")
+    @ApiOperation(value = "특정 하루의 칼로리 정보 불러오기 (목표 칼로리 대비 소모 칼로리 현황) 📝 - [홈화면 '오늘 소모 칼로리']", notes = "특정 하루에 대한 나의 소모칼로리/목표칼로리값을 불러옵니다. " +
+            "<br> - <소모칼로리> 는 [ 연동유저인 경우 -> '활동링에서의 소모칼로리 (activeEnergyBurned 값)' / 비연동유저인 경우 -> '앱 내에서 기록한 운동 칼로리의 합산' ] 을 뜻합니다." +
+            "<br> - <목표칼로리> 는 [ 비연동유저인 경우 -> 목표칼로리를 설정할 수 없으므로, 0 으로 반환 ] ")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/calorie-state")
     public ResponseEntity<GetCalorieStateRes> getCalorieState (
             @DateTimeFormat(pattern = "yyyy-MM-dd")
             @RequestParam LocalDate date, @AuthenticationPrincipal User user) {
-        GetCalorieStateRes data = exerciseService.getCalorieState(date, user);
-        return ResponseDto.ok(data);
+        GetCalorieStateRes getCalorieStateRes = exerciseService.getCalorieState(date, user);
+        return ResponseDto.ok(getCalorieStateRes);
     }
 
-    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면' 의 '최근 많이 한 운동' 에서 사용합니다. <br> - 운동시간 총합이 큰 종목 우선 정렬, 운동시간이 같을 경우 소비 칼로리 총합 순 정렬")
+    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝 - [홈화면 '최근 많이 한 운동']", notes = "오늘 하루동안 가장 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. " +
+            "<br> - '홈화면' 의 '최근 많이 한 운동' 에서 사용합니다. " +
+            "<br> - 운동시간 총합이 큰 종목 우선 정렬, 운동시간이 같을 경우 소비 칼로리 총합 순 정렬")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/recent")
     public ResponseEntity<GetRecentsRes> getRecents (

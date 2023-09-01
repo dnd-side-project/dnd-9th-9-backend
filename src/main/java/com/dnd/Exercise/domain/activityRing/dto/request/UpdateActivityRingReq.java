@@ -7,16 +7,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
 public class UpdateActivityRingReq {
 
+    @NotNull(message = "날짜를 입력해주세요.")
+    @PastOrPresent
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
 
-    private int burnedCalorie;
+    @NotNull(message = "칼로리를 입력해주세요.")
+    private Integer burnedCalorie;
 
     public ActivityRing toEntityWithUser(User user) {
         return ActivityRing.builder()
