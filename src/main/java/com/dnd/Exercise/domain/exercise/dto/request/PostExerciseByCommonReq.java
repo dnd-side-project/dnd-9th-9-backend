@@ -43,7 +43,7 @@ public class PostExerciseByCommonReq {
 
                 .memoImg(memoImg == null ? null : memoImg)
                 .memoContent(memoContent == null ? null : memoContent)
-                .isMemoPublic(isMemoPublic)
+                .isMemoPublic(isMemoPublic == null ? false : isMemoPublic)
 
                 .recordProvider(RecordProvider.MATCH_UP)
                 .build();
