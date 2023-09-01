@@ -92,12 +92,13 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     @Builder
-    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType) {
+    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType, Boolean isAppleLinked) {
         this.uid = uid;
         this.password = password;
         this.phoneNum = phoneNum;
         this.name = name;
         this.skillLevel = skillLevel;
         this.loginType = loginType;
+        this.isAppleLinked = isAppleLinked;
     }
 }

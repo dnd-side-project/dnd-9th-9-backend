@@ -98,7 +98,7 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
     }
 
     @Override
-    public void deleteAppleWorkouts(List<String> existingAppleUids) {
+    public void deleteUnexistingAppleWorkouts(List<String> existingAppleUids) {
        queryFactory
                 .delete(exercise)
                 .where(exercise.appleUid.isNotNull(),
@@ -107,7 +107,7 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
     }
 
     @Override
-    public List<RecentSportsDto> getDailyRecentSports(LocalDate date, Long userId) {
+    public List<RecentSportsDto> findDailyRecentSports(LocalDate date, Long userId) {
         return queryFactory
                 .select(Projections.fields(RecentSportsDto.class,
                         exercise.sports.as("sports"),

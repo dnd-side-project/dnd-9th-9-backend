@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -16,16 +18,21 @@ import java.time.temporal.ChronoUnit;
 @Setter
 @NoArgsConstructor
 public class AppleWorkoutDto {
+    @NotBlank
     private String appleUid;
 
+    @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startDateTime;
 
+    @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDateTime;
 
+    @NotNull
     private Sports sports;
 
+    @NotNull
     private int burnedCalorie;
 
     public Exercise toEntityWithUser(User user) {

@@ -39,6 +39,7 @@ public class AuthServiceImpl implements AuthService {
                 .name(signUpReq.getName())
                 .skillLevel(signUpReq.getSkillLevel())
                 .loginType(LoginType.MATCH_UP)
+                .isAppleLinked(false)
                 .build());
     }
 
