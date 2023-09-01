@@ -1,12 +1,16 @@
 package com.dnd.Exercise.domain.notification.controller;
 
 import com.dnd.Exercise.domain.notification.dto.response.FindAllNotificationsRes;
+import com.dnd.Exercise.domain.notification.service.NotificationService;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Parameter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/notification")
+@RequiredArgsConstructor
 public class NotificationController {
+
+    private final NotificationService notificationService;
 
     @ApiOperation(value = "유저 알림 조회 💡")
     @GetMapping("/user")
@@ -55,8 +62,10 @@ public class NotificationController {
 
     @ApiOperation(value = "응원하기 💡", notes = "2시간에 한 번만 가능하도록")
     @PostMapping("/cheer/{id}")
-    public ResponseEntity<String> cheerMembers(
+    public ResponseEntity<String> cheerMember(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "유저 ID") @PathVariable("id") Long id){
+        notificationService.cheerMember(user ,id);
         return ResponseDto.ok("응원하기 완료");
     }
 }
