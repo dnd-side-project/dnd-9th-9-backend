@@ -9,9 +9,7 @@ import com.dnd.Exercise.domain.exercise.service.ExerciseService;
 import com.dnd.Exercise.domain.sports.entity.Sports;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -55,7 +53,14 @@ public class ExerciseController {
         return ResponseDto.ok(257);
     }
 
-    @ApiOperation(value = "애플 데이터에서 운동기록 등록 📝", notes = "운동 리스트 등록 - getAnchoredWorkouts 리스트를 등록합니다 <br> (애플 측에서 데이터 '수정 또는 삭제' 발생한 경우에도 이 api 사용) <br> (request body 의 start/end DateTime 은 말씀해주신대로 yyyy-MM-dd HH:mm:ss String 입니다!)")
+    @ApiOperation(value = "애플 데이터에서 운동기록 등록 📝", notes = "운동 리스트 등록 - getAnchoredWorkouts 리스트를 등록합니다 " +
+            "<br> - (애플 측에서 데이터 '수정 또는 삭제' 발생한 경우에도 이 api 사용) " +
+            "<br> - getAnchoredWorkouts 리스트의 내용대로 서버 상태를 sync 합니다." +
+            "<br> - appleUid 는 '애플 데이터 상에서 해당 운동기록의 고유 id' 를 뜻합니다.")
+    @ApiResponses({
+            @ApiResponse(code=200, message="애플 운동기록 등록 성공"),
+            @ApiResponse(code=400, message="애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다.")
+    })
     @PostMapping("/apple-workouts")
     public ResponseEntity<String> postExerciseByApple (@RequestBody @Valid PostExerciseByAppleReq postExerciseByAppleReq, @AuthenticationPrincipal User user) {
         exerciseService.postExerciseByApple(postExerciseByAppleReq, user);
@@ -101,7 +106,9 @@ public class ExerciseController {
         return ResponseDto.ok(data);
     }
 
-    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝", notes = "오늘 날짜 기준으로 최근 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. <br> - '홈화면' 의 '최근 많이 한 운동' 에서 사용합니다. <br> - 운동시간 총합이 큰 종목 우선 정렬, 운동시간이 같을 경우 소비 칼로리 총합 순 정렬")
+    @ApiOperation(value = "최근 많이 한 운동 불러오기 📝 - [홈화면 '최근 많이 한 운동']", notes = "오늘 하루동안 가장 많이 한 운동종목 4가지, 각각의 운동시간/소모칼로리 정보를 불러옵니다. " +
+            "<br> - '홈화면' 의 '최근 많이 한 운동' 에서 사용합니다. " +
+            "<br> - 운동시간 총합이 큰 종목 우선 정렬, 운동시간이 같을 경우 소비 칼로리 총합 순 정렬")
     @ApiImplicitParam(name = "date", value = "오늘 날짜", required = true, dataType = "string")
     @GetMapping("/recent")
     public ResponseEntity<GetRecentsRes> getRecents (
