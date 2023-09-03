@@ -50,22 +50,4 @@ public class NotificationController {
             @Parameter(description = "알림 ID") @PathVariable("id") Long id){
         return ResponseDto.ok("알림 읽음");
     }
-
-
-    @ApiOperation(value = "팀원 깨우기 💡", notes = "2시간에 한 번만 가능하도록")
-    @PostMapping("/alert/{id}")
-    public ResponseEntity<String> alertMembers(
-            @Parameter(description = "필드 ID") @PathVariable("id") Long id){
-        return ResponseDto.ok("팀원 꺠우기 완료");
-    }
-
-
-    @ApiOperation(value = "응원하기 💡", notes = "2시간에 한 번만 가능하도록")
-    @PostMapping("/cheer/{id}")
-    public ResponseEntity<String> cheerMember(
-            @AuthenticationPrincipal User user,
-            @Parameter(description = "유저 ID") @PathVariable("id") Long id){
-        notificationService.cheerMember(user ,id);
-        return ResponseDto.ok("응원하기 완료");
-    }
 }

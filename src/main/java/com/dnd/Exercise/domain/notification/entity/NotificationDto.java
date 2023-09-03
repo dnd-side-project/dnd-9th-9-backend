@@ -13,17 +13,19 @@ public class NotificationDto {
     private String title;
     private String content;
     private NotificationType notificationType;
+    private Field field;
 
     @Builder
-    public NotificationDto(NotificationTopic topic, String from, String to){
+    public NotificationDto(NotificationTopic topic, String from, String to, Field field){
         this.title = topic.getTitle();
+        this.field = field;
         if (topic == NotificationTopic.CHEER){
             this.content = from + "님이 응원해요❣";
             this.notificationType = NotificationType.USER;
         }
     }
 
-    public Notification toEntity(User user, Field field){
+    public Notification toEntity(User user){
         return Notification.builder()
                 .title(title)
                 .content(content)
