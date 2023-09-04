@@ -50,6 +50,4 @@ public interface FieldService {
     FindFieldResultRes findFieldResult(User user, Long fieldId);
 
     void changeLeader(User user, Long fieldId, Long id);
-
-    void cheerMember(User user, Long id);
 }

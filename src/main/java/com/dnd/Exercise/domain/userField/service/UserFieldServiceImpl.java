@@ -7,6 +7,7 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
@@ -16,6 +17,9 @@ import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
+import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
+import com.dnd.Exercise.domain.notification.event.NotificationEvent;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
@@ -34,6 +38,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +55,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final ActivityRingRepository activityRingRepository;
     private final UserRepository userRepository;
     private final FieldUtil fieldUtil;
+    private final ApplicationEventPublisher eventPublisher;
 
     private TopPlayerDto getTopUserByCriteria(
             RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
@@ -188,5 +194,18 @@ public class UserFieldServiceImpl implements UserFieldService {
             throw new BusinessException(MUST_NOT_LEADER);
         }
         userFieldRepository.deleteByFieldAndUser(field, user);
+    }
+
+    @Override
+    public void cheerMember(User user, Long id) {
+        User targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.CHEER)
+                .from(user.getName())
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
     }
 }

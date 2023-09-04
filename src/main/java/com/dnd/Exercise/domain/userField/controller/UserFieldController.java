@@ -23,6 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -113,5 +114,22 @@ public class UserFieldController {
             @AuthenticationPrincipal User user){
         FindMyTeamStatusRes result = userFieldService.findMyTeamStatus(user);
         return ResponseDto.ok(result);
+    }
+
+    @ApiOperation(value = "팀원 깨우기 💡", notes = "2시간에 한 번만 가능하도록")
+    @PostMapping("/alert/{id}")
+    public ResponseEntity<String> alertMembers(
+            @Parameter(description = "필드 ID") @PathVariable("id") Long id){
+        return ResponseDto.ok("팀원 꺠우기 완료");
+    }
+
+
+    @ApiOperation(value = "응원하기 💡", notes = "2시간에 한 번만 가능하도록")
+    @PostMapping("/cheer/{id}")
+    public ResponseEntity<String> cheerMember(
+            @AuthenticationPrincipal User user,
+            @Parameter(description = "유저 ID") @PathVariable("id") Long id){
+        userFieldService.cheerMember(user ,id);
+        return ResponseDto.ok("응원하기 완료");
     }
 }

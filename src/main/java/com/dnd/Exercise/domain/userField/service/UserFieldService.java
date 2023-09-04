@@ -25,4 +25,6 @@ public interface UserFieldService {
     void ejectMember(User user, Long fieldId, List<Long> ids);
 
     void exitField(User user, Long id);
+
+    void cheerMember(User user, Long id);
 }

@@ -46,13 +46,10 @@ import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
-import com.dnd.Exercise.domain.notification.entity.NotificationDto;
-import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
-import com.dnd.Exercise.domain.notification.event.NotificationEvent;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.s3.AwsS3Service;
 import com.dnd.Exercise.global.util.field.FieldUtil;
@@ -86,7 +83,6 @@ public class FieldServiceImpl implements FieldService{
     private final AwsS3Service awsS3Service;
     private final FieldUtil fieldUtil;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final String S3_FOLDER = "field-profile";
 
 
@@ -501,18 +497,5 @@ public class FieldServiceImpl implements FieldService{
         fieldUtil.validateIsMember(newLeader, field);
 
         field.changeLeader(newLeader.getId());
-    }
-
-    @Override
-    public void cheerMember(User user, Long id) {
-        User targetUser = userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
-
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.CHEER)
-                .from(user.getName())
-                .build();
-
-        eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
     }
 }
