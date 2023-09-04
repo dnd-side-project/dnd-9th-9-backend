@@ -1,7 +1,6 @@
 package com.dnd.Exercise.domain.fieldEntry.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
-import java.util.List;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

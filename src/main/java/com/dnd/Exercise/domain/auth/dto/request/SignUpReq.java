@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.auth.dto.request;
 
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

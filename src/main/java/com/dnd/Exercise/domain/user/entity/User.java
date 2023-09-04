@@ -1,8 +1,11 @@
 package com.dnd.Exercise.domain.user.entity;
 
+import com.dnd.Exercise.domain.fcmToken.entity.FcmToken;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.*;
 
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import com.dnd.Exercise.global.common.BaseEntity;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -55,6 +58,9 @@ public class User extends BaseEntity implements UserDetails {
 
     private Boolean isAppleLinked;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FcmToken> fcmTokens = new ArrayList<>();
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return new HashSet<GrantedAuthority>();
@@ -100,5 +106,10 @@ public class User extends BaseEntity implements UserDetails {
         this.skillLevel = skillLevel;
         this.loginType = loginType;
         this.isAppleLinked = isAppleLinked;
+    }
+
+    public void addToken(FcmToken fcmToken) {
+        fcmTokens.add(fcmToken);
+        fcmToken.addUser(this);
     }
 }

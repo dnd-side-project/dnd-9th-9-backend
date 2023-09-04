@@ -55,11 +55,14 @@ dependencies {
 	// JWT
 	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 
-	//redis
+	// redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	// S3
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+	// firebase
+	implementation 'com.google.firebase:firebase-admin:7.1.0'
 }
 
 jar {

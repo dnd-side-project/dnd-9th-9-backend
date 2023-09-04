@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.field.dto.request;
 
-import com.dnd.Exercise.domain.field.entity.FieldSide;
+import com.dnd.Exercise.domain.field.entity.enums.FieldSide;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDate;
 import javax.validation.constraints.NotNull;

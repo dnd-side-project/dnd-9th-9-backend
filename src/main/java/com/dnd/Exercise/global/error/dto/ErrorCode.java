@@ -73,7 +73,9 @@ public enum ErrorCode {
 
     UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),
 
-    FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "S-002", "파일 삭제 중 오류가 발생했습니다.");
+    FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "S-002", "파일 삭제 중 오류가 발생했습니다."),
+
+    FCM_TIME_LIMIT(HttpStatus.BAD_REQUEST, "N-001", "2시간마다 가능합니다.");
 
     private final HttpStatus status;
     private final String code;

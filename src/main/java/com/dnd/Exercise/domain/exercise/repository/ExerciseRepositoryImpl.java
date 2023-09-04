@@ -7,7 +7,7 @@ import com.dnd.Exercise.domain.exercise.dto.response.RecentSportsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.QFindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
-import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;

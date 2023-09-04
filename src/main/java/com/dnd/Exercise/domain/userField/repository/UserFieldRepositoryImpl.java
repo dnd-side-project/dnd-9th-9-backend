@@ -1,11 +1,11 @@
 package com.dnd.Exercise.domain.userField.repository;
 
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.COMPLETED;
 import static com.dnd.Exercise.domain.field.entity.QField.field;
 import static com.dnd.Exercise.domain.field.repository.FieldRepositoryImpl.evaluateEq;
 import static com.dnd.Exercise.domain.userField.entity.QUserField.userField;
 
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.querydsl.jpa.impl.JPAQueryFactory;

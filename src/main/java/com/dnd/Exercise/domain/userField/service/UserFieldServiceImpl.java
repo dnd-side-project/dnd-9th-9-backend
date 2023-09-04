@@ -1,21 +1,29 @@
 package com.dnd.Exercise.domain.userField.service;
 
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.*;
-import static com.dnd.Exercise.domain.field.entity.FieldType.*;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.*;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.*;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CALORIE;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_PREFIX;
+import static com.dnd.Exercise.global.common.Constants.REDIS_NOTIFICATION_VERIFIED;
+import static com.dnd.Exercise.global.common.Constants.REDIS_WAKEUP_PREFIX;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.FCM_TIME_LIMIT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
-import com.dnd.Exercise.domain.field.entity.BattleType;
+import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
+import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
+import com.dnd.Exercise.domain.notification.event.NotificationEvent;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
@@ -26,14 +34,18 @@ import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
+import com.dnd.Exercise.global.common.Constants;
+import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.util.field.FieldUtil;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +62,9 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final ActivityRingRepository activityRingRepository;
     private final UserRepository userRepository;
     private final FieldUtil fieldUtil;
+    private final ApplicationEventPublisher eventPublisher;
+    private final RedisService redisService;
+    
 
     private TopPlayerDto getTopUserByCriteria(
             RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
@@ -60,6 +75,26 @@ public class UserFieldServiceImpl implements UserFieldService {
             return exerciseRepository.findAccumulatedTopByDynamicCriteria(
                     criterion, startDate, memberIds);
         }
+    }
+
+    private void validateFcmTimeLimit(User fromUser, Object target) {
+        String prefix;
+        Long targetId;
+
+        if (target instanceof User) {
+            prefix = REDIS_CHEER_PREFIX;
+            targetId = ((User) target).getId();
+        } else {
+            prefix = REDIS_WAKEUP_PREFIX;
+            targetId = ((Field) target).getId();
+        }
+        String key = fromUser.getId() + prefix + targetId;
+
+        if (REDIS_NOTIFICATION_VERIFIED.equals(redisService.getValues(key))) {
+            throw new BusinessException(FCM_TIME_LIMIT);
+        }
+
+        redisService.setValues(key, REDIS_NOTIFICATION_VERIFIED, Duration.ofHours(2));
     }
 
     @Override
@@ -188,5 +223,40 @@ public class UserFieldServiceImpl implements UserFieldService {
             throw new BusinessException(MUST_NOT_LEADER);
         }
         userFieldRepository.deleteByFieldAndUser(field, user);
+    }
+
+    @Transactional
+    @Override
+    public void cheerMember(User user, Long id) {
+        User targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        validateFcmTimeLimit(user, targetUser);
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.CHEER)
+                .from(user.getName())
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
+    }
+
+    @Override
+    public void alertMembers(User user, Long id) {
+        Field field = fieldUtil.getField(id);
+        fieldUtil.validateIsMember(user, field);
+
+        List<User> members = fieldUtil.getMembers(id);
+        members.remove(user);
+
+        validateFcmTimeLimit(user, field);
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.ALERT)
+                .from(user.getName())
+                .field(field)
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(members, notificationDto));
     }
 }

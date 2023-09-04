@@ -25,4 +25,8 @@ public class FcmToken {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    public void addUser(User user) {
+        this.user = user;
+    }
 }

@@ -1,7 +1,7 @@
 package com.dnd.Exercise.global.util.field;
 
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
@@ -15,7 +15,7 @@ import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
@@ -39,6 +39,11 @@ public class FieldUtil {
     public List<Long> getMemberIds(Long fieldId) {
         List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
         return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
+    }
+
+    public List<User> getMembers(Long fieldId){
+        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        return allMembers.stream().map(UserField::getUser).collect(Collectors.toList());
     }
 
     public List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {

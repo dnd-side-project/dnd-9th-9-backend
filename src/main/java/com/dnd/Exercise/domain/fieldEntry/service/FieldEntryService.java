@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.fieldEntry.service;
 
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;

@@ -1,11 +1,11 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.FieldStatus;
-import com.dnd.Exercise.domain.field.entity.Period;
-import com.dnd.Exercise.domain.field.entity.Goal;
-import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
-import com.dnd.Exercise.domain.field.entity.Strength;
+import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
+import com.dnd.Exercise.domain.field.entity.enums.Goal;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.Strength;
 import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;

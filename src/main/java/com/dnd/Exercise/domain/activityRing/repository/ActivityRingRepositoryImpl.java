@@ -4,7 +4,7 @@ import static com.dnd.Exercise.domain.activityRing.entity.QActivityRing.activity
 import static com.dnd.Exercise.domain.user.entity.QUser.user;
 
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
-import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.NumberExpression;

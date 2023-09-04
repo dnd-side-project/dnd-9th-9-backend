@@ -14,7 +14,7 @@ import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.time.LocalDate;
 import org.springframework.data.domain.Pageable;

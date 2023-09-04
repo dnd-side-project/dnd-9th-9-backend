@@ -3,16 +3,16 @@ package com.dnd.Exercise.domain.field.service;
 import static com.dnd.Exercise.domain.field.dto.response.FieldRole.GUEST;
 import static com.dnd.Exercise.domain.field.dto.response.FieldRole.LEADER;
 import static com.dnd.Exercise.domain.field.dto.response.FieldRole.MEMBER;
-import static com.dnd.Exercise.domain.field.entity.FieldSide.AWAY;
-import static com.dnd.Exercise.domain.field.entity.FieldSide.HOME;
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.COMPLETED;
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.IN_PROGRESS;
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.RECRUITING;
-import static com.dnd.Exercise.domain.field.entity.FieldType.*;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldSide.AWAY;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldSide.HOME;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.COMPLETED;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.*;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CALORIE;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
@@ -40,10 +40,10 @@ import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
 import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldSide;
-import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.field.entity.RankCriterion;
-import com.dnd.Exercise.domain.field.entity.WinStatus;
+import com.dnd.Exercise.domain.field.entity.enums.FieldSide;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -73,7 +74,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional(readOnly = true)
 @Slf4j
 public class FieldServiceImpl implements FieldService{
-
     private final FieldRepository fieldRepository;
     private final UserFieldRepository userFieldRepository;
     private final FieldMapper fieldMapper;

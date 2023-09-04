@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.user.dto.request;
 
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

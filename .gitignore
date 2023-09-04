@@ -38,3 +38,5 @@ out/
 
 **/application.properties
 .gitmessage.txt
+
+firebase/

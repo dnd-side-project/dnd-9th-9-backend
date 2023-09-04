@@ -1,7 +1,7 @@
 package com.dnd.Exercise.domain.fieldEntry.service;
 
-import static com.dnd.Exercise.domain.field.entity.FieldType.DUEL;
-import static com.dnd.Exercise.domain.field.entity.FieldType.TEAM_BATTLE;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.DUEL;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM_BATTLE;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_APPLY;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
@@ -10,7 +10,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
 
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.dto.FieldEntryMapper;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
