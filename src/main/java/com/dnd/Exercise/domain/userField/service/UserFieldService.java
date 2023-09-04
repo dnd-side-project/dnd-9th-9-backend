@@ -5,6 +5,7 @@ import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindAllMyCompletedFieldsRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import java.util.List;
@@ -16,7 +17,7 @@ public interface UserFieldService {
 
     List<FindAllFieldsDto> findAllMyInProgressFields(User user);
 
-    List<FindAllFieldsDto> findAllMyCompletedFields(User user, FieldType fieldType, Pageable pageable);
+    FindAllMyCompletedFieldsRes findAllMyCompletedFields(User user, FieldType fieldType, Pageable pageable);
 
     FindMyBattleStatusRes findMyBattleStatus(User user, BattleType battleType);
 

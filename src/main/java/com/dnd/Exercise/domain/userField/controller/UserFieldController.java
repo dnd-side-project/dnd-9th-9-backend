@@ -5,6 +5,7 @@ import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindAllMyCompletedFieldsRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.service.UserFieldService;
@@ -58,11 +59,11 @@ public class UserFieldController {
     @ApiOperation(value = "종료된 나의 필드 조회 📜",
             notes = "페이지 기본값: 0, 사이즈 기본값: 5, fieldType = null 일 경우 전체 조회")
     @GetMapping("/completed")
-    public ResponseEntity<List<FindAllFieldsDto>> findAllMyCompletedFields(
+    public ResponseEntity<FindAllMyCompletedFieldsRes> findAllMyCompletedFields(
             @AuthenticationPrincipal User user,
             @RequestParam(value = "fieldType", required = false) FieldType fieldType,
             @PageableDefault(page = 0, size = 5) Pageable pageable){
-        List<FindAllFieldsDto> result = userFieldService.findAllMyCompletedFields(user, fieldType, pageable);
+        FindAllMyCompletedFieldsRes result = userFieldService.findAllMyCompletedFields(user, fieldType, pageable);
         return ResponseDto.ok(result);
     }
 

@@ -16,7 +16,9 @@ import com.dnd.Exercise.domain.fieldEntry.dto.FieldEntryMapper;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryDto;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryDto;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -167,27 +170,50 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     }
 
     @Override
-    public List<FindAllTeamEntryRes> findAllTeamEntries(User user, Long fieldId,
+    public FindAllTeamEntryRes findAllTeamEntries(User user, Long fieldId,
             Pageable pageable) {
         Field field = fieldUtil.getField(fieldId);
         fieldUtil.validateIsMember(user, field);
 
-        return fieldEntryRepository.findAllTeamEntryByHostField(field, pageable);
+        Page<FindAllTeamEntryDto> queryResult = fieldEntryRepository
+                .findAllTeamEntryByHostField(field, pageable);
+
+        List<FindAllTeamEntryDto> teamEntries = queryResult.getContent();
+        Long totalCount = queryResult.getTotalElements();
+
+        return FindAllTeamEntryRes.builder()
+                .teamEntries(teamEntries)
+                .totalCount(totalCount)
+                .currentPageSize(pageable.getPageSize())
+                .currentPageNumber(pageable.getPageNumber())
+                .build();
     }
 
     @Override
-    public List<FindAllBattleEntryRes> findAllBattleEntriesByDirection(User user, Long fieldId,
+    public FindAllBattleEntryRes findAllBattleEntriesByDirection(User user, Long fieldId,
             FieldDirection fieldDirection, Pageable pageable) {
         Field field = fieldUtil.getField(fieldId);
         fieldUtil.validateIsMember(user, field);
 
-        return fieldEntryRepository.findAllBattleByField(field, fieldDirection, pageable);
+        Page<FindAllBattleEntryDto> queryResult = fieldEntryRepository
+                .findAllBattleByField(field, fieldDirection, pageable);
+
+        List<FindAllBattleEntryDto> battleEntries = queryResult.getContent();
+        Long totalCount = queryResult.getTotalElements();
+
+        return FindAllBattleEntryRes.builder()
+                .battleEntries(battleEntries)
+                .totalCount(totalCount)
+                .currentPageSize(pageable.getPageSize())
+                .currentPageNumber(pageable.getPageNumber())
+                .build();
+        
     }
 
     @Override
-    public List<FindAllBattleEntryRes> findAllBattleEntriesByType(User user, FieldType fieldType,
+    public FindAllBattleEntryRes findAllBattleEntriesByType(User user, FieldType fieldType,
             Pageable pageable) {
-        List<FieldEntry> entryList = null;
+        Page<FieldEntry> queryResult = null;
         if(List.of(DUEL, TEAM_BATTLE).contains(fieldType)){
             List<UserField> userFields = userFieldRepository.findAllByUser(user);
 
@@ -199,16 +225,26 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             }).findFirst().orElse(null);
 
             if(myUserField == null){
-                return null;
+                return new FindAllBattleEntryRes(pageable);
             }
 
-            entryList = fieldEntryRepository.findByEntrantField(myUserField.getField(), pageable);
+            queryResult = fieldEntryRepository.findByEntrantField(myUserField.getField(), pageable);
         } else {
-            entryList = fieldEntryRepository.findByEntrantUser(user, pageable);
+            queryResult = fieldEntryRepository.findByEntrantUser(user, pageable);
         }
 
-        return entryList.stream()
+        List<FieldEntry> entryList = queryResult.getContent();
+        Long totalCount = queryResult.getTotalElements();
+
+        List<FindAllBattleEntryDto> battleEntries = entryList.stream()
                 .map(fieldEntryMapper::toFindAllBattleEntryRes).collect(
                         Collectors.toList());
+
+        return FindAllBattleEntryRes.builder()
+                .battleEntries(battleEntries)
+                .totalCount(totalCount)
+                .currentPageSize(pageable.getPageSize())
+                .currentPageNumber(pageable.getPageNumber())
+                .build();
     }
 }

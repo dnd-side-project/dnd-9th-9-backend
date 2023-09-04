@@ -13,4 +13,6 @@ import lombok.NoArgsConstructor;
 public class FindAllFieldsRes {
     private List<FindAllFieldsDto> fieldsInfos;
     private Long totalCount;
+    private int currentPageSize;
+    private int currentPageNumber;
 }

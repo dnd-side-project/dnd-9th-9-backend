@@ -14,7 +14,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -44,11 +43,11 @@ public class FieldEntryController {
             @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
     })
     @GetMapping("/team/{id}")
-    public ResponseEntity<List<FindAllTeamEntryRes>> findAllTeamEntries(
+    public ResponseEntity<FindAllTeamEntryRes> findAllTeamEntries(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        List<FindAllTeamEntryRes> result = fieldEntryService.findAllTeamEntries(user, fieldId, pageable);
+        FindAllTeamEntryRes result = fieldEntryService.findAllTeamEntries(user, fieldId, pageable);
         return ResponseDto.ok(result);
     }
 
@@ -60,12 +59,13 @@ public class FieldEntryController {
             @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
     })
     @GetMapping("/battle/{id}")
-    public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByDirection(
+    public ResponseEntity<FindAllBattleEntryRes> findAllBattleEntriesByDirection(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
             @RequestParam(value = "fieldDirection") FieldDirection fieldDirection,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        List<FindAllBattleEntryRes> result = fieldEntryService.findAllBattleEntriesByDirection(user, fieldId, fieldDirection, pageable);
+        FindAllBattleEntryRes result = fieldEntryService
+                .findAllBattleEntriesByDirection(user, fieldId, fieldDirection, pageable);
         return ResponseDto.ok(result);
     }
 
@@ -73,11 +73,11 @@ public class FieldEntryController {
     @ApiOperation(value = "[My 매칭 - 신청] 페이지 - 필드 신청한 내역 조회 📬",
             notes = "페이지 기본값: 0, 사이즈 기본값: 3 <br> 신청한 내역이 없을 경우 null 을 반환합니다.")
     @GetMapping
-    public ResponseEntity<List<FindAllBattleEntryRes>> findAllBattleEntriesByType(
+    public ResponseEntity<FindAllBattleEntryRes> findAllBattleEntriesByType(
             @AuthenticationPrincipal User user,
             @RequestParam(value = "fieldType") FieldType fieldType,
             @PageableDefault(page = 0, size = 3) Pageable pageable){
-        List<FindAllBattleEntryRes> result = fieldEntryService.findAllBattleEntriesByType(user, fieldType, pageable);
+        FindAllBattleEntryRes result = fieldEntryService.findAllBattleEntriesByType(user, fieldType, pageable);
         return ResponseDto.ok(result);
     }
 

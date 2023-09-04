@@ -8,14 +8,16 @@ import static com.dnd.Exercise.domain.user.entity.QUser.user;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.QField;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
-import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
-import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryDto;
+import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -25,9 +27,16 @@ public class FieldEntryRepositoryImpl implements FieldEntryRepositoryCustom{
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<FindAllTeamEntryRes> findAllTeamEntryByHostField(Field field, Pageable pageable) {
-        return queryFactory
-                .select(Projections.constructor(FindAllTeamEntryRes.class,
+    public Page<FindAllTeamEntryDto> findAllTeamEntryByHostField(Field field, Pageable pageable) {
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(fieldEntry.count())
+                .from(fieldEntry)
+                .join(fieldEntry.entrantUser, user)
+                .where(fieldEntry.hostField.id.eq(field.getId()), fieldEntry.entrantField.isNull());
+
+        List<FindAllTeamEntryDto> results = queryFactory
+                .select(Projections.constructor(FindAllTeamEntryDto.class,
                         fieldEntry.id,
                         fieldEntry.entrantUser.id,
                         fieldEntry.entrantUser.name,
@@ -40,13 +49,20 @@ public class FieldEntryRepositoryImpl implements FieldEntryRepositoryCustom{
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();
+
+        return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
     }
 
     @Override
-    public List<FindAllBattleEntryRes> findAllBattleByField(Field field,
+    public Page<FindAllBattleEntryDto> findAllBattleByField(Field field,
             FieldDirection fieldDirection, Pageable pageable) {
-        JPAQuery<FindAllBattleEntryRes> query = queryFactory
-                .select(Projections.constructor(FindAllBattleEntryRes.class,
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(fieldEntry.count())
+                .from(fieldEntry);
+
+        JPAQuery<FindAllBattleEntryDto> query = queryFactory
+                .select(Projections.constructor(FindAllBattleEntryDto.class,
                         fieldEntry.id,
                         fieldDirection == SENT ? fieldEntry.hostField.id : fieldEntry.entrantField.id,
                         fieldDirection == SENT ? fieldEntry.hostField.name : fieldEntry.entrantField.name,
@@ -63,11 +79,20 @@ public class FieldEntryRepositoryImpl implements FieldEntryRepositoryCustom{
         if (SENT.equals(fieldDirection)) {
             query.join(fieldEntry.hostField, QField.field);
             query.where(fieldEntry.entrantField.id.eq(field.getId()), fieldEntry.entrantUser.isNull());
+
+            countQuery.join(fieldEntry.hostField, QField.field);
+            countQuery.where(fieldEntry.entrantField.id.eq(field.getId()), fieldEntry.entrantUser.isNull());
+
         } else {
             query.join(fieldEntry.entrantField, QField.field);
             query.where(fieldEntry.hostField.id.eq(field.getId()), fieldEntry.entrantUser.isNull());
+
+            countQuery.join(fieldEntry.entrantField, QField.field);
+            countQuery.where(fieldEntry.hostField.id.eq(field.getId()), fieldEntry.entrantUser.isNull());
         }
 
-        return query.fetch();
+        List<FindAllBattleEntryDto> results = query.fetch();
+
+        return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
     }
 }

@@ -1,6 +1,7 @@
 package com.dnd.Exercise.domain.exercise.repository;
 
 import static com.dnd.Exercise.domain.exercise.entity.QExercise.exercise;
+import static com.dnd.Exercise.domain.field.entity.QField.field;
 import static com.dnd.Exercise.domain.user.entity.QUser.user;
 
 import com.dnd.Exercise.domain.exercise.dto.response.RecentSportsDto;
@@ -12,11 +13,14 @@ import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -63,23 +67,33 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
     }
 
     @Override
-    public List<FindFieldRecordDto> findAllWithUser(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId) {
+    public Page<FindFieldRecordDto> findAllWithUser(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId) {
 
         BooleanExpression isLeader = getIsLeader(leaderId);
 
-        return queryFactory
+        JPAQuery<Long> countQuery = queryFactory
+                .select(exercise.count())
+                .from(exercise)
+                .join(exercise.user, user)
+                .where(exercise.exerciseDate.eq(date)
+                        .and(exercise.user.id.in(userIds)));
+
+        List<FindFieldRecordDto> results = queryFactory
                 .select(new QFindFieldRecordDto(exercise.id, user.id, user.profileImg, user.name,
-                        isLeader, exercise.sports, exercise.recordingDateTime, exercise.durationMinute,
+                        isLeader, exercise.sports, exercise.recordingDateTime,
+                        exercise.durationMinute,
                         exercise.burnedCalorie, exercise.memoImg, exercise.memoContent,
                         exercise.isMemoPublic))
                 .from(exercise)
                 .join(exercise.user, user)
                 .where(exercise.exerciseDate.eq(date)
-                .and(exercise.user.id.in(userIds)))
+                        .and(exercise.user.id.in(userIds)))
                 .orderBy(exercise.recordingDateTime.asc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+
+        return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
     }
 
     private BooleanExpression getIsLeader(Long leaderId){
