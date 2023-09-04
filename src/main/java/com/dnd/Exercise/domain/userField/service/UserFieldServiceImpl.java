@@ -6,6 +6,9 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CA
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_PREFIX;
+import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_VERIFIED;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.FCM_TIME_LIMIT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
@@ -30,8 +33,11 @@ import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
+import com.dnd.Exercise.global.common.Constants;
+import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.util.field.FieldUtil;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -56,6 +62,8 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final UserRepository userRepository;
     private final FieldUtil fieldUtil;
     private final ApplicationEventPublisher eventPublisher;
+    private final RedisService redisService;
+    
 
     private TopPlayerDto getTopUserByCriteria(
             RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
@@ -66,6 +74,16 @@ public class UserFieldServiceImpl implements UserFieldService {
             return exerciseRepository.findAccumulatedTopByDynamicCriteria(
                     criterion, startDate, memberIds);
         }
+    }
+
+    private void validateFcmTimeLimit(User fromUser, User toUser) {
+        if(REDIS_CHEER_VERIFIED.equals(redisService.getValues(
+                fromUser.getId() + REDIS_CHEER_PREFIX +  toUser.getId()))){
+            throw new BusinessException(FCM_TIME_LIMIT);
+        }
+
+        redisService.setValues( fromUser.getId() + REDIS_CHEER_PREFIX + toUser.getId(),
+                REDIS_CHEER_VERIFIED, Duration.ofHours(2));
     }
 
     @Override
@@ -196,10 +214,13 @@ public class UserFieldServiceImpl implements UserFieldService {
         userFieldRepository.deleteByFieldAndUser(field, user);
     }
 
+    @Transactional
     @Override
     public void cheerMember(User user, Long id) {
         User targetUser = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(NOT_FOUND));
+
+        validateFcmTimeLimit(user, targetUser);
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .topic(NotificationTopic.CHEER)
