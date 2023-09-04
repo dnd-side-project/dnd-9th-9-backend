@@ -58,9 +58,9 @@ public class FieldController {
     @ApiOperation(value = "필드 생성 🔥")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 생성 완료"),
-            @ApiResponse(code=400, message="이미 해당 유형의 필드를 가지고 있습니다. "
+            @ApiResponse(code=400, message="[FE-002] 이미 해당 유형의 필드를 가지고 있습니다. "
                     + "가질 수 있는 최대 필드 수 : 1:1 배틀 1개, 팀 배틀 1개, 팀 1개 "
-                    + "| 1:1 배틀의 최대 인원은 1명입니다.")
+                    + "<br>[F-010] 1:1 배틀의 최대 인원은 1명입니다. ")
     })
     @PostMapping
     public ResponseEntity<String> createField(
@@ -86,6 +86,9 @@ public class FieldController {
 
     @ApiOperation(value = "단일 필드 조회 🔥", notes = "팀원 정보를 제외한 해당 필드에 관한 정보를 불러옵니다. <br>"
             + "로그인한 유저가 해당 필드의 팀원이고, 매칭된 필드일 경우 상대 팀 정보를 추가로 조회합니다")
+    @ApiResponses({
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<FindFieldRes> findField(
             @AuthenticationPrincipal User user,
@@ -99,10 +102,11 @@ public class FieldController {
     @ApiOperation(value = "필드 프로필 수정 🔥")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 프로필 수정 완료"),
-            @ApiResponse(code=400, message="매치가 이미 진행 중입니다. | 파일 삭제 중 오류가 발생했습니다. "
-                    + "| 업로드 중 오류가 발생했습니다."),
-            @ApiResponse(code=403, message="팀장 권한이 필요합니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-004] 매치가 이미 진행 중입니다. "
+                    + "<br>[S-002] 파일 삭제 중 오류가 발생했습니다. "
+                    + "<br>[S-001] 업로드 중 오류가 발생했습니다."),
+            @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @PatchMapping("/{id}/profile")
     public ResponseEntity<String> updateFieldProfile(
@@ -117,9 +121,10 @@ public class FieldController {
     @ApiOperation(value = "필드 정보 수정 🔥")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 정보 수정 완료"),
-            @ApiResponse(code=400, message="매치가 이미 진행 중입니다. | 1:1 배틀의 최대 인원은 1명입니다."),
-            @ApiResponse(code=403, message="팀장 권한이 필요합니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-004] 매치가 이미 진행 중입니다. "
+                    + "<br>[F-010] 1:1 배틀의 최대 인원은 1명입니다."),
+            @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @PatchMapping("/{id}/info")
     public ResponseEntity<String> updateFieldInfo(
@@ -134,10 +139,10 @@ public class FieldController {
     @ApiOperation(value = "필드 삭제 🔥")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 삭제 완료"),
-            @ApiResponse(code=400, message="완료된 필드에 대해서는 삭제가 불가능합니다. "
-                    + "| 매치가 이미 진행 중입니다."),
-            @ApiResponse(code=403, message="팀장 권한이 필요합니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-002] 완료된 필드에 대해서는 삭제가 불가능합니다. "
+                    + "<br>[F-004] 매치가 이미 진행 중입니다."),
+            @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @DeleteMapping("{id}")
     public ResponseEntity<String> deleteField(
@@ -150,11 +155,11 @@ public class FieldController {
 
     @ApiOperation(value = "자동 매칭 🔥")
     @ApiResponses({
-            @ApiResponse(code=400, message="매치가 이미 진행 중입니다. "
-                    + "| 현재 팀원 모집 중입니다."),
-            @ApiResponse(code=403, message="팀장 권한이 필요합니다."),
-            @ApiResponse(code=404, message="매칭을 위해서는 해당 유형의 필드가 필요합니다. "
-                    + "| 비슷한 조건의 필드가 없습니다.")
+            @ApiResponse(code=400, message="[F-004] 매치가 이미 진행 중입니다. "
+                    + "<br>[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다."),
+            @ApiResponse(code=404, message="[F-003] 매칭을 위해서는 해당 유형의 필드가 필요합니다. "
+                    + "<br>[F-006] 비슷한 조건의 필드가 없습니다.")
     })
     @GetMapping("/auto")
     public ResponseEntity<AutoMatchingRes> autoMatching(
@@ -169,8 +174,9 @@ public class FieldController {
     @ApiOperation(value = "방장 넘기기 🔥")
     @ApiResponses({
         @ApiResponse(code=200, message="팀장 변경 완료"),
-        @ApiResponse(code=403, message="팀장 권한이 필요합니다. | 팀 멤버가 아닙니다."),
-        @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+        @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다. "
+                + "<br>[F-012] 팀 멤버가 아닙니다."),
+        @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @PatchMapping("/{id}/change-leader")
     public ResponseEntity<String> changeLeader(
@@ -188,9 +194,10 @@ public class FieldController {
                     + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'하루 요약'에서 사용 <br>"
                     + "배틀 상대가 있는 필드로 HOME 조회 시 나의 승리 여부와 상대 필드 이름도 조회됩니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
-            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다. | 매칭된 상대 필드가 없습니다.")
+            @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008]필드를 찾을 수 없습니다. "
+                    + "<br>[F-007] 매칭된 상대 필드가 없습니다.")
     })
     @GetMapping("/{id}/rating-summary")
     public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
@@ -205,9 +212,9 @@ public class FieldController {
     // DB에서 RANK 사용해서 상위 3개만 추출
     @ApiOperation(value = "나의 필드 or 상대편 필드 팀원별 랭킹 조회 🔥", notes = "팀과 팀배틀에서만 사용")
     @ApiResponses({
-            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
-            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @GetMapping("/{id}/team/ranking")
     public ResponseEntity<GetRankingRes> getTeamRanking(
@@ -221,9 +228,9 @@ public class FieldController {
 
     @ApiOperation(value = "1:1 배틀 랭킹 조회 🔥", notes = "1:1 배틀에서만 사용")
     @ApiResponses({
-            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
-            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @ApiImplicitParam(name = "date", value = "선택 날짜", required = true, dataType = "string")
     @GetMapping("/{id}/duel/ranking")
@@ -238,9 +245,9 @@ public class FieldController {
     @ApiOperation(value = "[필드 - 기록] 페이지 스레드 리스트 조회 🔥",
             notes = " page 기본값: 0, size 기본값: 3 <br> DUEL 일 경우 상대방 기록까지 조회")
     @ApiResponses({
-            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
-            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @GetMapping("{id}/record")
     public ResponseEntity<FindAllFieldRecordsRes> findAllFieldRecords(
@@ -253,9 +260,10 @@ public class FieldController {
 
     @ApiOperation(value = "[필드 - 기록] 페이지 스레드 단일 운동 조회 🔥", notes = "운동 내역 클릭시")
     @ApiResponses({
-            @ApiResponse(code=400, message="현재 팀원 모집 중입니다."),
-            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다. | 운동 정보를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다. "
+                    + "<br>[E-001] 운동 정보를 찾을 수 없습니다.")
     })
     @GetMapping("{fieldId}/record/{exerciseId}")
     public ResponseEntity<FindFieldRecordDto> findFieldRecord(
@@ -276,9 +284,9 @@ public class FieldController {
     @ApiOperation(value = "[필드 - 매칭] 종료된 필드 매칭 결과 조회 🔥"
             , notes = "매칭 결과, 점수 분석, 받은 뱃지를 반환합니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="완료된 필드가 아닙니다."),
-            @ApiResponse(code=403, message="팀 멤버가 아닙니다."),
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=400, message="[F-011] 완료된 필드가 아닙니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @GetMapping("{id}/result")
     public ResponseEntity<FindFieldResultRes> findFieldResult(

@@ -39,7 +39,7 @@ public class UserFieldController {
 
     @ApiOperation(value = "팀원 리스트 조회 📜")
     @ApiResponses({
-            @ApiResponse(code=404, message="필드를 찾을 수 없습니다.")
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
     @GetMapping("/{id}")
     public ResponseEntity<List<FindAllMembersRes>> findAllMembers(
@@ -70,8 +70,9 @@ public class UserFieldController {
     @ApiOperation(value = "팀원 내보내기 📜")
     @ApiResponses({
             @ApiResponse(code=200, message="팀원 내보내기 완료"),
-            @ApiResponse(code=400, message="필드를 찾을 수 없습니다. | 매치가 이미 진행 중입니다."),
-            @ApiResponse(code=403, message = "팀장 권한이 필요합니다.")
+            @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다. "
+                    + "<br>[F-004] 매치가 이미 진행 중입니다."),
+            @ApiResponse(code=403, message = "[F-009] 팀장 권한이 필요합니다.")
     })
     @DeleteMapping("/{id}/eject")
     public ResponseEntity<String> ejectMember(
@@ -85,8 +86,10 @@ public class UserFieldController {
     @ApiOperation(value = "필드 나가기 📜")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 나가기 완료"),
-            @ApiResponse(code=400, message="필드를 찾을 수 없습니다. | 매치가 이미 진행 중입니다."),
-            @ApiResponse(code=403, message = "팀 멤버가 아닙니다. | 팀 리더가 아니어야 합니다.")
+            @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다. "
+                    + "<br>[F-004] 매치가 이미 진행 중입니다."),
+            @ApiResponse(code=403, message = "[F-012] 팀 멤버가 아닙니다. "
+                    + "<br>[F-013] 팀 리더가 아니어야 합니다.")
     })
     @DeleteMapping("{id}/exit")
     public ResponseEntity<String> exitField(
@@ -118,6 +121,12 @@ public class UserFieldController {
     }
 
     @ApiOperation(value = "팀원 깨우기 💡", notes = "2시간에 한 번만 가능하도록")
+    @ApiResponses({
+            @ApiResponse(code=200, message="팀원 꺠우기 완료"),
+            @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다. "
+                    + "<br>[F-012] 팀 멤버가 아닙니다."
+                    + "<br>[N-001] 2시간마다 가능합니다.")
+    })
     @PostMapping("/alert/{id}")
     public ResponseEntity<String> alertMembers(
             @AuthenticationPrincipal User user,
@@ -128,6 +137,11 @@ public class UserFieldController {
 
 
     @ApiOperation(value = "응원하기 💡", notes = "2시간에 한 번만 가능하도록")
+    @ApiResponses({
+            @ApiResponse(code=200, message="응원하기 완료"),
+            @ApiResponse(code=400, message="[C-001] 리소스를 찾을 수 없음 "
+                    + "<br>[N-001] 2시간마다 가능합니다.")
+    })
     @PostMapping("/cheer/{id}")
     public ResponseEntity<String> cheerMember(
             @AuthenticationPrincipal User user,
