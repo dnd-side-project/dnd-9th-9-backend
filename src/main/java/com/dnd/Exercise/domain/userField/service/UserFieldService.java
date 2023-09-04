@@ -27,4 +27,6 @@ public interface UserFieldService {
     void exitField(User user, Long id);
 
     void cheerMember(User user, Long id);
+
+    void alertMembers(User user, Long id);
 }

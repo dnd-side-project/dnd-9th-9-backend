@@ -7,7 +7,8 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_PREFIX;
-import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_VERIFIED;
+import static com.dnd.Exercise.global.common.Constants.REDIS_NOTIFICATION_VERIFIED;
+import static com.dnd.Exercise.global.common.Constants.REDIS_WAKEUP_PREFIX;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FCM_TIME_LIMIT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
@@ -76,14 +77,24 @@ public class UserFieldServiceImpl implements UserFieldService {
         }
     }
 
-    private void validateFcmTimeLimit(User fromUser, User toUser) {
-        if(REDIS_CHEER_VERIFIED.equals(redisService.getValues(
-                fromUser.getId() + REDIS_CHEER_PREFIX +  toUser.getId()))){
+    private void validateFcmTimeLimit(User fromUser, Object target) {
+        String prefix;
+        Long targetId;
+
+        if (target instanceof User) {
+            prefix = REDIS_CHEER_PREFIX;
+            targetId = ((User) target).getId();
+        } else {
+            prefix = REDIS_WAKEUP_PREFIX;
+            targetId = ((Field) target).getId();
+        }
+        String key = fromUser.getId() + prefix + targetId;
+
+        if (REDIS_NOTIFICATION_VERIFIED.equals(redisService.getValues(key))) {
             throw new BusinessException(FCM_TIME_LIMIT);
         }
 
-        redisService.setValues( fromUser.getId() + REDIS_CHEER_PREFIX + toUser.getId(),
-                REDIS_CHEER_VERIFIED, Duration.ofHours(2));
+        redisService.setValues(key, REDIS_NOTIFICATION_VERIFIED, Duration.ofHours(2));
     }
 
     @Override
@@ -228,5 +239,24 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .build();
 
         eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
+    }
+
+    @Override
+    public void alertMembers(User user, Long id) {
+        Field field = fieldUtil.getField(id);
+        fieldUtil.validateIsMember(user, field);
+
+        List<User> members = fieldUtil.getMembers(id);
+        members.remove(user);
+
+        validateFcmTimeLimit(user, field);
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.ALERT)
+                .from(user.getName())
+                .field(field)
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(members, notificationDto));
     }
 }

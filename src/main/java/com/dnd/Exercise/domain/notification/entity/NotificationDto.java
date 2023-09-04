@@ -22,6 +22,9 @@ public class NotificationDto {
         if (topic == NotificationTopic.CHEER){
             this.content = from + "님이 응원해요❣";
             this.notificationType = NotificationType.USER;
+        } else if (topic == NotificationTopic.ALERT) {
+            this.content = from + "님이 " + field.getName() + " 팀을 깨웠어요💡";
+            this.notificationType = NotificationType.FIELD;
         }
     }
 

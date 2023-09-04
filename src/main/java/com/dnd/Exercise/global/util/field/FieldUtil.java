@@ -41,6 +41,11 @@ public class FieldUtil {
         return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
     }
 
+    public List<User> getMembers(Long fieldId){
+        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        return allMembers.stream().map(UserField::getUser).collect(Collectors.toList());
+    }
+
     public List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {
         return activityRingRepository.findAllByDateAndUserIdIn(date, memberIds);
     }

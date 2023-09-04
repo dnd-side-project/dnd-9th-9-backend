@@ -119,7 +119,9 @@ public class UserFieldController {
     @ApiOperation(value = "팀원 깨우기 💡", notes = "2시간에 한 번만 가능하도록")
     @PostMapping("/alert/{id}")
     public ResponseEntity<String> alertMembers(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "필드 ID") @PathVariable("id") Long id){
+        userFieldService.alertMembers(user, id);
         return ResponseDto.ok("팀원 꺠우기 완료");
     }
 
