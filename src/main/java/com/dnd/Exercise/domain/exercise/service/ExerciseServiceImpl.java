@@ -10,6 +10,7 @@ import com.dnd.Exercise.domain.exercise.dto.request.UpdateExerciseReq;
 import com.dnd.Exercise.domain.exercise.dto.response.*;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
+import com.dnd.Exercise.domain.sports.entity.Sports;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
@@ -132,6 +133,16 @@ public class ExerciseServiceImpl implements ExerciseService{
                 .build();
     }
 
+    @Override
+    public Integer getExpectedBurnedCalorie(int durationMinute, Sports sports, User user) {
+        validateUserWeight(user);
+
+        double result = ((sports.getMet() * (3.5 * user.getWeight() * durationMinute))/1000)*5;
+        Integer calorie = (int) Math.round(result);
+
+        return calorie;
+    }
+
     private int getDailyTotalBurnedCalorie(LocalDate date, User user) {
         int totalBurnedCalorie = 0;
 
@@ -195,6 +206,12 @@ public class ExerciseServiceImpl implements ExerciseService{
     private void validateIsAppleLinked(User user) {
         if (!user.getIsAppleLinked()) {
             throw new BusinessException(ErrorCode.APPLE_WORKOUTS_UPDATE_UNAVAILABLE);
+        }
+    }
+
+    private void validateUserWeight(User user) {
+        if (!(user.getWeight()>0)) {
+            throw new BusinessException(ErrorCode.NEED_USER_WEIGHT_FOR_EXPECTED_CALORIE);
         }
     }
 }

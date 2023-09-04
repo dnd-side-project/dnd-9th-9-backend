@@ -44,13 +44,12 @@ public class ExerciseController {
         return ResponseDto.ok("운동기록 등록 성공");
     }
 
-    @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 시 운동 종목에 대한 예상 소비칼로리 자체 계산 📝", notes = "figma flow 에서 운동시간 입력 후 '완료' 버튼 클릭 시 이 api 로 요청해서 예상 소비 칼로리 값을 얻습니다. 일단은 일관된 mock data 반환..")
+    @ApiOperation(value = "매치업 서비스 내에서 운동기록 등록 시 운동 종목에 대한 예상 소비칼로리 자체 계산 📝", notes = "운동 종목 별 met 값 + 유저 몸무게 + 운동 시간을 고려하여 예상 소모 칼로리를 계산합니다.")
     @GetMapping("/expected-burned-calorie")
     public ResponseEntity<Integer> getExpectedBurnedCalorie (
             @RequestParam int durationMinute, @RequestParam Sports sports, @AuthenticationPrincipal User user) {
-        // TODO: 칼로리 계산 정책 확립 후 로직 추가
-
-        return ResponseDto.ok(257);
+        Integer expectedBurnedCalorie = exerciseService.getExpectedBurnedCalorie(durationMinute,sports,user);
+        return ResponseDto.ok(expectedBurnedCalorie);
     }
 
     @ApiOperation(value = "애플 데이터에서 운동기록 등록 📝", notes = "운동 리스트 등록 - getAnchoredWorkouts 리스트를 등록합니다 " +
