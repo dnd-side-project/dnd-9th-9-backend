@@ -1,8 +1,8 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
 import com.dnd.Exercise.domain.Badge.entity.BadgeDto;
-import com.dnd.Exercise.domain.field.entity.Period;
-import com.dnd.Exercise.domain.field.entity.WinStatus;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
+import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;

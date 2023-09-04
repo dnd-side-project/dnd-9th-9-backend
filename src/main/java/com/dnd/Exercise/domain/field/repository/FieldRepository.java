@@ -1,9 +1,9 @@
 package com.dnd.Exercise.domain.field.repository;
 
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldStatus;
-import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.field.entity.Period;
+import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;

@@ -1,7 +1,7 @@
 package com.dnd.Exercise.domain.fieldEntry.repository;
 
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.util.List;

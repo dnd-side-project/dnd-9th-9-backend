@@ -1,21 +1,21 @@
 package com.dnd.Exercise.domain.userField.service;
 
-import static com.dnd.Exercise.domain.field.entity.FieldStatus.*;
-import static com.dnd.Exercise.domain.field.entity.FieldType.*;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.BURNED_CALORIE;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.EXERCISE_TIME;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.GOAL_ACHIEVED;
-import static com.dnd.Exercise.domain.field.entity.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.*;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.*;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CALORIE;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
+import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
-import com.dnd.Exercise.domain.field.entity.BattleType;
+import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;

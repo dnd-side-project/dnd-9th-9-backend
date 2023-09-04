@@ -1,11 +1,10 @@
 package com.dnd.Exercise.domain.fieldEntry.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.FieldType;
-import com.dnd.Exercise.domain.field.entity.Period;
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data

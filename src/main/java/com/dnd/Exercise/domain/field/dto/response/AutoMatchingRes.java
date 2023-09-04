@@ -1,9 +1,9 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.Goal;
-import com.dnd.Exercise.domain.field.entity.Period;
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
-import com.dnd.Exercise.domain.field.entity.Strength;
+import com.dnd.Exercise.domain.field.entity.enums.Goal;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.Strength;
 import lombok.Data;
 
 @Data

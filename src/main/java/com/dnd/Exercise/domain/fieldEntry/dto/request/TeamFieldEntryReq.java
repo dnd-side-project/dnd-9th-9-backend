@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.fieldEntry.dto.request;
 
-import com.dnd.Exercise.domain.field.entity.TeamType;
+import com.dnd.Exercise.domain.field.entity.enums.TeamType;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 

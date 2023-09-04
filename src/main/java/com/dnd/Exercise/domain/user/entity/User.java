@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.*;
 
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import com.dnd.Exercise.global.common.BaseEntity;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;

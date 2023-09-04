@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.userField.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import lombok.Data;
 
 @Data

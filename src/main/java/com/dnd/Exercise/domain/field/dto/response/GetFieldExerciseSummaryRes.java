@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.WinStatus;
+import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

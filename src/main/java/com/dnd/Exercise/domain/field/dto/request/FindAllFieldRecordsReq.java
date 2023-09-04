@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.field.dto.request;
 
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import java.time.LocalDate;
 import javax.validation.constraints.NotNull;
 import lombok.Data;

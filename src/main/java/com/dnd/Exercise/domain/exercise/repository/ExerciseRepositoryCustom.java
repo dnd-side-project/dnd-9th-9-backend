@@ -1,10 +1,9 @@
 package com.dnd.Exercise.domain.exercise.repository;
 
-import com.dnd.Exercise.domain.exercise.dto.request.AppleWorkoutDto;
 import com.dnd.Exercise.domain.exercise.dto.response.RecentSportsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.RankingDto;
-import com.dnd.Exercise.domain.field.entity.RankCriterion;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import java.time.LocalDate;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.fieldEntry.dto.request;
 
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

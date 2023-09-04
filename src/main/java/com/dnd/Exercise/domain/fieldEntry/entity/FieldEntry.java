@@ -3,7 +3,7 @@ package com.dnd.Exercise.domain.fieldEntry.entity;
 import static javax.persistence.FetchType.*;
 
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.BaseEntity;
 import javax.persistence.Column;

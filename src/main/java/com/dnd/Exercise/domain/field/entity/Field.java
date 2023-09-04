@@ -1,10 +1,16 @@
 package com.dnd.Exercise.domain.field.entity;
 
-import static com.dnd.Exercise.domain.field.entity.Period.ONE_WEEK;
-import static com.dnd.Exercise.domain.field.entity.Period.THREE_WEEKS;
-import static com.dnd.Exercise.domain.field.entity.Period.TWO_WEEKS;
+import static com.dnd.Exercise.domain.field.entity.enums.Period.ONE_WEEK;
+import static com.dnd.Exercise.domain.field.entity.enums.Period.THREE_WEEKS;
+import static com.dnd.Exercise.domain.field.entity.enums.Period.TWO_WEEKS;
 import static javax.persistence.FetchType.LAZY;
 
+import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.Goal;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
+import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
+import com.dnd.Exercise.domain.field.entity.enums.Strength;
 import com.dnd.Exercise.global.common.BaseEntity;
 import java.time.LocalDate;
 import javax.persistence.Column;
