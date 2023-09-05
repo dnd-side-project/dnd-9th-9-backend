@@ -39,9 +39,8 @@ jobs:
         cat ./src/main/resources/application.properties
 
     - name: Make firebase Directory
-      run: |
-        mkdir -p ./src/main/resources/firebase
-        shell: bash
+      run: mkdir -p ./src/main/resources/firebase
+      shell: bash
         
     - name: create-fcm-json
       id: create-fcm-json
