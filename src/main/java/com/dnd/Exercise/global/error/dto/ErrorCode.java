@@ -69,6 +69,8 @@ public enum ErrorCode {
 
     EXERCISE_NOT_FOUND(HttpStatus.NOT_FOUND, "E-001", "운동 정보를 찾을 수 없습니다."),
 
+    NEED_USER_WEIGHT_FOR_EXPECTED_CALORIE(HttpStatus.BAD_REQUEST,"E-002","예상 소모 칼로리 계산을 위해서는 몸무게가 사전 입력되어야 합니다."),
+
     APPLE_WORKOUTS_UPDATE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "E-002", "애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다."),
 
     UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),

@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.exercise.dto.response.FindAllExerciseDetailsOfDay
 import com.dnd.Exercise.domain.exercise.dto.response.GetCalorieStateRes;
 import com.dnd.Exercise.domain.exercise.dto.response.GetMyExerciseSummaryRes;
 import com.dnd.Exercise.domain.exercise.dto.response.GetRecentsRes;
+import com.dnd.Exercise.domain.sports.entity.Sports;
 import com.dnd.Exercise.domain.user.entity.User;
 
 import java.time.LocalDate;
@@ -20,4 +21,5 @@ public interface ExerciseService {
     GetCalorieStateRes getCalorieState(LocalDate date, User user);
     GetMyExerciseSummaryRes getMyExerciseSummary(LocalDate date, User user);
     GetRecentsRes getRecent(LocalDate date, User user);
+    Integer getExpectedBurnedCalorie(int durationMinute, Sports sports, User user);
 }
