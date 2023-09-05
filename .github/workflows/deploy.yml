@@ -37,6 +37,20 @@ jobs:
         touch ./src/main/resources/application.properties
         echo "${{ secrets.APPLICATION_PROPS }}" > ./src/main/resources/application.properties
         cat ./src/main/resources/application.properties
+
+    - name: Make firebase Directory
+      run: |
+        mkdir -p ./src/main/resources/firebase
+        shell: bash
+        
+    - name: create-fcm-json
+      id: create-fcm-json
+      uses: jsdaniell/create-json@1.1.2
+      with:
+        name: "firebase_service_key.json"
+        json: ${{ secrets.FIREBASE_SERVICE_KEY }}
+        dir: "src/main/resources/firebase/"
+          
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
