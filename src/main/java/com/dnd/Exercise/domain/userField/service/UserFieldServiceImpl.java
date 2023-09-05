@@ -29,6 +29,7 @@ import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
 import com.dnd.Exercise.domain.userField.dto.response.BattleStatusDto;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindAllMyCompletedFieldsRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,15 +129,24 @@ public class UserFieldServiceImpl implements UserFieldService {
     }
 
     @Override
-    public List<FindAllFieldsDto> findAllMyCompletedFields(User user, FieldType fieldType,
+    public FindAllMyCompletedFieldsRes findAllMyCompletedFields(User user, FieldType fieldType,
             Pageable pageable) {
-        List<UserField> myUserFields = userFieldRepository.findCompletedFieldByUserAndType(
+        Page<UserField> queryResult = userFieldRepository.findCompletedFieldByUserAndType(
                 user, fieldType, pageable);
 
-        return myUserFields.stream()
+        List<UserField> myUserFields = queryResult.getContent();
+        Long totalCount = queryResult.getTotalElements();
+
+        List<FindAllFieldsDto> completedFields = myUserFields.stream()
                 .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
                 .collect(Collectors.toList());
 
+        return FindAllMyCompletedFieldsRes.builder()
+                .completedFields(completedFields)
+                .totalCount(totalCount)
+                .currentPageSize(pageable.getPageSize())
+                .currentPageNumber(pageable.getPageNumber())
+                .build();
     }
 
     @Override

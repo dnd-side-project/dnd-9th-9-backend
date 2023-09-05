@@ -6,6 +6,7 @@ import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,10 +25,10 @@ public interface FieldEntryRepository extends JpaRepository<FieldEntry, Long>, F
     void deleteAllByEntrantField(Field field);
 
     @EntityGraph(attributePaths = "hostField")
-    List<FieldEntry> findByEntrantUser(User user, Pageable pageable);
+    Page<FieldEntry> findByEntrantUser(User user, Pageable pageable);
 
     @EntityGraph(attributePaths = "hostField")
-    List<FieldEntry> findByEntrantField(Field field, Pageable pageable);
+    Page<FieldEntry> findByEntrantField(Field field, Pageable pageable);
 
     void deleteAllByEntrantUserAndFieldType(User user, FieldType fieldType);
 }

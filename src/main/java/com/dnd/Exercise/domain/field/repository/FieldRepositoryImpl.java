@@ -61,7 +61,7 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
     }
 
     public static <T> BooleanExpression evaluateIn(SimpleExpression<T> path, Collection<T> values) {
-        return values == null ? null : path.in(values);
+        return values == null || values.isEmpty() ? null : path.in(values);
     }
 
     public static BooleanExpression evaluateLike(StringPath path, String value) {

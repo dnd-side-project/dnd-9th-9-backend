@@ -15,4 +15,10 @@ public class FindAllFieldRecordsRes {
     private Long daysLeft;
 
     private String rule;
+
+    private Long totalCount;
+
+    private int currentPageSize;
+
+    private int currentPageNumber;
 }

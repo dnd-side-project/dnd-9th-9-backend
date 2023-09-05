@@ -1,30 +1,25 @@
 package com.dnd.Exercise.domain.fieldEntry.dto.response;
 
-import com.dnd.Exercise.domain.field.entity.enums.FieldType;
-import com.dnd.Exercise.domain.field.entity.enums.Period;
-import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Pageable;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class FindAllBattleEntryRes {
+    private List<FindAllBattleEntryDto> battleEntries;
+    private Long totalCount;
+    private int currentPageSize;
+    private int currentPageNumber;
 
-    private Long entryId;
-
-    private Long fieldId;
-
-    private String name;
-
-    private FieldType fieldType;
-
-    private int currentSize;
-
-    private int maxSize;
-
-    private SkillLevel skillLevel;
-
-    private Period period;
+    public FindAllBattleEntryRes(Pageable pageable){
+        this.battleEntries = new ArrayList<>();
+        this.totalCount = 0L;
+        this.currentPageNumber = pageable.getPageNumber();
+        this.currentPageSize = pageable.getPageSize();
+    }
 }

@@ -224,11 +224,12 @@ public class FieldServiceImpl implements FieldService{
         List<FindAllFieldsDto> fieldResList = content.stream().map(fieldMapper::toFindAllFieldsDto)
                 .collect(Collectors.toList());
 
-        return FindAllFieldsRes.builder().
-                fieldsInfos(fieldResList).
-                totalCount(totalCount).
-                build();
-
+        return FindAllFieldsRes.builder()
+                .fieldsInfos(fieldResList)
+                .totalCount(totalCount)
+                .currentPageSize(pageable.getPageSize())
+                .currentPageNumber(pageable.getPageNumber())
+                .build();
     }
 
     @Override
@@ -397,16 +398,22 @@ public class FieldServiceImpl implements FieldService{
             memberIds.addAll(fieldUtil.getMemberIds(field.getOpponent().getId()));
         }
 
-        List<FindFieldRecordDto> recordList = exerciseRepository.findAllWithUser(
+        Page<FindFieldRecordDto> allWithUser = exerciseRepository.findAllWithUser(
                 targetDate, memberIds, pageable, leaderId);
+
+        List<FindFieldRecordDto> recordList = allWithUser.getContent();
+        Long totalCount = allWithUser.getTotalElements();
 
         long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), field.getEndDate());
 
         FindAllFieldRecordsRes.FindAllFieldRecordsResBuilder resBuilder =
                 FindAllFieldRecordsRes.builder()
-                .recordList(recordList)
-                .rule(field.getRule())
-                .daysLeft(daysLeft);
+                        .recordList(recordList)
+                        .rule(field.getRule())
+                        .daysLeft(daysLeft)
+                        .totalCount(totalCount)
+                        .currentPageNumber(pageable.getPageNumber())
+                        .currentPageSize(pageable.getPageSize());
 
         if (recordsReq.getFieldType() != TEAM){
             List<Integer> mySummary = fieldUtil.getFieldSummary(fieldId, targetDate);
