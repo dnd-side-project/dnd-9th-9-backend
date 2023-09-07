@@ -24,9 +24,9 @@ public class UpdateMyProfileReq {
 
     private Integer age;
 
-    private Integer height;
+    private Double height;
 
-    private Integer weight;
+    private Double weight;
 
     private SkillLevel skillLevel;
 }

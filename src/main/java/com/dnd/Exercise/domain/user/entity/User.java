@@ -44,9 +44,9 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private int height;
+    private double height;
 
-    private int weight;
+    private double weight;
 
     @Enumerated(EnumType.STRING)
     private SkillLevel skillLevel;

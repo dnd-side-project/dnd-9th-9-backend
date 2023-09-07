@@ -10,10 +10,10 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class UpdateOnboardProfileReq {
     @NotNull
-    private int weight;
+    private double weight;
 
     @NotNull
-    private int height;
+    private double height;
 
     @NotNull
     private Gender gender;

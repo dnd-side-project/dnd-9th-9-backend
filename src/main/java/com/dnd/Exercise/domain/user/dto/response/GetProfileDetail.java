@@ -26,8 +26,8 @@ public class GetProfileDetail {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private int height;
-    private int weight;
+    private double height;
+    private double weight;
 
     @Enumerated(EnumType.STRING)
     private SkillLevel skillLevel;
