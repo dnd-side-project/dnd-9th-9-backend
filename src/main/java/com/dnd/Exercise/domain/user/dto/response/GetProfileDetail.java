@@ -5,11 +5,13 @@ import com.dnd.Exercise.domain.user.entity.Gender;
 import com.dnd.Exercise.domain.user.entity.LoginType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class GetProfileDetail {
     private String uid;
