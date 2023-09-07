@@ -13,13 +13,11 @@ import org.springframework.core.io.Resource;
 
 @Configuration
 public class FirebaseConfig {
-    @Value("classpath:firebase/firebase_service_key.json")
-    private Resource resource;
 
     @PostConstruct
     public FirebaseApp initFireBase(){
         try {
-            FileInputStream serviceAccount = new FileInputStream(resource.getFile());
+            FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase/firebase_service_key.json");
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
