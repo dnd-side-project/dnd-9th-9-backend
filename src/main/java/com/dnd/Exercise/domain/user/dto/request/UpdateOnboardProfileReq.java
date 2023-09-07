@@ -4,16 +4,22 @@ import com.dnd.Exercise.domain.user.entity.Gender;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
+
 @Getter
 @NoArgsConstructor
 public class UpdateOnboardProfileReq {
-    private int weight;
+    @NotNull
+    private double weight;
 
-    private int height;
+    @NotNull
+    private double height;
 
+    @NotNull
     private Gender gender;
 
+    @NotNull
     private Boolean isAppleLinked;
 
-    private int calorieGoal;
+    private Integer calorieGoal;
 }

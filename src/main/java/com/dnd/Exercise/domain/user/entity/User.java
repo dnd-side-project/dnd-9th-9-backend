@@ -16,6 +16,7 @@ import java.util.HashSet;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity implements UserDetails {
     @Id
@@ -43,9 +44,9 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private int height;
+    private double height;
 
-    private int weight;
+    private double weight;
 
     @Enumerated(EnumType.STRING)
     private SkillLevel skillLevel;
@@ -98,7 +99,7 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     @Builder
-    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType, Boolean isAppleLinked) {
+    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType, Boolean isAppleLinked, Boolean isNotificationAgreed) {
         this.uid = uid;
         this.password = password;
         this.phoneNum = phoneNum;
@@ -106,10 +107,27 @@ public class User extends BaseEntity implements UserDetails {
         this.skillLevel = skillLevel;
         this.loginType = loginType;
         this.isAppleLinked = isAppleLinked;
+        this.isNotificationAgreed = isNotificationAgreed;
     }
 
     public void addToken(FcmToken fcmToken) {
         fcmTokens.add(fcmToken);
         fcmToken.addUser(this);
+    }
+
+    public void updateSkillLevel(SkillLevel skillLevel) {
+        this.skillLevel = skillLevel;
+    }
+
+    public void updateProfileImgUrl(String imgUrl) {
+        this.profileImg = imgUrl;
+    }
+
+    public void updateIsAppleLinked(Boolean isAppleLinked) {
+        this.isAppleLinked = isAppleLinked;
+    }
+
+    public void updateIsNotificationAgreed(Boolean isNotificationAgreed) {
+        this.isNotificationAgreed = isNotificationAgreed;
     }
 }

@@ -40,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
                 .skillLevel(signUpReq.getSkillLevel())
                 .loginType(LoginType.MATCH_UP)
                 .isAppleLinked(false)
+                .isNotificationAgreed(true)
                 .build());
     }
 

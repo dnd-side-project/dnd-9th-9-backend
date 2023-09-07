@@ -71,7 +71,11 @@ public enum ErrorCode {
 
     NEED_USER_WEIGHT_FOR_EXPECTED_CALORIE(HttpStatus.BAD_REQUEST,"E-002","예상 소모 칼로리 계산을 위해서는 몸무게가 사전 입력되어야 합니다."),
 
-    APPLE_WORKOUTS_UPDATE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "E-002", "애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다."),
+    APPLE_WORKOUTS_UPDATE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "E-003", "애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다."),
+
+    CALORIE_GOAL_UPDATE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "U-001", "애플 연동을 수행한 유저만 목표 칼로리를 설정할 수 있습니다."),
+
+    NEED_CALORIE_GOAL(HttpStatus.BAD_REQUEST, "U-002", "애플 연동 유저인 경우 목표 칼로리 값을 전송해야 합니다."),
 
     UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),
 

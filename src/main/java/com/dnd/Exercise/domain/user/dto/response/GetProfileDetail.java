@@ -5,11 +5,13 @@ import com.dnd.Exercise.domain.user.entity.Gender;
 import com.dnd.Exercise.domain.user.entity.LoginType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class GetProfileDetail {
     private String uid;
@@ -24,8 +26,8 @@ public class GetProfileDetail {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private int height;
-    private int weight;
+    private double height;
+    private double weight;
 
     @Enumerated(EnumType.STRING)
     private SkillLevel skillLevel;
