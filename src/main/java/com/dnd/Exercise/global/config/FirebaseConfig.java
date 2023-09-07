@@ -14,10 +14,13 @@ import org.springframework.core.io.Resource;
 @Configuration
 public class FirebaseConfig {
 
+    @Value("${firebase.file.path}")
+    private String filePath;
+
     @PostConstruct
     public FirebaseApp initFireBase(){
         try {
-            FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase/firebase_service_key.json");
+            FileInputStream serviceAccount = new FileInputStream(filePath);
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
