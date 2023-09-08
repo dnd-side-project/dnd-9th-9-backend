@@ -63,11 +63,11 @@ public class FieldController {
                     + "<br>[F-010] 1:1 배틀의 최대 인원은 1명입니다. ")
     })
     @PostMapping
-    public ResponseEntity<String> createField(
+    public ResponseEntity<Long> createField(
             @AuthenticationPrincipal User user,
             @ModelAttribute @Valid CreateFieldReq createFieldReq){
-        fieldService.createField(createFieldReq, user);
-        return ResponseDto.ok("필드 생성 완료");
+        Long fieldId = fieldService.createField(createFieldReq, user);
+        return ResponseDto.ok(fieldId);
     }
 
 

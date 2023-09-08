@@ -195,7 +195,7 @@ public class FieldServiceImpl implements FieldService{
 
     @Transactional
     @Override
-    public void createField(CreateFieldReq createFieldReq, User user) {
+    public Long createField(CreateFieldReq createFieldReq, User user) {
         fieldUtil.validateNotHavingField(user, createFieldReq.getFieldType());
 
         validateDuelMaxSize(createFieldReq.getFieldType(), createFieldReq.getMaxSize());
@@ -210,6 +210,8 @@ public class FieldServiceImpl implements FieldService{
         userFieldRepository.save(userField);
 
         fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
+
+        return savedField.getId();
     }
 
 
