@@ -63,6 +63,9 @@ dependencies {
 
 	// firebase
 	implementation 'com.google.firebase:firebase-admin:7.1.0'
+
+	// http client
+	implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
 }
 
 jar {
