@@ -40,6 +40,9 @@ import java.util.Random;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class VerificationServiceImpl implements VerificationService {
+    private static final int VERIFICATION_CODE_LENGTH = 6;
+    private static final long VERIFICATION_CODE_VALID_MINUTE = 10;
+
     @Value("${naver-cloud-sms.accessKey}")
     private String accessKey;
 
@@ -70,14 +73,14 @@ public class VerificationServiceImpl implements VerificationService {
         log.info("receiver phone number: {}", receiverPhone);
         log.info("verification code: {}", verificationCode);
 
-        redisService.setValues(receiverPhone, verificationCode, Duration.ofMinutes(10));
+        redisService.setValues(receiverPhone, verificationCode, Duration.ofMinutes(VERIFICATION_CODE_VALID_MINUTE));
 
         String messageContent = new StringBuilder()
                 .append("[매치업] ")
                 .append(verificationCode)
                 .append(" 인증번호를 입력해주세요.")
                 .append("\n")
-                .append("인증번호 유효시간은 10분입니다.")
+                .append("인증번호 유효시간은 " + VERIFICATION_CODE_VALID_MINUTE + "분입니다.")
                 .toString();
 
         List<MessageDto> messages = new ArrayList<>();
@@ -154,7 +157,7 @@ public class VerificationServiceImpl implements VerificationService {
     private String makeRandomNumber() {
         Random rand = new Random();
         String numStr = "";
-        for(int i=0; i<4; i++) {
+        for(int i=0; i<VERIFICATION_CODE_LENGTH; i++) {
             String num = Integer.toString(rand.nextInt(10));
             numStr += num;
         }
