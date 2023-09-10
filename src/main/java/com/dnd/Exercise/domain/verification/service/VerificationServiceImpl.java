@@ -4,9 +4,11 @@ import com.dnd.Exercise.domain.verification.dto.request.MessageDto;
 import com.dnd.Exercise.domain.verification.dto.request.NaverSmsReq;
 import com.dnd.Exercise.domain.verification.dto.request.SendCodeReq;
 import com.dnd.Exercise.domain.verification.dto.response.NaverSmsRes;
+import com.dnd.Exercise.global.common.RedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
@@ -24,11 +26,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Random;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class VerificationServiceImpl implements VerificationService {
@@ -44,8 +49,11 @@ public class VerificationServiceImpl implements VerificationService {
     @Value("${naver-cloud-sms.senderPhone}")
     private String senderPhone;
 
+    private final RedisService redisService;
+
     @Override
     public void sendSms(SendCodeReq sendCodeReq) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
+        String receiverPhone = sendCodeReq.getPhoneNum();
         Long time = System.currentTimeMillis();
 
         HttpHeaders headers = new HttpHeaders();
@@ -54,11 +62,16 @@ public class VerificationServiceImpl implements VerificationService {
         headers.set("x-ncp-iam-access-key", accessKey);
         headers.set("x-ncp-apigw-signature-v2", makeSignature(time));
 
-        // TODO: 인증번호 난수생성
-        // TODO: redis 에 유효시간 설정하여 저장
+        String verificationCode = makeRandomNumber();
+
+        log.info("receiver phone number: {}", receiverPhone);
+        log.info("verification code: {}", verificationCode);
+
+        redisService.setValues(receiverPhone, verificationCode, Duration.ofMinutes(10));
+
         String messageContent = new StringBuilder()
                 .append("[매치업] ")
-                .append("1234")
+                .append(verificationCode)
                 .append(" 인증번호를 입력해주세요.")
                 .append("\n")
                 .append("인증번호 유효시간은 10분입니다.")
@@ -66,7 +79,7 @@ public class VerificationServiceImpl implements VerificationService {
 
         List<MessageDto> messages = new ArrayList<>();
         messages.add(MessageDto.builder()
-                .to(sendCodeReq.getPhoneNum())
+                .to(receiverPhone)
                 .content(messageContent)
                 .build());
 
@@ -116,5 +129,15 @@ public class VerificationServiceImpl implements VerificationService {
         String encodeBase64String = Base64.getEncoder().encodeToString(rawHmac);
 
         return encodeBase64String;
+    }
+
+    private String makeRandomNumber() {
+        Random rand = new Random();
+        String numStr = "";
+        for(int i=0; i<4; i++) {
+            String num = Integer.toString(rand.nextInt(10));
+            numStr += num;
+        }
+        return numStr;
     }
 }
