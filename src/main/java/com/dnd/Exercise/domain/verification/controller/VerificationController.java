@@ -38,7 +38,8 @@ public class VerificationController {
 
     @ApiOperation(value = "인증번호 인증 📞", notes = "발송받은 인증번호로 인증을 수행합니다. 인증 성공 여부를 반환합니다.")
     @PostMapping("/verify")
-    public ResponseEntity<Boolean> verify(@RequestBody VerifyReq verifyReq) {
-        return ResponseDto.ok(false);
+    public ResponseEntity<String> verify(@RequestBody @Valid VerifyReq verifyReq) {
+        verificationService.verify(verifyReq);
+        return ResponseDto.ok("인증되었습니다.");
     }
 }

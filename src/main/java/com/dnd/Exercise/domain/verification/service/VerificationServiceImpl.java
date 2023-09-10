@@ -3,8 +3,11 @@ package com.dnd.Exercise.domain.verification.service;
 import com.dnd.Exercise.domain.verification.dto.request.MessageDto;
 import com.dnd.Exercise.domain.verification.dto.request.NaverSmsReq;
 import com.dnd.Exercise.domain.verification.dto.request.SendCodeReq;
+import com.dnd.Exercise.domain.verification.dto.request.VerifyReq;
 import com.dnd.Exercise.domain.verification.dto.response.NaverSmsRes;
 import com.dnd.Exercise.global.common.RedisService;
+import com.dnd.Exercise.global.error.dto.ErrorCode;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -100,6 +103,23 @@ public class VerificationServiceImpl implements VerificationService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         NaverSmsRes response = restTemplate.postForObject(new URI("https://sens.apigw.ntruss.com/sms/v2/services/"+ serviceId +"/messages"), httpBody, NaverSmsRes.class);
+    }
+
+    @Override
+    public void verify(VerifyReq verifyReq) {
+        String phoneNum = verifyReq.getPhoneNum();
+        String requestCode = verifyReq.getCode();
+
+        if (!redisService.hasKey(phoneNum)) {
+            throw new BusinessException(ErrorCode.EXPIRED_VERIFICATION_CODE);
+        }
+
+        String verificationCode = redisService.getValues(phoneNum);
+        if (!verificationCode.equals(requestCode)) {
+            throw new BusinessException(ErrorCode.INCORRECT_VERIFICATION_CODE);
+        }
+
+        redisService.deleteValues(phoneNum);
     }
 
     private String makeSignature(Long time) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
