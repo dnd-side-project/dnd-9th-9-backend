@@ -7,6 +7,8 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,10 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @ApiOperation(value = "유저 알림 조회 💡")
+    @ApiResponses({
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
+    })
     @GetMapping("/user")
     public ResponseEntity<FindUserNotificationsRes> findUserNotifications(
             @AuthenticationPrincipal User user,
@@ -52,6 +58,10 @@ public class NotificationController {
 
 
     @ApiOperation(value = "알림 읽음 처리 💡")
+    @ApiResponses({
+            @ApiResponse(code=403, message="[C-006] 접근 권한이 없습니다."),
+            @ApiResponse(code=404, message="[N-002] 알림을 찾을 수 없습니다.")
+    })
     @PatchMapping("/{id}/read")
     public ResponseEntity<String> readNotification(
             @AuthenticationPrincipal User user,
