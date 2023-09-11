@@ -1,17 +1,23 @@
 package com.dnd.Exercise.domain.notification.service;
 
+import static com.dnd.Exercise.domain.notification.entity.NotificationType.FIELD;
 import static com.dnd.Exercise.domain.notification.entity.NotificationType.USER;
 import static java.util.stream.Collectors.toList;
 
 import com.dnd.Exercise.domain.fcmToken.entity.FcmToken;
 import com.dnd.Exercise.domain.fcmToken.repository.FcmTokenRepository;
+import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.notification.dto.NotificationMapper;
+import com.dnd.Exercise.domain.notification.dto.response.FieldNotificationDto;
+import com.dnd.Exercise.domain.notification.dto.response.FindFieldNotificationsRes;
 import com.dnd.Exercise.domain.notification.dto.response.FindUserNotificationsRes;
 import com.dnd.Exercise.domain.notification.dto.response.UserNotificationDto;
 import com.dnd.Exercise.domain.notification.entity.Notification;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.repository.NotificationRepository;
 import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.global.util.field.FieldUtil;
 import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -36,6 +42,7 @@ public class NotificationServiceImpl implements NotificationService{
     private final FcmTokenRepository fcmTokenRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final FieldUtil fieldUtil;
 
 
     @Transactional
@@ -79,6 +86,28 @@ public class NotificationServiceImpl implements NotificationService{
                 .map(notificationMapper::toUserNotificationDto).collect(toList());
 
         return FindUserNotificationsRes.builder()
+                .notificationInfos(notificationInfos)
+                .totalCount(totalCount)
+                .currentPageNumber(pageable.getPageNumber())
+                .currentPageSize(pageable.getPageSize())
+                .build();
+    }
+
+    @Override
+    public FindFieldNotificationsRes findFieldNotifications(User user, Long id, Pageable pageable) {
+        Field field = fieldUtil.getField(id);
+        fieldUtil.validateIsMember(user, field);
+
+        Page<Notification> queryResult = notificationRepository
+                .findByUserAndNotificationType(user, FIELD, pageable);
+
+        List<Notification> notifications = queryResult.getContent();
+        Long totalCount = queryResult.getTotalElements();
+
+        List<FieldNotificationDto> notificationInfos = notifications.stream()
+                .map(notificationMapper::toFieldNotificationDto).collect(toList());
+
+        return FindFieldNotificationsRes.builder()
                 .notificationInfos(notificationInfos)
                 .totalCount(totalCount)
                 .currentPageNumber(pageable.getPageNumber())

@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.notification.controller;
 
+import com.dnd.Exercise.domain.notification.dto.response.FindFieldNotificationsRes;
 import com.dnd.Exercise.domain.notification.dto.response.FindUserNotificationsRes;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -40,9 +41,13 @@ public class NotificationController {
 
     @ApiOperation(value = "필드 알림 조회 💡")
     @GetMapping("/{id}")
-    public ResponseEntity<FindUserNotificationsRes> findFieldNotifications(
-            @Parameter(description = "필드 ID") @PathVariable("id") Long id){
-        return null;
+    public ResponseEntity<FindFieldNotificationsRes> findFieldNotifications(
+            @AuthenticationPrincipal User user,
+            @Parameter(description = "필드 ID") @PathVariable("id") Long id,
+            @PageableDefault(size = 10) Pageable pageable){
+        FindFieldNotificationsRes result = notificationService
+                .findFieldNotifications(user, id, pageable);
+        return ResponseDto.ok(result);
     }
 
 
