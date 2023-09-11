@@ -5,13 +5,11 @@ import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
-public class UserNotificationDto {
+public class FieldNotificationDto {
     private Long id;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-
-    private Long fieldId;
 
     private String content;
 
