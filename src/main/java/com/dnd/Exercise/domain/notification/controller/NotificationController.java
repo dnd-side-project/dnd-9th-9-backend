@@ -59,4 +59,12 @@ public class NotificationController {
         notificationService.readNotification(user, id);
         return ResponseDto.ok("알림 읽음");
     }
+
+    @ApiOperation(value = "유저 알림 모두 읽기 💡")
+    @PatchMapping("/user/read")
+    public ResponseEntity<String> readAllNotifications(
+            @AuthenticationPrincipal User user){
+        notificationService.readAllNotifications(user);
+        return ResponseDto.ok("알림 모두 읽음");
+    }
 }

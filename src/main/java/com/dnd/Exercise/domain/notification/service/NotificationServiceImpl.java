@@ -128,6 +128,12 @@ public class NotificationServiceImpl implements NotificationService{
         notification.isReadTrue();
     }
 
+    @Transactional
+    @Override
+    public void readAllNotifications(User user) {
+        notificationRepository.bulkIsRead(user.getId());
+    }
+
     private static Message makeMessage(ApnsConfig apnsConfig, FcmToken token) {
         return Message.builder()
                 .setApnsConfig(apnsConfig)
