@@ -27,7 +27,8 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/webjars/**",
             /* apis */
-            "/auth/sign-up", "/auth/login", "/auth/id-available", "/auth/refresh"
+            "/auth/sign-up", "/auth/login", "/auth/id-available", "/auth/refresh",
+            "/verification/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;

@@ -81,7 +81,11 @@ public enum ErrorCode {
 
     FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "S-002", "파일 삭제 중 오류가 발생했습니다."),
 
-    FCM_TIME_LIMIT(HttpStatus.BAD_REQUEST, "N-001", "2시간마다 가능합니다.");
+    FCM_TIME_LIMIT(HttpStatus.BAD_REQUEST, "N-001", "2시간마다 가능합니다."),
+
+    INCORRECT_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "V-001", "잘못된 인증번호입니다."),
+
+    EXPIRED_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "V-002", "인증번호 유효시간이 지났습니다.");
 
     private final HttpStatus status;
     private final String code;
