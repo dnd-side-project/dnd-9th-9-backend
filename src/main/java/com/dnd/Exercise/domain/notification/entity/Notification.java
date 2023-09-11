@@ -55,4 +55,6 @@ public class Notification extends BaseEntity {
         this.user = user;
         this.field = field;
     }
+
+    public void isReadTrue(){ this.isRead = true; }
 }

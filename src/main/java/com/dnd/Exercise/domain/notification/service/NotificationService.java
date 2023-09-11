@@ -15,4 +15,6 @@ public interface NotificationService {
     FindUserNotificationsRes findUserNotifications(User user, Pageable pageable);
 
     FindFieldNotificationsRes findFieldNotifications(User user, Long id, Pageable pageable);
+
+    void readNotification(User user, Long id);
 }

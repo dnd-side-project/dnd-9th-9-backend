@@ -2,6 +2,8 @@ package com.dnd.Exercise.domain.notification.service;
 
 import static com.dnd.Exercise.domain.notification.entity.NotificationType.FIELD;
 import static com.dnd.Exercise.domain.notification.entity.NotificationType.USER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOTIFICATION_NOT_FOUND;
 import static java.util.stream.Collectors.toList;
 
 import com.dnd.Exercise.domain.fcmToken.entity.FcmToken;
@@ -14,9 +16,9 @@ import com.dnd.Exercise.domain.notification.dto.response.FindUserNotificationsRe
 import com.dnd.Exercise.domain.notification.dto.response.UserNotificationDto;
 import com.dnd.Exercise.domain.notification.entity.Notification;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
-import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.repository.NotificationRepository;
 import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.util.field.FieldUtil;
 import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.BatchResponse;
@@ -113,6 +115,17 @@ public class NotificationServiceImpl implements NotificationService{
                 .currentPageNumber(pageable.getPageNumber())
                 .currentPageSize(pageable.getPageSize())
                 .build();
+    }
+
+    @Transactional
+    @Override
+    public void readNotification(User user, Long id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(NOTIFICATION_NOT_FOUND));
+        if(!user.getId().equals(notification.getUser().getId())){
+            throw new BusinessException(FORBIDDEN);
+        }
+        notification.isReadTrue();
     }
 
     private static Message makeMessage(ApnsConfig apnsConfig, FcmToken token) {

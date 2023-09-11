@@ -40,7 +40,7 @@ public class NotificationController {
 
 
     @ApiOperation(value = "필드 알림 조회 💡")
-    @GetMapping("/{id}")
+    @GetMapping("/field/{id}")
     public ResponseEntity<FindFieldNotificationsRes> findFieldNotifications(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 ID") @PathVariable("id") Long id,
@@ -54,7 +54,9 @@ public class NotificationController {
     @ApiOperation(value = "알림 읽음 처리 💡")
     @PatchMapping("/{id}/read")
     public ResponseEntity<String> readNotification(
+            @AuthenticationPrincipal User user,
             @Parameter(description = "알림 ID") @PathVariable("id") Long id){
+        notificationService.readNotification(user, id);
         return ResponseDto.ok("알림 읽음");
     }
 }
