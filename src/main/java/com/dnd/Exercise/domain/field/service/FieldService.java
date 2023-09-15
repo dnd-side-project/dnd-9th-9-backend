@@ -17,13 +17,12 @@ import com.dnd.Exercise.domain.field.dto.response.GetRankingRes;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import java.time.LocalDate;
-import org.springframework.data.domain.Pageable;
 
 public interface FieldService {
 
     Long createField(CreateFieldReq createFieldReq, User user);
 
-    FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond, Pageable pageable);
+    FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond);
 
     FindFieldRes findField(Long id, User user);
 
@@ -50,4 +49,6 @@ public interface FieldService {
     FindFieldResultRes findFieldResult(User user, Long fieldId);
 
     void changeLeader(User user, Long fieldId, Long id);
+
+    Long countAllFields(FindAllFieldsCond findAllFieldsCond);
 }

@@ -29,4 +29,8 @@ public class FindAllFieldsCond {
     private List<Period> period;
     @ApiModelProperty(notes = "카테고리", example = "[GAIN, LOSS, MAINTENANCE, PROFILE]")
     private List<Goal> goal;
+    @ApiModelProperty(notes = "페이지 사이즈")
+    private int size = 10;
+    @ApiModelProperty(notes = "조회한 마지막 필드의 ID값")
+    private Long fieldId;
 }
