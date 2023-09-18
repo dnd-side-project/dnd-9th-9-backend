@@ -2,8 +2,8 @@ package com.dnd.Exercise.domain.verification.service;
 
 import com.dnd.Exercise.domain.verification.dto.request.MessageDto;
 import com.dnd.Exercise.domain.verification.dto.request.NaverSmsReq;
-import com.dnd.Exercise.domain.verification.dto.request.SendCodeReq;
-import com.dnd.Exercise.domain.verification.dto.request.VerifyReq;
+import com.dnd.Exercise.domain.verification.dto.request.SignUpCodeReq;
+import com.dnd.Exercise.domain.verification.dto.request.VerifySignUpReq;
 import com.dnd.Exercise.domain.verification.dto.response.NaverSmsRes;
 import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
@@ -58,8 +58,20 @@ public class VerificationServiceImpl implements VerificationService {
     private final RedisService redisService;
 
     @Override
-    public void sendSms(SendCodeReq sendCodeReq) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
-        String receiverPhone = sendCodeReq.getPhoneNum();
+    public void signUpCode(SignUpCodeReq signUpCodeReq) {
+        try {
+            sendSms(signUpCodeReq.getPhoneNum());
+        } catch (Exception e) {
+            log.error("error while sending verification code: {}", e);
+        }
+    }
+
+    @Override
+    public void verifySignUp(VerifySignUpReq verifySignUpReq) {
+        verify(verifySignUpReq.getPhoneNum(), verifySignUpReq.getCode());
+    }
+
+    private void sendSms(String receiverPhone) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
         Long time = System.currentTimeMillis();
 
         HttpHeaders headers = new HttpHeaders();
@@ -108,11 +120,7 @@ public class VerificationServiceImpl implements VerificationService {
         NaverSmsRes response = restTemplate.postForObject(new URI("https://sens.apigw.ntruss.com/sms/v2/services/"+ serviceId +"/messages"), httpBody, NaverSmsRes.class);
     }
 
-    @Override
-    public void verify(VerifyReq verifyReq) {
-        String phoneNum = verifyReq.getPhoneNum();
-        String requestCode = verifyReq.getCode();
-
+    private void verify(String phoneNum, String requestCode) {
         if (!redisService.hasKey(phoneNum)) {
             throw new BusinessException(ErrorCode.EXPIRED_VERIFICATION_CODE);
         }

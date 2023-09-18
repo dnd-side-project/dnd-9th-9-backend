@@ -1,7 +1,7 @@
 package com.dnd.Exercise.domain.verification.controller;
 
-import com.dnd.Exercise.domain.verification.dto.request.SendCodeReq;
-import com.dnd.Exercise.domain.verification.dto.request.VerifyReq;
+import com.dnd.Exercise.domain.verification.dto.request.SignUpCodeReq;
+import com.dnd.Exercise.domain.verification.dto.request.VerifySignUpReq;
 import com.dnd.Exercise.domain.verification.service.VerificationService;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
@@ -27,28 +27,24 @@ public class VerificationController {
 
     private final VerificationService verificationService;
 
-    @ApiOperation(value = "인증번호 전송 요청 📞", notes = "해당 전화번호로 인증번호를 발송합니다.")
+    @ApiOperation(value = "회원가입 시 인증번호 전송 요청 📞", notes = "해당 전화번호로 인증번호를 발송합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="인증번호 발송 완료")
     })
-    @PostMapping("/send-code")
-    public ResponseEntity<String> sendCode(@RequestBody @Valid SendCodeReq sendCodeReq) {
-        try {
-            verificationService.sendSms(sendCodeReq);
-        } catch (Exception e) {
-            log.error("error while sending verification code: {}", e);
-        }
+    @PostMapping("/sign-up-code")
+    public ResponseEntity<String> signUpCode(@RequestBody @Valid SignUpCodeReq signUpCodeReq) {
+        verificationService.signUpCode(signUpCodeReq);
         return ResponseDto.ok("인증번호 발송 완료");
     }
 
-    @ApiOperation(value = "인증번호 인증 📞", notes = "발송받은 인증번호로 인증을 수행합니다.")
+    @ApiOperation(value = "회원가입 시 인증번호 인증 📞", notes = "발송받은 인증번호로 인증을 수행합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="인증되었습니다."),
             @ApiResponse(code=400, message="잘못된 인증번호입니다. or 인증번호 유효시간이 지났습니다.")
     })
-    @PostMapping("/verify")
-    public ResponseEntity<String> verify(@RequestBody @Valid VerifyReq verifyReq) {
-        verificationService.verify(verifyReq);
+    @PostMapping("/verify/sign-up")
+    public ResponseEntity<String> verifySignUp(@RequestBody @Valid VerifySignUpReq verifySignUpReq) {
+        verificationService.verifySignUp(verifySignUpReq);
         return ResponseDto.ok("인증되었습니다.");
     }
 }
