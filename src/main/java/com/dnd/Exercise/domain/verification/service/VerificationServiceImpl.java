@@ -1,10 +1,10 @@
 package com.dnd.Exercise.domain.verification.service;
 
-import com.dnd.Exercise.domain.verification.dto.request.MessageDto;
-import com.dnd.Exercise.domain.verification.dto.request.NaverSmsReq;
-import com.dnd.Exercise.domain.verification.dto.request.SignUpCodeReq;
-import com.dnd.Exercise.domain.verification.dto.request.VerifySignUpReq;
+import com.dnd.Exercise.domain.user.entity.User;
+import com.dnd.Exercise.domain.user.repository.UserRepository;
+import com.dnd.Exercise.domain.verification.dto.request.*;
 import com.dnd.Exercise.domain.verification.dto.response.NaverSmsRes;
+import com.dnd.Exercise.domain.verification.dto.response.VerifyFindIdRes;
 import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -57,6 +58,8 @@ public class VerificationServiceImpl implements VerificationService {
 
     private final RedisService redisService;
 
+    private final UserRepository userRepository;
+
     @Override
     public void signUpCode(SignUpCodeReq signUpCodeReq) {
         try {
@@ -69,6 +72,38 @@ public class VerificationServiceImpl implements VerificationService {
     @Override
     public void verifySignUp(VerifySignUpReq verifySignUpReq) {
         verify(verifySignUpReq.getPhoneNum(), verifySignUpReq.getCode());
+    }
+
+    @Override
+    public void findIdCode(FindIdCodeReq findIdCodeReq) {
+        String name = findIdCodeReq.getName();
+        String phoneNum = findIdCodeReq.getPhoneNum();
+
+        if (!userRepository.existsByNameAndPhoneNum(name,phoneNum)) {
+            throw new BusinessException(ErrorCode.UNEXISTING_USER);
+        }
+
+        try {
+            sendSms(phoneNum);
+        } catch (Exception e) {
+            log.error("error while sending verification code: {}", e);
+        }
+    }
+
+    @Override
+    public VerifyFindIdRes verifyFindId(VerifyFindIdReq verifyFindIdReq) {
+        String phoneNum = verifyFindIdReq.getPhoneNum();
+        String code = verifyFindIdReq.getCode();
+        String name = verifyFindIdReq.getName();
+
+        verify(phoneNum, code);
+
+        List<User> users = userRepository.findAllByNameAndPhoneNum(name,phoneNum);
+        List<String> uids = users.stream().map(User::getUid).collect(Collectors.toList());
+
+        return VerifyFindIdRes.builder()
+                .uids(uids)
+                .build();
     }
 
     private void sendSms(String receiverPhone) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
