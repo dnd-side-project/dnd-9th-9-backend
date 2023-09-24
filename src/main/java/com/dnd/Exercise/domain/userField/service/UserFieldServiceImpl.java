@@ -9,6 +9,7 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_CO
 import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_PREFIX;
 import static com.dnd.Exercise.global.common.Constants.REDIS_NOTIFICATION_VERIFIED;
 import static com.dnd.Exercise.global.common.Constants.REDIS_WAKEUP_PREFIX;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FCM_TIME_LIMIT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
@@ -35,7 +36,6 @@ import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
-import com.dnd.Exercise.global.common.Constants;
 import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.util.field.FieldUtil;
@@ -214,14 +214,16 @@ public class UserFieldServiceImpl implements UserFieldService {
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
         fieldUtil.validateHaveOpponent(field);
 
-        List<User> targetUsers = userRepository.findByIdIn(ids);
         List<Long> memberIds = fieldUtil.getMemberIds(fieldId);
 
-        if (targetUsers.stream().anyMatch(targetUser -> !memberIds.contains(targetUser.getId()))) {
+        if (ids.contains(user.getId())){
+            throw new BusinessException(BAD_REQUEST);
+        }
+        if (ids.stream().anyMatch(targetId -> !memberIds.contains(targetId))) {
             throw new BusinessException(NOT_MEMBER);
         }
 
-        userFieldRepository.deleteAllByFieldAndUserIn(field, targetUsers);
+        userFieldRepository.deleteAllByFieldAndUserIdIn(field, ids);
     }
 
     @Transactional

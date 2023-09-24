@@ -71,7 +71,8 @@ public class UserFieldController {
     @ApiResponses({
             @ApiResponse(code=200, message="팀원 내보내기 완료"),
             @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다. "
-                    + "<br>[F-004] 매치가 이미 진행 중입니다."),
+                    + "<br>[F-004] 매치가 이미 진행 중입니다."
+                    + "<br>[C-000] 잘못된 요청"),
             @ApiResponse(code=403, message = "[F-009] 팀장 권한이 필요합니다.")
     })
     @DeleteMapping("/{id}/eject")

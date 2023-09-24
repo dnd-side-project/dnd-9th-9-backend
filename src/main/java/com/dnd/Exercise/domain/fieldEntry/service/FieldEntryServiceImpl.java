@@ -131,12 +131,12 @@ public class FieldEntryServiceImpl implements FieldEntryService {
 
         if(fieldEntry.getEntrantField() == null){
             if(!fieldEntry.getEntrantUser().equals(user)
-                    || !hostField.getLeaderId().equals(user.getId())){
+                    && !hostField.getLeaderId().equals(user.getId())){
                 throw new BusinessException(BAD_REQUEST);
             }
         }else{
             if(!entrantField.getLeaderId().equals(user.getId())
-                    || !hostField.getLeaderId().equals(user.getId())){
+                    && !hostField.getLeaderId().equals(user.getId())){
                 throw new BusinessException(FORBIDDEN);
             }
         }
@@ -162,10 +162,14 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             userFieldRepository.save(userField);
 
             fieldEntryRepository.deleteAllByEntrantUser(entrantUser);
+            if (hostField.getCurrentSize() == hostField.getMaxSize()){
+                fieldEntryRepository.deleteAllByHostFieldAndEntrantField(hostField, null);
+            }
         }
         else{
             entrantField.changeOpponent(hostField);
             fieldEntryRepository.deleteAllByEntrantField(entrantField);
+            fieldEntryRepository.deleteAllByHostFieldAndEntrantUser(hostField, null);
         }
     }
 
