@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -43,6 +42,8 @@ import java.util.stream.Collectors;
 public class VerificationServiceImpl implements VerificationService {
     private static final int VERIFICATION_CODE_LENGTH = 6;
     private static final long VERIFICATION_CODE_VALID_MINUTE = 10;
+    private static final long VERIFIED_FLAG_VALID_MINUTE = 5;
+    private static final String VERIFIED_FLAG = "VERIFIED";
 
     @Value("${naver-cloud-sms.accessKey}")
     private String accessKey;
@@ -91,19 +92,34 @@ public class VerificationServiceImpl implements VerificationService {
     }
 
     @Override
-    public VerifyFindIdRes verifyFindId(VerifyFindIdReq verifyFindIdReq) {
-        String phoneNum = verifyFindIdReq.getPhoneNum();
-        String code = verifyFindIdReq.getCode();
-        String name = verifyFindIdReq.getName();
+    public void verify(VerifyReq verifyReq) {
+        String phoneNum = verifyReq.getPhoneNum();
+        String requestCode = verifyReq.getCode();
+        VerifyingType verifyingType = verifyReq.getVerifyingType();
+        String redisKey = verifyingType + phoneNum;
 
-        verify(phoneNum, code);
+        if (!redisService.hasKey(redisKey)) {
+            throw new BusinessException(ErrorCode.EXPIRED_VERIFICATION_CODE);
+        }
 
-        List<User> users = userRepository.findAllByNameAndPhoneNum(name,phoneNum);
-        List<String> uids = users.stream().map(User::getUid).collect(Collectors.toList());
+        String verificationCode = redisService.getValues(redisKey);
+        if (!verificationCode.equals(requestCode)) {
+            throw new BusinessException(ErrorCode.INCORRECT_VERIFICATION_CODE);
+        }
 
-        return VerifyFindIdRes.builder()
-                .uids(uids)
-                .build();
+        redisService.setValues(redisKey, VERIFIED_FLAG, Duration.ofMinutes(VERIFIED_FLAG_VALID_MINUTE));
+    }
+
+    @Override
+    public void validateIsVerified(String phoneNum, VerifyingType verifyingType) {
+        String redisKey = verifyingType + phoneNum;
+        String flag = redisService.getValues(redisKey);
+
+        if (flag == null || !flag.equals(VERIFIED_FLAG)) {
+            throw new BusinessException(ErrorCode.NEED_VERIFICATION);
+        }
+
+        redisService.deleteValues(redisKey);
     }
 
     private void sendSms(String receiverPhone) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
@@ -153,19 +169,6 @@ public class VerificationServiceImpl implements VerificationService {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
 
         NaverSmsRes response = restTemplate.postForObject(new URI("https://sens.apigw.ntruss.com/sms/v2/services/"+ serviceId +"/messages"), httpBody, NaverSmsRes.class);
-    }
-
-    private void verify(String phoneNum, String requestCode) {
-        if (!redisService.hasKey(phoneNum)) {
-            throw new BusinessException(ErrorCode.EXPIRED_VERIFICATION_CODE);
-        }
-
-        String verificationCode = redisService.getValues(phoneNum);
-        if (!verificationCode.equals(requestCode)) {
-            throw new BusinessException(ErrorCode.INCORRECT_VERIFICATION_CODE);
-        }
-
-        redisService.deleteValues(phoneNum);
     }
 
     private String makeSignature(Long time) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {

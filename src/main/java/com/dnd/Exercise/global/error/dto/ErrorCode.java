@@ -89,7 +89,9 @@ public enum ErrorCode {
 
     EXPIRED_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "V-002", "인증번호 유효시간이 지났습니다."),
 
-    UNEXISTING_USER(HttpStatus.BAD_REQUEST, "V-003", "해당 이름과 전화번호를 가진 유저는 존재하지 않습니다.");
+    UNEXISTING_USER(HttpStatus.BAD_REQUEST, "V-003", "해당 이름과 전화번호를 가진 유저는 존재하지 않습니다."),
+
+    NEED_VERIFICATION(HttpStatus.BAD_REQUEST, "V-004", "전화번호 인증이 사전 수행되어야 합니다.");
 
     private final HttpStatus status;
     private final String code;

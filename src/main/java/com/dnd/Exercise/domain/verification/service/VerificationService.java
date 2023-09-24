@@ -1,14 +1,12 @@
 package com.dnd.Exercise.domain.verification.service;
 
-import com.dnd.Exercise.domain.verification.dto.request.FindIdCodeReq;
-import com.dnd.Exercise.domain.verification.dto.request.SignUpCodeReq;
-import com.dnd.Exercise.domain.verification.dto.request.VerifyFindIdReq;
-import com.dnd.Exercise.domain.verification.dto.request.VerifySignUpReq;
-import com.dnd.Exercise.domain.verification.dto.response.VerifyFindIdRes;
+import com.dnd.Exercise.domain.verification.dto.VerifyingType;
+import com.dnd.Exercise.domain.verification.dto.request.*;
 
 public interface VerificationService {
     void signUpCode(SignUpCodeReq signUpCodeReq);
     void verifySignUp(VerifySignUpReq verifySignUpReq);
     void findIdCode(FindIdCodeReq findIdCodeReq);
-    VerifyFindIdRes verifyFindId(VerifyFindIdReq verifyFindIdReq);
+    void verify(VerifyReq verifyReq);
+    void validateIsVerified(String phoneNum, VerifyingType verifyingType);
 }
