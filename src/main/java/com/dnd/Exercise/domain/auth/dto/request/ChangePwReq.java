@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
+import static com.dnd.Exercise.global.common.Constants.PW_REGEXP;
+
 @Getter
 @NoArgsConstructor
 public class ChangePwReq {
@@ -21,9 +23,11 @@ public class ChangePwReq {
 
     @ApiModelProperty(value = "새로 설정할 비밀번호", required = true)
     @NotBlank
+    @Pattern(regexp = PW_REGEXP, message = "비밀번호는 8~16 자리의 영문 & 숫자 조합으로만 입력 가능합니다.")
     private String newPassword;
 
     @ApiModelProperty(value = "새로 설정할 비밀번호 확인용", required = true)
     @NotBlank
+    @Pattern(regexp = PW_REGEXP, message = "비밀번호는 8~16 자리의 영문 & 숫자 조합으로만 입력 가능합니다.")
     private String confirmPassword;
 }
