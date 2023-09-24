@@ -8,4 +8,5 @@ public final class Constants {
 
     public static final String ID_REGEXP = "^(?=.*[a-zA-z])(?=.*[0-9]).{6,15}$";
     public static final String PW_REGEXP = "^(?=.*[a-zA-z])(?=.*[0-9]).{8,16}$";
+    public static final String PHONE_NUM_REGEXP = "^01(?:0|1|[6-9])(?:\\d{3}|\\d{4})\\d{4}$";
 }
