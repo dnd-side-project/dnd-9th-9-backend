@@ -1,9 +1,6 @@
 package com.dnd.Exercise.domain.auth.service;
 
-import com.dnd.Exercise.domain.auth.dto.request.FindIdReq;
-import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
-import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
-import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
+import com.dnd.Exercise.domain.auth.dto.request.*;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
@@ -112,5 +109,26 @@ public class AuthServiceImpl implements AuthService {
         return FindIdRes.builder()
                 .uids(uids)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void changePw(ChangePwReq changePwReq) {
+        String phoneNum = changePwReq.getPhoneNum();
+        String uid = changePwReq.getUid();
+        String newPassword = changePwReq.getNewPassword();
+        String confirmPassword = changePwReq.getConfirmPassword();
+
+        verificationService.validateIsVerified(phoneNum, VerifyingType.FIND_PW);
+        validateNewPassword(newPassword,confirmPassword);
+
+        User user = userRepository.findByUid(uid).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        user.updatePassword(passwordEncoder.encode(newPassword));
+    }
+
+    private void validateNewPassword(String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(ErrorCode.UNMATCHING_NEW_PASSWORD);
+        }
     }
 }

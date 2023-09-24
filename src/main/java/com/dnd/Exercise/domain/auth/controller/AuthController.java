@@ -1,9 +1,6 @@
 package com.dnd.Exercise.domain.auth.controller;
 
-import com.dnd.Exercise.domain.auth.dto.request.FindIdReq;
-import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
-import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
-import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
+import com.dnd.Exercise.domain.auth.dto.request.*;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
 import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
@@ -76,8 +73,6 @@ public class AuthController {
         return ResponseDto.ok("로그아웃 성공");
     }
 
-    // TODO: 아이디찾기, 비밀번호찾기(+수정) 추후 추가
-
     @ApiOperation(value = "아이디 찾기 🔐", notes = "이름과 전화번호를 통해 유저의 아이디를 찾아줍니다. <br>" +
             "- 해당 '이름 + 전화번호' 로 가입된 아이디가 여러 개일 경우, 아이디들을 모두 반환합니다. <br>" +
             "- 전화번호 인증을 완료한 유저일 경우에 한해서만 아이디 찾기가 가능합니다. <br>" +
@@ -89,5 +84,17 @@ public class AuthController {
     public ResponseEntity<FindIdRes> findId(@ModelAttribute @Valid FindIdReq findIdReq) {
         FindIdRes findIdRes = authService.findId(findIdReq);
         return ResponseDto.ok(findIdRes);
+    }
+
+    @ApiOperation(value = "비밀번호 재설정 🔐", notes = "비밀번호를 재설정합니다. <br>" +
+            "- '새로운 비밀번호' + '새로운 비밀번호 확인' 조합을 서버로 전송합니다. <br>" +
+            "- 위의 두 조합이 서로 일치하고, 비밀번호 유효성 조건에 부합한다면 비밀번호를 재설정합니다.")
+    @ApiResponses({
+            @ApiResponse(code=400, message="비밀번호가 일치하지 않습니다.")
+    })
+    @PostMapping("/change-pw")
+    public ResponseEntity<String> changePw(@RequestBody @Valid ChangePwReq changePwReq) {
+        authService.changePw(changePwReq);
+        return ResponseDto.ok("비밀번호가 재설정 되었습니다.");
     }
 }

@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.verification.service;
 
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.verification.dto.VerifyingType;
 import com.dnd.Exercise.domain.verification.dto.request.*;
@@ -41,7 +42,7 @@ import java.util.Random;
 public class VerificationServiceImpl implements VerificationService {
     private static final int VERIFICATION_CODE_LENGTH = 6;
     private static final long VERIFICATION_CODE_VALID_MINUTE = 10;
-    private static final long VERIFIED_FLAG_VALID_MINUTE = 5;
+    private static final long VERIFIED_FLAG_VALID_MINUTE = 20;
     private static final String VERIFIED_FLAG = "VERIFIED";
 
     @Value("${naver-cloud-sms.accessKey}")
@@ -80,6 +81,27 @@ public class VerificationServiceImpl implements VerificationService {
 
         try {
             sendSms(phoneNum, VerifyingType.FIND_ID);
+        } catch (Exception e) {
+            log.error("error while sending verification code: {}", e);
+        }
+    }
+
+    @Override
+    public void findPwCode(FindPwCodeReq findPwCodeReq) {
+        String uid = findPwCodeReq.getUid();
+        String phoneNum = findPwCodeReq.getPhoneNum();
+
+        if (!userRepository.existsByUid(uid)) {
+            throw new BusinessException(ErrorCode.UNEXISTING_ID);
+        }
+
+        User user = userRepository.findByUid(uid).get();
+        if (!phoneNum.equals(user.getPhoneNum())) {
+            throw new BusinessException(ErrorCode.UNMATCHING_PHONE_NUM);
+        }
+
+        try {
+            sendSms(phoneNum, VerifyingType.FIND_PW);
         } catch (Exception e) {
             log.error("error while sending verification code: {}", e);
         }

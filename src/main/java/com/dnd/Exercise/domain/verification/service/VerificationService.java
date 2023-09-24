@@ -6,6 +6,7 @@ import com.dnd.Exercise.domain.verification.dto.request.*;
 public interface VerificationService {
     void signUpCode(SignUpCodeReq signUpCodeReq);
     void findIdCode(FindIdCodeReq findIdCodeReq);
+    void findPwCode(FindPwCodeReq findPwCodeReq);
     void verify(VerifyReq verifyReq);
     void validateIsVerified(String phoneNum, VerifyingType verifyingType);
 }
