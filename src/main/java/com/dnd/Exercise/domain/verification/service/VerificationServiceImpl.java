@@ -1,10 +1,9 @@
 package com.dnd.Exercise.domain.verification.service;
 
-import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
+import com.dnd.Exercise.domain.verification.dto.VerifyingType;
 import com.dnd.Exercise.domain.verification.dto.request.*;
 import com.dnd.Exercise.domain.verification.dto.response.NaverSmsRes;
-import com.dnd.Exercise.domain.verification.dto.response.VerifyFindIdRes;
 import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
@@ -64,15 +63,10 @@ public class VerificationServiceImpl implements VerificationService {
     @Override
     public void signUpCode(SignUpCodeReq signUpCodeReq) {
         try {
-            sendSms(signUpCodeReq.getPhoneNum());
+            sendSms(signUpCodeReq.getPhoneNum(), VerifyingType.SIGN_UP);
         } catch (Exception e) {
             log.error("error while sending verification code: {}", e);
         }
-    }
-
-    @Override
-    public void verifySignUp(VerifySignUpReq verifySignUpReq) {
-        verify(verifySignUpReq.getPhoneNum(), verifySignUpReq.getCode());
     }
 
     @Override
@@ -85,7 +79,7 @@ public class VerificationServiceImpl implements VerificationService {
         }
 
         try {
-            sendSms(phoneNum);
+            sendSms(phoneNum, VerifyingType.FIND_ID);
         } catch (Exception e) {
             log.error("error while sending verification code: {}", e);
         }
@@ -122,7 +116,7 @@ public class VerificationServiceImpl implements VerificationService {
         redisService.deleteValues(redisKey);
     }
 
-    private void sendSms(String receiverPhone) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    private void sendSms(String receiverPhone, VerifyingType verifyingType) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
         Long time = System.currentTimeMillis();
 
         HttpHeaders headers = new HttpHeaders();
@@ -135,8 +129,9 @@ public class VerificationServiceImpl implements VerificationService {
 
         log.info("receiver phone number: {}", receiverPhone);
         log.info("verification code: {}", verificationCode);
+        log.info("verification type: {}", verifyingType);
 
-        redisService.setValues(receiverPhone, verificationCode, Duration.ofMinutes(VERIFICATION_CODE_VALID_MINUTE));
+        redisService.setValues(verifyingType + receiverPhone, verificationCode, Duration.ofMinutes(VERIFICATION_CODE_VALID_MINUTE));
 
         String messageContent = new StringBuilder()
                 .append("[매치업] ")
