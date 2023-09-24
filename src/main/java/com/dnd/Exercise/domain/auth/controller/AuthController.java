@@ -1,15 +1,15 @@
 package com.dnd.Exercise.domain.auth.controller;
 
+import com.dnd.Exercise.domain.auth.dto.request.FindIdReq;
 import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
 import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
 import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
+import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
-import com.dnd.Exercise.global.error.dto.ErrorCode;
-import com.dnd.Exercise.global.error.exception.BusinessException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -77,4 +77,17 @@ public class AuthController {
     }
 
     // TODO: 아이디찾기, 비밀번호찾기(+수정) 추후 추가
+
+    @ApiOperation(value = "아이디 찾기 🔐", notes = "이름과 전화번호를 통해 유저의 아이디를 찾아줍니다. <br>" +
+            "- 해당 '이름 + 전화번호' 로 가입된 아이디가 여러 개일 경우, 아이디들을 모두 반환합니다. <br>" +
+            "- 전화번호 인증을 완료한 유저일 경우에 한해서만 아이디 찾기가 가능합니다. <br>" +
+            "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(code=400, message="전화번호 인증이 사전 수행되어야 합니다.")
+    })
+    @GetMapping("/find-id")
+    public ResponseEntity<FindIdRes> findId(@ModelAttribute @Valid FindIdReq findIdReq) {
+        FindIdRes findIdRes = authService.findId(findIdReq);
+        return ResponseDto.ok(findIdRes);
+    }
 }

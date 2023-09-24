@@ -1,4 +1,4 @@
-package com.dnd.Exercise.domain.verification.dto.response;
+package com.dnd.Exercise.domain.auth.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +11,6 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class VerifyFindIdRes {
-    @Builder.Default
-    private String message = "인증되었습니다.";
-
+public class FindIdRes {
     private List<String> uids;
 }

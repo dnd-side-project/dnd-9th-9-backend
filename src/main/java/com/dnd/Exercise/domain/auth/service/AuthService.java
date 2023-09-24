@@ -1,9 +1,11 @@
 package com.dnd.Exercise.domain.auth.service;
 
+import com.dnd.Exercise.domain.auth.dto.request.FindIdReq;
 import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
 import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
 import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
+import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 
 public interface AuthService {
@@ -12,4 +14,5 @@ public interface AuthService {
     boolean checkUidAvailable(String uid);
     AccessTokenRes refresh(RefreshReq refreshReq);
     void logout(Long userId);
+    FindIdRes findId(FindIdReq findIdReq);
 }

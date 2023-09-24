@@ -1,23 +1,29 @@
 package com.dnd.Exercise.domain.auth.service;
 
+import com.dnd.Exercise.domain.auth.dto.request.FindIdReq;
 import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
 import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
 import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
+import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.domain.auth.repository.RefreshTokenRedisRepository;
 import com.dnd.Exercise.domain.user.entity.LoginType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
+import com.dnd.Exercise.domain.verification.dto.VerifyingType;
+import com.dnd.Exercise.domain.verification.service.VerificationService;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
 import com.dnd.Exercise.global.jwt.RefreshToken;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,5 +97,20 @@ public class AuthServiceImpl implements AuthService {
     public void logout(Long userId) {
         RefreshToken token = refreshTokenRedisRepository.findByUserId(userId);
         refreshTokenRedisRepository.deleteById(token.getRefreshToken());
+    }
+
+    @Override
+    public FindIdRes findId(FindIdReq findIdReq) {
+        String phoneNum = findIdReq.getPhoneNum();
+        String name = findIdReq.getName();
+
+        verificationService.validateIsVerified(phoneNum, VerifyingType.FIND_ID);
+
+        List<User> users = userRepository.findAllByNameAndPhoneNum(name,phoneNum);
+        List<String> uids = users.stream().map(User::getUid).collect(Collectors.toList());
+
+        return FindIdRes.builder()
+                .uids(uids)
+                .build();
     }
 }
