@@ -88,9 +88,12 @@ public class AuthController {
 
     @ApiOperation(value = "비밀번호 재설정 🔐", notes = "비밀번호를 재설정합니다. <br>" +
             "- '새로운 비밀번호' + '새로운 비밀번호 확인' 조합을 서버로 전송합니다. <br>" +
-            "- 위의 두 조합이 서로 일치하고, 비밀번호 유효성 조건에 부합한다면 비밀번호를 재설정합니다.")
+            "- 위의 두 조합이 서로 일치하고, 비밀번호 유효성 조건에 부합한다면 비밀번호를 재설정합니다. <br>" +
+            "- 전화번호 인증을 완료한 유저일 경우에 한해서만 비밀번호 변경이 가능합니다. <br>" +
+            "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="비밀번호가 일치하지 않습니다.")
+            @ApiResponse(code=200, message="비밀번호가 재설정 되었습니다."),
+            @ApiResponse(code=400, message="비밀번호가 일치하지 않습니다. or 전화번호 인증이 사전 수행되어야 합니다.")
     })
     @PostMapping("/change-pw")
     public ResponseEntity<String> changePw(@RequestBody @Valid ChangePwReq changePwReq) {

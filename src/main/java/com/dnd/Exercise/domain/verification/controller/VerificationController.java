@@ -52,8 +52,7 @@ public class VerificationController {
             "- 해당 아이디의 유저가 존재하지 않거나 회원정보에 등록된 전화번호와 일치하지 않는다면, 인증번호를 발송하지 않습니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="인증번호 발송 완료"),
-            @ApiResponse(code=400, message="해당 아이디의 유저는 존재하지 않습니다."),
-            @ApiResponse(code=400, message="회원정보에 등록된 전화번호와 일치하지 않습니다.")
+            @ApiResponse(code=400, message="해당 아이디의 유저는 존재하지 않습니다. or 회원정보에 등록된 전화번호와 일치하지 않습니다.")
     })
     @PostMapping("/find-pw-code")
     public ResponseEntity<String> findPwCode(@RequestBody @Valid FindPwCodeReq findPwCodeReq) {
