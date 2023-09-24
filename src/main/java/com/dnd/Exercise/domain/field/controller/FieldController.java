@@ -77,12 +77,20 @@ public class FieldController {
                     + "배제하고 page, size만 넣으면 페이징됩니다")
     @GetMapping
     public ResponseEntity<FindAllFieldsRes> findAllFields(
-            @ModelAttribute @Valid FindAllFieldsCond findAllFieldsCond,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
-        FindAllFieldsRes result = fieldService.findAllFields(findAllFieldsCond, pageable);
+            @ModelAttribute @Valid FindAllFieldsCond findAllFieldsCond){
+        FindAllFieldsRes result = fieldService.findAllFields(findAllFieldsCond);
         return ResponseDto.ok(result);
     }
 
+    @ApiOperation(value = "조건에 따른 필드수 조회 🔥",
+            notes = "필드 총 개수 Count API (페이지 이동 시 최초 1회만 조회) <br> "
+                    + "fieldId는 null 값을 넣으면 됩니다. 이 외 항목들은 [필드 조회 및 검색] API 의 값들과 똑같이 채우면 됩니다.")
+    @GetMapping("/count")
+    public ResponseEntity<Long> countAllFields(
+            @ModelAttribute @Valid FindAllFieldsCond findAllFieldsCond){
+        Long result = fieldService.countAllFields(findAllFieldsCond);
+        return ResponseDto.ok(result);
+    }
 
     @ApiOperation(value = "단일 필드 조회 🔥", notes = "팀원 정보를 제외한 해당 필드에 관한 정보를 불러옵니다. <br>"
             + "로그인한 유저가 해당 필드의 팀원이고, 매칭된 필드일 경우 상대 팀 정보를 추가로 조회합니다")

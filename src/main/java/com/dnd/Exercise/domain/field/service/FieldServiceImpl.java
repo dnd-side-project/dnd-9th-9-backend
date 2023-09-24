@@ -216,22 +216,21 @@ public class FieldServiceImpl implements FieldService{
 
 
     @Override
-    public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond, Pageable pageable) {
-        Page<Field> allFieldsWithFilter = fieldRepository.findAllFieldsWithFilter(
-                findAllFieldsCond, pageable);
+    public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond) {
+        List<Field> fieldList = fieldRepository.findAllFieldsWithFilter(findAllFieldsCond);
 
-        List<Field> content = allFieldsWithFilter.getContent();
-        Long totalCount = allFieldsWithFilter.getTotalElements();
-
-        List<FindAllFieldsDto> fieldResList = content.stream().map(fieldMapper::toFindAllFieldsDto)
+        List<FindAllFieldsDto> fieldResList = fieldList.stream().map(fieldMapper::toFindAllFieldsDto)
                 .collect(Collectors.toList());
 
         return FindAllFieldsRes.builder()
                 .fieldsInfos(fieldResList)
-                .totalCount(totalCount)
-                .currentPageSize(pageable.getPageSize())
-                .currentPageNumber(pageable.getPageNumber())
+                .currentPageSize(findAllFieldsCond.getSize())
                 .build();
+    }
+
+    @Override
+    public Long countAllFields(FindAllFieldsCond findAllFieldsCond) {
+        return fieldRepository.countAllFieldsWithFilter(findAllFieldsCond);
     }
 
     @Override
