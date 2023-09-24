@@ -28,10 +28,17 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+    private final VerificationService verificationService;
 
     @Override
     @Transactional
     public void signUp(SignUpReq signUpReq) {
+        verificationService.validateIsVerified(signUpReq.getPhoneNum(), VerifyingType.SIGN_UP);
+
+        if(!checkUidAvailable(signUpReq.getUid())) {
+            throw new BusinessException(ErrorCode.ID_ALREADY_EXISTS);
+        }
+
         userRepository.save(User.builder()
                 .uid(signUpReq.getUid())
                 .password(passwordEncoder.encode(signUpReq.getPassword()))

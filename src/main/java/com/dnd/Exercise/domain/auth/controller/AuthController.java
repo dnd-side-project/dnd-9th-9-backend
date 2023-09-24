@@ -36,9 +36,6 @@ public class AuthController {
     })
     @PostMapping("/sign-up")
     public ResponseEntity<String> signUp(@RequestBody @Valid SignUpReq signUpReq) {
-        if(!authService.checkUidAvailable(signUpReq.getUid())) {
-            throw new BusinessException(ErrorCode.ID_ALREADY_EXISTS);
-        }
         authService.signUp(signUpReq);
         return ResponseDto.ok("회원가입 완료");
     }
