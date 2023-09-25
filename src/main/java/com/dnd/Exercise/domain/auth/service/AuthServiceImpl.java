@@ -1,23 +1,26 @@
 package com.dnd.Exercise.domain.auth.service;
 
-import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
-import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
-import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
+import com.dnd.Exercise.domain.auth.dto.request.*;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
+import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.domain.auth.repository.RefreshTokenRedisRepository;
 import com.dnd.Exercise.domain.user.entity.LoginType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
+import com.dnd.Exercise.domain.verification.dto.VerifyingType;
+import com.dnd.Exercise.domain.verification.service.VerificationService;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
 import com.dnd.Exercise.global.jwt.RefreshToken;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,10 +31,17 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+    private final VerificationService verificationService;
 
     @Override
     @Transactional
     public void signUp(SignUpReq signUpReq) {
+        verificationService.validateIsVerified(signUpReq.getPhoneNum(), VerifyingType.SIGN_UP);
+
+        if(!checkUidAvailable(signUpReq.getUid())) {
+            throw new BusinessException(ErrorCode.ID_ALREADY_EXISTS);
+        }
+
         userRepository.save(User.builder()
                 .uid(signUpReq.getUid())
                 .password(passwordEncoder.encode(signUpReq.getPassword()))
@@ -84,5 +94,41 @@ public class AuthServiceImpl implements AuthService {
     public void logout(Long userId) {
         RefreshToken token = refreshTokenRedisRepository.findByUserId(userId);
         refreshTokenRedisRepository.deleteById(token.getRefreshToken());
+    }
+
+    @Override
+    public FindIdRes findId(FindIdReq findIdReq) {
+        String phoneNum = findIdReq.getPhoneNum();
+        String name = findIdReq.getName();
+
+        verificationService.validateIsVerified(phoneNum, VerifyingType.FIND_ID);
+
+        List<User> users = userRepository.findAllByNameAndPhoneNum(name,phoneNum);
+        List<String> uids = users.stream().map(User::getUid).collect(Collectors.toList());
+
+        return FindIdRes.builder()
+                .uids(uids)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void changePw(ChangePwReq changePwReq) {
+        String phoneNum = changePwReq.getPhoneNum();
+        String uid = changePwReq.getUid();
+        String newPassword = changePwReq.getNewPassword();
+        String confirmPassword = changePwReq.getConfirmPassword();
+
+        verificationService.validateIsVerified(phoneNum, VerifyingType.FIND_PW);
+        validateNewPassword(newPassword,confirmPassword);
+
+        User user = userRepository.findByUid(uid).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        user.updatePassword(passwordEncoder.encode(newPassword));
+    }
+
+    private void validateNewPassword(String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(ErrorCode.UNMATCHING_NEW_PASSWORD);
+        }
     }
 }

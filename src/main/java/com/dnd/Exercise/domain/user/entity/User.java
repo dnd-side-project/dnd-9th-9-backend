@@ -130,4 +130,8 @@ public class User extends BaseEntity implements UserDetails {
     public void updateIsNotificationAgreed(Boolean isNotificationAgreed) {
         this.isNotificationAgreed = isNotificationAgreed;
     }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
 }

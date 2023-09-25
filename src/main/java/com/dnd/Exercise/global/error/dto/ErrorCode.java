@@ -28,6 +28,8 @@ public enum ErrorCode {
 
     INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "A-003", "유효하지 않은 refresh 토큰 입니다."),
 
+    UNMATCHING_NEW_PASSWORD(HttpStatus.BAD_REQUEST, "A-004", "비밀번호가 일치하지 않습니다."),
+
     INVALID_STATUS(HttpStatus.BAD_REQUEST, "F-001", "진행 중, 완료된 필드에 대해서는 수정이 불가능합니다."),
 
     DELETE_FAILED(HttpStatus.BAD_REQUEST, "F-002", "완료된 필드에 대해서는 삭제가 불가능합니다."),
@@ -87,7 +89,15 @@ public enum ErrorCode {
 
     INCORRECT_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "V-001", "잘못된 인증번호입니다."),
 
-    EXPIRED_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "V-002", "인증번호 유효시간이 지났습니다.");
+    EXPIRED_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "V-002", "인증번호 유효시간이 지났습니다."),
+
+    UNEXISTING_USER(HttpStatus.BAD_REQUEST, "V-003", "해당 이름과 전화번호를 가진 유저는 존재하지 않습니다."),
+
+    NEED_VERIFICATION(HttpStatus.BAD_REQUEST, "V-004", "전화번호 인증이 사전 수행되어야 합니다."),
+
+    UNEXISTING_ID(HttpStatus.BAD_REQUEST, "V-005", "해당 아이디의 유저는 존재하지 않습니다."),
+
+    UNMATCHING_PHONE_NUM(HttpStatus.BAD_REQUEST, "V-006", "회원정보에 등록된 전화번호와 일치하지 않습니다.");
 
     private final HttpStatus status;
     private final String code;

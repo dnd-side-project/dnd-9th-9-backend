@@ -1,15 +1,12 @@
 package com.dnd.Exercise.domain.auth.controller;
 
-import com.dnd.Exercise.domain.auth.dto.request.LoginReq;
-import com.dnd.Exercise.domain.auth.dto.request.RefreshReq;
-import com.dnd.Exercise.domain.auth.dto.request.SignUpReq;
+import com.dnd.Exercise.domain.auth.dto.request.*;
 import com.dnd.Exercise.domain.auth.dto.response.AccessTokenRes;
+import com.dnd.Exercise.domain.auth.dto.response.FindIdRes;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
-import com.dnd.Exercise.global.error.dto.ErrorCode;
-import com.dnd.Exercise.global.error.exception.BusinessException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -36,9 +33,6 @@ public class AuthController {
     })
     @PostMapping("/sign-up")
     public ResponseEntity<String> signUp(@RequestBody @Valid SignUpReq signUpReq) {
-        if(!authService.checkUidAvailable(signUpReq.getUid())) {
-            throw new BusinessException(ErrorCode.ID_ALREADY_EXISTS);
-        }
         authService.signUp(signUpReq);
         return ResponseDto.ok("회원가입 완료");
     }
@@ -79,5 +73,31 @@ public class AuthController {
         return ResponseDto.ok("로그아웃 성공");
     }
 
-    // TODO: 아이디찾기, 비밀번호찾기(+수정) 추후 추가
+    @ApiOperation(value = "아이디 찾기 🔐", notes = "이름과 전화번호를 통해 유저의 아이디를 찾아줍니다. <br>" +
+            "- 해당 '이름 + 전화번호' 로 가입된 아이디가 여러 개일 경우, 아이디들을 모두 반환합니다. <br>" +
+            "- 전화번호 인증을 완료한 유저일 경우에 한해서만 아이디 찾기가 가능합니다. <br>" +
+            "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(code=400, message="전화번호 인증이 사전 수행되어야 합니다.")
+    })
+    @GetMapping("/find-id")
+    public ResponseEntity<FindIdRes> findId(@ModelAttribute @Valid FindIdReq findIdReq) {
+        FindIdRes findIdRes = authService.findId(findIdReq);
+        return ResponseDto.ok(findIdRes);
+    }
+
+    @ApiOperation(value = "비밀번호 재설정 🔐", notes = "비밀번호를 재설정합니다. <br>" +
+            "- '새로운 비밀번호' + '새로운 비밀번호 확인' 조합을 서버로 전송합니다. <br>" +
+            "- 위의 두 조합이 서로 일치하고, 비밀번호 유효성 조건에 부합한다면 비밀번호를 재설정합니다. <br>" +
+            "- 전화번호 인증을 완료한 유저일 경우에 한해서만 비밀번호 변경이 가능합니다. <br>" +
+            "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(code=200, message="비밀번호가 재설정 되었습니다."),
+            @ApiResponse(code=400, message="비밀번호가 일치하지 않습니다. or 전화번호 인증이 사전 수행되어야 합니다.")
+    })
+    @PostMapping("/change-pw")
+    public ResponseEntity<String> changePw(@RequestBody @Valid ChangePwReq changePwReq) {
+        authService.changePw(changePwReq);
+        return ResponseDto.ok("비밀번호가 재설정 되었습니다.");
+    }
 }

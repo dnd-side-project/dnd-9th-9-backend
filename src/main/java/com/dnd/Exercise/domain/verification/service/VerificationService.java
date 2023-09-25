@@ -1,16 +1,12 @@
 package com.dnd.Exercise.domain.verification.service;
 
-import com.dnd.Exercise.domain.verification.dto.request.SendCodeReq;
-import com.dnd.Exercise.domain.verification.dto.request.VerifyReq;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.web.client.RestClientException;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import com.dnd.Exercise.domain.verification.dto.VerifyingType;
+import com.dnd.Exercise.domain.verification.dto.request.*;
 
 public interface VerificationService {
-    void sendSms(SendCodeReq sendCodeReq) throws JsonProcessingException, RestClientException, URISyntaxException, InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException;
+    void signUpCode(SignUpCodeReq signUpCodeReq);
+    void findIdCode(FindIdCodeReq findIdCodeReq);
+    void findPwCode(FindPwCodeReq findPwCodeReq);
     void verify(VerifyReq verifyReq);
+    void validateIsVerified(String phoneNum, VerifyingType verifyingType);
 }
