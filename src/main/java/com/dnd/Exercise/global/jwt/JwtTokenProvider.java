@@ -82,7 +82,7 @@ public class JwtTokenProvider {
         return authorization.substring("Bearer ".length());
     }
 
-    public boolean validateToken(String jwtToken) {
+    public boolean validateAccessToken(String jwtToken) {
         try {
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(jwtToken);
             return !claims.getBody().getExpiration().before(new Date());
@@ -99,5 +99,17 @@ public class JwtTokenProvider {
             log.info("JWT 토큰이 잘못되었습니다.");
         }
         return false;
+    }
+
+    public void validateRefreshToken(String jwtToken) {
+        try {
+            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(jwtToken);
+        } catch (SignatureException | MalformedJwtException e) {
+            throw new BusinessException(ErrorCode.INVALID_JWT_TOKEN);
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(ErrorCode.EXPIRED_JWT_TOKEN);
+        } catch (UnsupportedJwtException e) {
+            throw new BusinessException(ErrorCode.UNSUPPORTED_JWT_TOKEN);
+        }
     }
 }
