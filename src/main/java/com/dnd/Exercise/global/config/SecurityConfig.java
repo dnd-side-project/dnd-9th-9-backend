@@ -1,5 +1,6 @@
 package com.dnd.Exercise.global.config;
 
+import com.dnd.Exercise.global.jwt.CustomAuthenticationEntryPoint;
 import com.dnd.Exercise.global.jwt.JwtAuthenticationFilter;
 import com.dnd.Exercise.global.jwt.JwtExceptionFilter;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
@@ -49,6 +50,9 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(PERMIT_URLS).permitAll()
                 .anyRequest().authenticated()
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class)
