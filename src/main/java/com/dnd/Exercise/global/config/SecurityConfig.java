@@ -1,6 +1,7 @@
 package com.dnd.Exercise.global.config;
 
 import com.dnd.Exercise.global.jwt.JwtAuthenticationFilter;
+import com.dnd.Exercise.global.jwt.JwtExceptionFilter;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -50,7 +51,8 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtExceptionFilter(), JwtAuthenticationFilter.class);
         return http.build();
     }
 }
