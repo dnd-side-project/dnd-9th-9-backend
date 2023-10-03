@@ -2,6 +2,8 @@ package com.dnd.Exercise.global.jwt;
 
 import com.dnd.Exercise.domain.auth.repository.RefreshTokenRedisRepository;
 import com.dnd.Exercise.domain.auth.service.CustomUserDetailsService;
+import com.dnd.Exercise.global.error.dto.ErrorCode;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -88,13 +90,13 @@ public class JwtTokenProvider {
             return !claims.getBody().getExpiration().before(new Date());
         } catch (SignatureException | MalformedJwtException e) {
             log.info("JWT 토큰이 유효하지 않습니다.");
-            // TODO: 예외처리
+            throw new CustomJwtException(ErrorCode.INVALID_JWT_TOKEN);
         } catch (ExpiredJwtException e) {
             log.info("JWT 토큰이 만료되었습니다.");
-            // TODO: 예외처리
+            throw new CustomJwtException(ErrorCode.EXPIRED_JWT_TOKEN);
         } catch (UnsupportedJwtException e) {
             log.info("지원하지 않는 JWT 토큰입니다.");
-            // TODO: 예외처리
+            throw new CustomJwtException(ErrorCode.UNSUPPORTED_JWT_TOKEN);
         } catch (IllegalArgumentException e) {
             log.info("JWT 토큰이 잘못되었습니다.");
         }
