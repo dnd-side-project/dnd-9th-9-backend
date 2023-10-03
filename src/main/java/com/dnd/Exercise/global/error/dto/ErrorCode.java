@@ -22,13 +22,19 @@ public enum ErrorCode {
 
     FORBIDDEN(HttpStatus.FORBIDDEN, "C-006","접근 권한이 없습니다."),
 
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C-007", "로그인이 필요합니다."),
+
+    INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "J-001", "유효하지 않은 JWT 토큰입니다."),
+
+    EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "J-002", "만료된 JWT 토큰입니다."),
+
+    UNSUPPORTED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "J-003", "지원하지 않는 JWT 토큰입니다."),
+
     LOGIN_FAILED(HttpStatus.BAD_REQUEST, "A-001", "아이디 또는 비밀번호를 잘못 입력하였습니다."),
 
     ID_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "A-002", "이미 사용중인 아이디 입니다."),
 
-    INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "A-003", "유효하지 않은 refresh 토큰 입니다."),
-
-    UNMATCHING_NEW_PASSWORD(HttpStatus.BAD_REQUEST, "A-004", "비밀번호가 일치하지 않습니다."),
+    UNMATCHING_NEW_PASSWORD(HttpStatus.BAD_REQUEST, "A-003", "비밀번호가 일치하지 않습니다."),
 
     INVALID_STATUS(HttpStatus.BAD_REQUEST, "F-001", "진행 중, 완료된 필드에 대해서는 수정이 불가능합니다."),
 
