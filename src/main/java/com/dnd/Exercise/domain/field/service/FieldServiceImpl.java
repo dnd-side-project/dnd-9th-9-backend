@@ -243,8 +243,8 @@ public class FieldServiceImpl implements FieldService{
 
         FindFieldRes.FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(fieldDto);
 
-        if (isMember && myField.getFieldStatus() == IN_PROGRESS){
-            Field opponentField = fieldUtil.getField(myField.getOpponent().getId());
+        Field opponentField = myField.getOpponent();
+        if (isMember && opponentField != null){
             FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
             resBuilder.assignedFieldDto(assignedFieldDto);
         }
