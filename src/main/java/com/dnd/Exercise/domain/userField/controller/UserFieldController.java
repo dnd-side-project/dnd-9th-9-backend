@@ -150,4 +150,12 @@ public class UserFieldController {
         userFieldService.cheerMember(user ,id);
         return ResponseDto.ok("응원하기 완료");
     }
+
+    @ApiOperation(value = "필드 보유 여부 확인 💡", notes = "자동매칭 전 사용")
+    @GetMapping("/check")
+    public ResponseEntity<String> checkOwnBattle(
+            @AuthenticationPrincipal User user){
+        userFieldService.checkOwnBattle(user);
+        return ResponseDto.ok("보유 여부 확인 완료");
+    }
 }

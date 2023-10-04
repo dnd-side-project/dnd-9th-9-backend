@@ -14,6 +14,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.FCM_TIME_LIMIT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
@@ -271,5 +272,21 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .build();
 
         eventPublisher.publishEvent(new NotificationEvent(members, notificationDto));
+    }
+
+    @Override
+    public void checkOwnBattle(User user) {
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
+                List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE));
+
+        List<UserField> result = myUserFields.stream()
+                .filter(userField -> {
+                    Field field = userField.getField();
+                    return field.getOpponent() == null;
+                }).collect(Collectors.toList());
+
+        if (result.isEmpty()){
+            throw new BusinessException(SHOULD_CREATE);
+        }
     }
 }
