@@ -55,10 +55,10 @@ public class AuthController {
 
     @ApiOperation(value = "access 토큰 만료 시 재발급 🔐", notes = "refresh 토큰으로 access 토큰을 갱신합니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="유효하지 않은 refresh 토큰 입니다.")
+            @ApiResponse(code=401, message="유효하지 않은 JWT 토큰 입니다. or 만료된 JWT 토큰입니다. or 지원하지 않는 JWT 토큰입니다.")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<AccessTokenRes> refresh(@RequestBody RefreshReq refreshReq) {
+    public ResponseEntity<AccessTokenRes> refresh(@RequestBody @Valid RefreshReq refreshReq) {
         AccessTokenRes token = authService.refresh(refreshReq);
         return ResponseDto.ok(token);
     }

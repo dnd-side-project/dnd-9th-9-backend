@@ -1,6 +1,8 @@
 package com.dnd.Exercise.global.config;
 
+import com.dnd.Exercise.global.jwt.CustomAuthenticationEntryPoint;
 import com.dnd.Exercise.global.jwt.JwtAuthenticationFilter;
+import com.dnd.Exercise.global.jwt.JwtExceptionFilter;
 import com.dnd.Exercise.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -49,8 +51,12 @@ public class SecurityConfig {
                 .antMatchers(PERMIT_URLS).permitAll()
                 .anyRequest().authenticated()
                 .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtExceptionFilter(), JwtAuthenticationFilter.class);
         return http.build();
     }
 }

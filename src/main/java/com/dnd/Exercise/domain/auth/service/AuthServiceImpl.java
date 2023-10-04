@@ -76,12 +76,11 @@ public class AuthServiceImpl implements AuthService {
     public AccessTokenRes refresh(RefreshReq refreshReq) {
         String requestToken = refreshReq.getRefreshToken();
 
-        if (requestToken == null || !jwtTokenProvider.validateToken(requestToken)) {
-            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
-        RefreshToken redisToken = refreshTokenRedisRepository.findById(requestToken).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
+        jwtTokenProvider.validateRefreshToken(requestToken);
+
+        RefreshToken redisToken = refreshTokenRedisRepository.findById(requestToken).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_JWT_TOKEN));
         if ((redisToken.getUserId() != Long.parseLong(jwtTokenProvider.getUserId(requestToken)))) {
-            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new BusinessException(ErrorCode.INVALID_JWT_TOKEN);
         }
 
         AccessTokenRes newAccessToken = AccessTokenRes.builder()
