@@ -1,6 +1,6 @@
 package com.dnd.Exercise.domain.auth.controller;
 
-import com.dnd.Exercise.domain.auth.dto.request.OAuthCodeReq;
+import com.dnd.Exercise.domain.auth.dto.request.OAuthLoginReq;
 import com.dnd.Exercise.domain.auth.dto.response.TokenRes;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
@@ -18,7 +18,7 @@ public class OAuthController {
 
     @ApiOperation(value = "애플 로그인 🔐", notes = "인가 코드를 전송합니다. <br> 이미 존재하는 유저이면 로그인 / 새로운 유저이면 회원가입 처리 후 로그인 시켜줍니다.")
     @PostMapping("/apple-login")
-    public ResponseEntity<TokenRes> appleLogin(@RequestBody OAuthCodeReq oAuthCodeReq) {
+    public ResponseEntity<TokenRes> appleLogin(@RequestBody OAuthLoginReq oAuthTokenReq) {
         return ResponseDto.ok(new TokenRes());
     }
 
@@ -30,7 +30,7 @@ public class OAuthController {
 
     @ApiOperation(value = "구글 로그인 🔐", notes = "인가 코드를 전송합니다. <br> 이미 존재하는 유저이면 로그인 / 새로운 유저이면 회원가입 처리 후 로그인 시켜줍니다.")
     @PostMapping("/google-login")
-    public ResponseEntity<TokenRes> googleLogin(@RequestBody OAuthCodeReq oAuthCodeReq) {
+    public ResponseEntity<TokenRes> googleLogin(@RequestBody OAuthLoginReq oAuthTokenReq) {
         return ResponseDto.ok(new TokenRes());
     }
 }
