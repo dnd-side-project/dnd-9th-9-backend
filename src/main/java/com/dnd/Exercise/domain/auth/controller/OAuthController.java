@@ -6,6 +6,8 @@ import com.dnd.Exercise.domain.auth.service.OAuthService;
 import com.dnd.Exercise.global.common.ResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,9 @@ public class OAuthController {
 
     @ApiOperation(value = "카카오 로그인 🔐", notes = "카카오 측에서 발급받은 access token 을 전송합니다. <br> 이미 존재하는 유저이면 로그인 / 새로운 유저이면 회원가입 처리 후 로그인 시켜줍니다.")
     @PostMapping("/kakao-login")
+    @ApiResponses({
+            @ApiResponse(code=401, message="해당 액세스 토큰으로 카카오 유저 정보를 받아오지 못했습니다. (error code: K-001)")
+    })
     public ResponseEntity<TokenRes> kakaoLogin(@RequestBody @Valid OAuthLoginReq oAuthLoginReq) {
         TokenRes tokenRes = oAuthService.kakaoLogin(oAuthLoginReq);
         return ResponseDto.ok(tokenRes);
