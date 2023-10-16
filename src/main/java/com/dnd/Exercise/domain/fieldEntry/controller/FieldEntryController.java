@@ -89,7 +89,7 @@ public class FieldEntryController {
                     + "<br>[F-004] 매치가 이미 진행 중입니다. "
                     + "<br>[FE-003] 이미 팀원이 가득 찼습니다. "
                     + "<br>[FE-001] 이미 신청한 필드입니다. "
-                    + "<br>[FE-002] 이미 해당 유형의 필드를 가지고 있습니다. 가질 수 있는 최대 필드 수 : 1:1 배틀 1개, 팀 배틀 1개, 팀 1개")
+                    + "<br>[FE-002] 이미 해당 유형의 매칭이 있습니다.")
     })
     @PostMapping("/team")
     public ResponseEntity<String> createTeamFieldEntry(
