@@ -69,6 +69,9 @@ dependencies {
 
 	// json
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+
+	// feign client
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.8'
 }
 
 jar {

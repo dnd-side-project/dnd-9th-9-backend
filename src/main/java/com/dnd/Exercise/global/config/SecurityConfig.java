@@ -30,7 +30,7 @@ public class SecurityConfig {
             "/webjars/**",
             /* apis */
             "/auth/sign-up", "/auth/login", "/auth/id-available", "/auth/refresh", "/auth/find-id", "/auth/change-pw",
-            "/verification/**"
+            "/verification/**", "/oauth/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;
