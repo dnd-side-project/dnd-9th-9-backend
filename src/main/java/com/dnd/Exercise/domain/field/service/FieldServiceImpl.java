@@ -257,7 +257,6 @@ public class FieldServiceImpl implements FieldService{
     public void updateFieldProfile(Long id, User user, UpdateFieldProfileReq updateFieldProfileReq) {
         Field field = fieldUtil.getField(id);
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
-        fieldUtil.validateHaveOpponent(field);
 
         if(field.getProfileImg() != null){
             awsS3Service.deleteImage(field.getProfileImg());

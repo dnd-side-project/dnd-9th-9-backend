@@ -115,7 +115,7 @@ public class FieldController {
             @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다."),
             @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
-    @PatchMapping("/{id}/profile")
+    @PostMapping("/{id}/profile")
     public ResponseEntity<String> updateFieldProfile(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,
