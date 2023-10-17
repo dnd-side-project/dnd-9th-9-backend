@@ -127,7 +127,7 @@ public class FieldEntryController {
             @ApiResponse(code=200, message="필드 신청 취소 완료"),
             @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다."
                     + "<br>[C-000] 잘못된 요청"),
-            @ApiResponse(code=403, message = "[C-006] 접근 권한이 없습니다.")
+            @ApiResponse(code=403, message = "[FE-005] 매칭에 대한 설정은 팀장만 가능합니다.")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteFieldEntry(

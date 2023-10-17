@@ -90,7 +90,7 @@ public class UserFieldController {
             @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다. "
                     + "<br>[F-004] 매치가 이미 진행 중입니다."),
             @ApiResponse(code=403, message = "[F-012] 팀 멤버가 아닙니다. "
-                    + "<br>[F-013] 팀 리더가 아니어야 합니다.")
+                    + "<br>[F-013] 팀을 나가기 위해서는 다른 팀원에게 방장을 넘겨야 해요.")
     })
     @DeleteMapping("{id}/exit")
     public ResponseEntity<String> exitField(

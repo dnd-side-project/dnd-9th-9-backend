@@ -8,13 +8,13 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "C-000", "잘못된 요청"),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "C-000", "잘못된 요청입니다\n다시 한 번 확인해주세요"),
 
     NOT_FOUND(HttpStatus.NOT_FOUND, "C-001", "리소스를 찾을 수 없음"),
 
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "C-002", "허용되지 않은 Request Method 호출"),
 
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C-003", "내부 서버 오류"),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C-003", "알 수 없는 오류가 발생하였습니다."),
 
     METHOD_ARGUMENT_NOT_VALID(HttpStatus.BAD_REQUEST, "C-004", "요청 인자가 유효하지 않음"),
 
@@ -60,7 +60,7 @@ public enum ErrorCode {
 
     NOT_MEMBER(HttpStatus.FORBIDDEN, "F-012", "팀 멤버가 아닙니다."),
 
-    MUST_NOT_LEADER(HttpStatus.FORBIDDEN, "F-013", "팀 리더가 아니어야 합니다."),
+    MUST_NOT_LEADER(HttpStatus.FORBIDDEN, "F-013", "팀을 나가기 위해서는\n다른 팀원에게 방장을 넘겨야 해요."),
 
     ALREADY_APPLY(HttpStatus.BAD_REQUEST, "FE-001", "이미 신청한 필드입니다."),
 
@@ -69,6 +69,8 @@ public enum ErrorCode {
     ALREADY_FULL(HttpStatus.BAD_REQUEST, "FE-003", "이미 팀원이 가득 찼습니다."),
 
     PERIOD_NOT_MATCH(HttpStatus.BAD_REQUEST, "FE-004", "기간이 같아야 합니다."),
+
+    MUST_LEADER(HttpStatus.FORBIDDEN, "FE-005", "매칭에 대한 설정은 팀장만 가능합니다."),
 
     ACTIVITY_RING_NOT_FOUND(HttpStatus.NOT_FOUND, "AR-001", "해당 날짜에 대한 활동링 소모칼로리 정보가 존재하지 않습니다."),
 
