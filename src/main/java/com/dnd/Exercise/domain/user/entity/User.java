@@ -24,6 +24,8 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "user_id")
     private Long id;
 
+    private String oauthId;
+
     private String uid;
 
     private String password;
@@ -99,7 +101,7 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     @Builder
-    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType, Boolean isAppleLinked, Boolean isNotificationAgreed) {
+    public User(String uid, String password, String phoneNum, String name, SkillLevel skillLevel, LoginType loginType, Boolean isAppleLinked, Boolean isNotificationAgreed, String oauthId, String email) {
         this.uid = uid;
         this.password = password;
         this.phoneNum = phoneNum;
@@ -108,6 +110,8 @@ public class User extends BaseEntity implements UserDetails {
         this.loginType = loginType;
         this.isAppleLinked = isAppleLinked;
         this.isNotificationAgreed = isNotificationAgreed;
+        this.oauthId = oauthId;
+        this.email = email;
     }
 
     public void addToken(FcmToken fcmToken) {

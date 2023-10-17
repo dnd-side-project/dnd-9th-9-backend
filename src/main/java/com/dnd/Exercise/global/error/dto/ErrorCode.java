@@ -103,7 +103,9 @@ public enum ErrorCode {
 
     UNEXISTING_ID(HttpStatus.BAD_REQUEST, "V-005", "해당 아이디의 유저는 존재하지 않습니다."),
 
-    UNMATCHING_PHONE_NUM(HttpStatus.BAD_REQUEST, "V-006", "회원정보에 등록된 전화번호와 일치하지 않습니다.");
+    UNMATCHING_PHONE_NUM(HttpStatus.BAD_REQUEST, "V-006", "회원정보에 등록된 전화번호와 일치하지 않습니다."),
+
+    INVALID_KAKAO_TOKEN(HttpStatus.UNAUTHORIZED, "K-001", "해당 액세스 토큰으로 카카오 유저 정보를 받아오지 못했습니다.");
 
     private final HttpStatus status;
     private final String code;
