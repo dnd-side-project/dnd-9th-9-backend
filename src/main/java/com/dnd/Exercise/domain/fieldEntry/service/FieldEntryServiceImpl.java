@@ -7,6 +7,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
 
 import com.dnd.Exercise.domain.field.entity.Field;
@@ -137,7 +138,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         }else{
             if(!entrantField.getLeaderId().equals(user.getId())
                     && !hostField.getLeaderId().equals(user.getId())){
-                throw new BusinessException(FORBIDDEN);
+                throw new BusinessException(MUST_LEADER);
             }
         }
         fieldEntryRepository.deleteById(entryId);

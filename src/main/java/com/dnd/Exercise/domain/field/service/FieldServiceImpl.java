@@ -243,8 +243,8 @@ public class FieldServiceImpl implements FieldService{
 
         FindFieldRes.FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(fieldDto);
 
-        if (isMember && myField.getFieldStatus() == IN_PROGRESS){
-            Field opponentField = fieldUtil.getField(myField.getOpponent().getId());
+        Field opponentField = myField.getOpponent();
+        if (isMember && opponentField != null){
             FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
             resBuilder.assignedFieldDto(assignedFieldDto);
         }
@@ -257,7 +257,6 @@ public class FieldServiceImpl implements FieldService{
     public void updateFieldProfile(Long id, User user, UpdateFieldProfileReq updateFieldProfileReq) {
         Field field = fieldUtil.getField(id);
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
-        fieldUtil.validateHaveOpponent(field);
 
         if(field.getProfileImg() != null){
             awsS3Service.deleteImage(field.getProfileImg());

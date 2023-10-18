@@ -58,8 +58,7 @@ public class FieldController {
     @ApiOperation(value = "필드 생성 🔥")
     @ApiResponses({
             @ApiResponse(code=200, message="필드 생성 완료"),
-            @ApiResponse(code=400, message="[FE-002] 이미 해당 유형의 필드를 가지고 있습니다. "
-                    + "가질 수 있는 최대 필드 수 : 1:1 배틀 1개, 팀 배틀 1개, 팀 1개 "
+            @ApiResponse(code=400, message="[FE-002] 이미 해당 유형의 매칭이 있습니다."
                     + "<br>[F-010] 1:1 배틀의 최대 인원은 1명입니다. ")
     })
     @PostMapping
@@ -116,7 +115,7 @@ public class FieldController {
             @ApiResponse(code=403, message="[F-009] 팀장 권한이 필요합니다."),
             @ApiResponse(code=404, message="[F-008] 필드를 찾을 수 없습니다.")
     })
-    @PatchMapping("/{id}/profile")
+    @PostMapping("/{id}/profile")
     public ResponseEntity<String> updateFieldProfile(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id,

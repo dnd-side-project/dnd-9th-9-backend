@@ -90,7 +90,7 @@ public class UserFieldController {
             @ApiResponse(code=400, message="[F-008] 필드를 찾을 수 없습니다. "
                     + "<br>[F-004] 매치가 이미 진행 중입니다."),
             @ApiResponse(code=403, message = "[F-012] 팀 멤버가 아닙니다. "
-                    + "<br>[F-013] 팀 리더가 아니어야 합니다.")
+                    + "<br>[F-013] 팀을 나가기 위해서는 다른 팀원에게 방장을 넘겨야 해요.")
     })
     @DeleteMapping("{id}/exit")
     public ResponseEntity<String> exitField(
@@ -149,5 +149,13 @@ public class UserFieldController {
             @Parameter(description = "유저 ID") @PathVariable("id") Long id){
         userFieldService.cheerMember(user ,id);
         return ResponseDto.ok("응원하기 완료");
+    }
+
+    @ApiOperation(value = "필드 보유 여부 확인 💡", notes = "자동매칭 전 사용")
+    @GetMapping("/check")
+    public ResponseEntity<String> checkOwnBattle(
+            @AuthenticationPrincipal User user){
+        userFieldService.checkOwnBattle(user);
+        return ResponseDto.ok("보유 여부 확인 완료");
     }
 }
