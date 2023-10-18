@@ -64,7 +64,7 @@ public class VerificationController {
             "- '회원가입, 아이디찾기, 비밀번호찾기' 를 수행하기 이전에 본 api 를 통해 인증번호 인증을 완료해야 합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="인증되었습니다."),
-            @ApiResponse(code=400, message="[V-001] 잘못된 인증번호입니다. or [V-002] 인증번호 유효시간이 지났습니다.")
+            @ApiResponse(code=400, message="[V-001] 잘못된 인증번호입니다. or [V-002] 인증번호 유효시간이 지났습니다. 하단의 버튼을 눌러 재전송해 주세요.")
     })
     @PostMapping("/verify")
     public ResponseEntity<String> verify(@RequestBody @Valid VerifyReq verifyReq) {

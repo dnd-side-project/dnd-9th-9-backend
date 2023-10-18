@@ -45,8 +45,7 @@ public class UserController {
             "<br> '애플 데이터와의 초기 연동' or '연동 안한 유저의 온보딩' 에서 사용합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="온보딩 정보 업데이트 완료"),
-            @ApiResponse(code=400, message="[U-001] 애플 연동을 수행한 유저만 목표 칼로리를 설정할 수 있습니다."),
-            @ApiResponse(code=400, message="[U-002] 애플 연동 유저인 경우 목표 칼로리 값을 전송해야 합니다.")
+            @ApiResponse(code=400, message="[U-001] 애플 연동을 수행한 유저만 목표 칼로리를 설정할 수 있습니다. or [U-002] 애플 연동 유저인 경우 목표 칼로리 값을 전송해야 합니다.")
     })
     @PatchMapping("/my/onboard-profile")
     public ResponseEntity<String> updateOnboardProfile(@RequestBody @Valid UpdateOnboardProfileReq updateOnboardProfileReq, @AuthenticationPrincipal User user) {

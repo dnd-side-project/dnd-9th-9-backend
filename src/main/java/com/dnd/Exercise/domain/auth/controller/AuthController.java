@@ -29,7 +29,7 @@ public class AuthController {
     @ApiOperation(value = "회원가입 🔐", notes = "일반 회원가입 시 사용합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="회원가입 완료"),
-            @ApiResponse(code=400, message="[A-002] 이미 사용중인 아이디 입니다.")
+            @ApiResponse(code=400, message="[A-003] 이미 사용중인 아이디 입니다.")
     })
     @PostMapping("/sign-up")
     public ResponseEntity<String> signUp(@RequestBody @Valid SignUpReq signUpReq) {
@@ -39,7 +39,7 @@ public class AuthController {
 
     @ApiOperation(value = "로그인 🔐", notes = "일반 로그인 시 사용합니다. <br> 발급받은 access 토큰은 추후 요청 시 Authorization 헤더에 'Bearer 토큰' 형태로 전송합니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="[A-001] 아이디 또는 비밀번호를 잘못 입력하였습니다.")
+            @ApiResponse(code=400, message="[A-001] 존재하지 않는 아이디입니다. or [A-002] 비밀번호가 일치하지 않습니다.")
     })
     @PostMapping("/login")
     public ResponseEntity<TokenRes> login(@RequestBody @Valid LoginReq loginReq) {
@@ -93,7 +93,7 @@ public class AuthController {
             "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="비밀번호가 재설정 되었습니다."),
-            @ApiResponse(code=400, message="[A-003] 비밀번호가 일치하지 않습니다. or [V-004] 전화번호 인증이 사전 수행되어야 합니다.")
+            @ApiResponse(code=400, message="[A-004] 비밀번호가 일치하지 않습니다. or [V-004] 전화번호 인증이 사전 수행되어야 합니다.")
     })
     @PostMapping("/change-pw")
     public ResponseEntity<String> changePw(@RequestBody @Valid ChangePwReq changePwReq) {
