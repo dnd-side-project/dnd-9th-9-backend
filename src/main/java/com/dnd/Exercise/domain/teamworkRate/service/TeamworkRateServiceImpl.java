@@ -58,6 +58,13 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
         }
     }
 
+    @Override
+    @Transactional
+    public int getTeamworkRateOfField(Field field) {
+        int teamworkRateOfField = getRateGainOfField(field);
+        return teamworkRateOfField;
+    }
+
     private void validateIsFieldCompleted(Field field) {
         if (!COMPLETED.equals(field.getFieldStatus())) {
             throw new BusinessException(NOT_COMPLETED);

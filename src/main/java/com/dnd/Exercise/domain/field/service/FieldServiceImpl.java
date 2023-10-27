@@ -46,6 +46,7 @@ import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
+import com.dnd.Exercise.domain.teamworkRate.service.TeamworkRateService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.entity.UserField;
@@ -83,6 +84,7 @@ public class FieldServiceImpl implements FieldService{
     private final AwsS3Service awsS3Service;
     private final FieldUtil fieldUtil;
     private final UserRepository userRepository;
+    private final TeamworkRateService teamworkRateService;
     private final String S3_FOLDER = "field-profile";
 
 
@@ -472,7 +474,8 @@ public class FieldServiceImpl implements FieldService{
         FindFieldResultDto home = new FindFieldResultDto(myField, score);
         FindFieldResultRes.FindFieldResultResBuilder resBuilder= FindFieldResultRes.builder()
                 .period(myField.getPeriod())
-                .home(home);
+                .home(home)
+                .teamworkRate(teamworkRateService.getTeamworkRateOfField(myField));
 
         if (!TEAM.equals(myField.getFieldType())){
             Field opponentField = myField.getOpponent();
