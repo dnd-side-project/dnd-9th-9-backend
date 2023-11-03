@@ -1,6 +1,8 @@
 package com.dnd.Exercise.domain.teamworkRate.controller;
 
+import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.teamworkRate.dto.request.PostTeamworkRateReq;
+import com.dnd.Exercise.domain.teamworkRate.dto.response.GetTeamworkRateHistoryRes;
 import com.dnd.Exercise.domain.teamworkRate.service.TeamworkRateService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.ResponseDto;
@@ -11,10 +13,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -37,5 +36,13 @@ public class TeamworkRateController {
     public ResponseEntity<String> postTeamworkRate(@RequestBody @Valid PostTeamworkRateReq postTeamworkRateReq, @AuthenticationPrincipal User user) {
         teamworkRateService.postTeamworkRate(postTeamworkRateReq, user);
         return ResponseDto.ok("불꽃평가 등록 완료");
+    }
+
+    @ApiOperation(value = "불꽃 히스토리 확인 💯", notes = "마이페이지에서 불꽃 히스토리를 확인합니다.")
+    @GetMapping("/history")
+    public ResponseEntity<GetTeamworkRateHistoryRes> getTeamworkRateHistory(@RequestParam(required = false) FieldType fieldType, @RequestParam Integer page, @RequestParam Integer size,
+                                                                            @AuthenticationPrincipal User user) {
+        GetTeamworkRateHistoryRes getTeamworkRateHistoryRes = teamworkRateService.getTeamworkRateHistory(fieldType,page,size,user);
+        return ResponseEntity.ok(getTeamworkRateHistoryRes);
     }
 }

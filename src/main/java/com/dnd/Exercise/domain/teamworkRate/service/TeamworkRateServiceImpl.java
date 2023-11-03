@@ -2,7 +2,11 @@ package com.dnd.Exercise.domain.teamworkRate.service;
 
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
+import com.dnd.Exercise.domain.teamworkRate.dto.TeamworkRateMapper;
 import com.dnd.Exercise.domain.teamworkRate.dto.request.PostTeamworkRateReq;
+import com.dnd.Exercise.domain.teamworkRate.dto.response.GetTeamworkRateHistoryRes;
+import com.dnd.Exercise.domain.teamworkRate.dto.response.TeamworkRateHistoryDto;
 import com.dnd.Exercise.domain.teamworkRate.entity.TeamworkRate;
 import com.dnd.Exercise.domain.teamworkRate.repository.TeamworkRateRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -12,6 +16,9 @@ import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.util.field.FieldUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +38,7 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     private final UserFieldRepository userFieldRepository;
     private final UserRepository userRepository;
     private final FieldUtil fieldUtil;
+    private final TeamworkRateMapper teamworkRateMapper;
 
     @Override
     @Transactional
@@ -63,6 +71,30 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     public int getTeamworkRateOfField(Field field) {
         int teamworkRateOfField = getRateGainOfField(field);
         return teamworkRateOfField;
+    }
+
+    @Override
+    public GetTeamworkRateHistoryRes getTeamworkRateHistory(FieldType fieldType, Integer page, Integer size, User user) {
+        Pageable pageable = PageRequest.of(page,size);
+        Page<UserField> pagedUserFields = userFieldRepository.findCompletedFieldByUserAndType(user,fieldType,pageable);
+
+        List<Field> completedFields = pagedUserFields.getContent()
+                .stream().map(UserField::getField).collect(Collectors.toList());
+
+        List<TeamworkRateHistoryDto> teamworkRateHistoryDtos = completedFields.stream()
+                .map(field -> {
+                    Integer teamworkRate = getRateGainOfField(field);
+                    WinStatus winStatus = fieldUtil.getFieldWinStatus(field);
+                    return teamworkRateMapper.from(field,teamworkRate,winStatus);})
+                .collect(Collectors.toList());
+
+        return new GetTeamworkRateHistoryRes().builder()
+                .teamworkRateHistoryDtos(teamworkRateHistoryDtos)
+                .currentPage(pagedUserFields.getNumber())
+                .currentPageSize(pagedUserFields.getSize())
+                .isFirstPage(pagedUserFields.isFirst())
+                .isLastPage(pagedUserFields.isLast())
+                .build();
     }
 
     private void validateIsFieldCompleted(Field field) {
