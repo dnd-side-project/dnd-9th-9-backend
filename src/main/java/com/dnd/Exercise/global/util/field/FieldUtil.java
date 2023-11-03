@@ -2,6 +2,7 @@ package com.dnd.Exercise.global.util.field;
 
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
@@ -16,6 +17,7 @@ import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
@@ -24,6 +26,8 @@ import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -116,6 +120,22 @@ public class FieldUtil {
         List<Exercise> exercises = getExercises(startDate, endDate, memberIds);
 
         return calculateRecord(activityRings, exercises);
+    }
+
+    public WinStatus getFieldWinStatus(Field field) {
+        if (TEAM.equals(field.getFieldType())) {
+            return null;
+        }
+        Field opponent = field.getOpponent();
+        List<Integer> myScores = getFieldSummary(field.getId(),field.getStartDate(),field.getEndDate());
+        List<Integer> opponentScores = getFieldSummary(opponent.getId(),opponent.getStartDate(),opponent.getEndDate());
+
+        int result = IntStream.range(0, myScores.size())
+                .map(i -> Integer.compare(myScores.get(i), opponentScores.get(i))).sum();
+
+        if (result > 0) return WinStatus.WIN;
+        if (result < 0) return WinStatus.LOSE;
+        return WinStatus.DRAW;
     }
 
     public void validateNotHavingField(User user, FieldType fieldType){
