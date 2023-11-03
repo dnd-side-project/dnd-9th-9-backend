@@ -29,7 +29,7 @@ public class UserFieldRepositoryImpl implements UserFieldRepositoryCustom{
         JPAQuery<Long> countQuery = queryFactory
                 .select(userField.count())
                 .from(userField)
-                .join(userField.field, field).fetchJoin()
+                .join(userField.field, field)
                 .where(userField.user.id.eq(user.getId()))
                 .where(userField.field.fieldStatus.eq(COMPLETED),
                         evaluateEq(userField.field.fieldType, fieldType));
