@@ -68,7 +68,6 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     }
 
     @Override
-    @Transactional
     public int getTeamworkRateOfField(Field field) {
         int teamworkRateOfField = getRateGainOfField(field);
         return teamworkRateOfField;
