@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,7 +76,7 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
 
     @Override
     public GetTeamworkRateHistoryRes getTeamworkRateHistory(FieldType fieldType, Integer page, Integer size, User user) {
-        Pageable pageable = PageRequest.of(page,size);
+        Pageable pageable = PageRequest.of(page,size, Sort.by("field.endDate").descending());
         Page<UserField> pagedUserFields = userFieldRepository.findCompletedFieldByUserAndType(user,fieldType,pageable);
 
         List<Field> completedFields = pagedUserFields.getContent()

@@ -18,7 +18,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -62,7 +64,7 @@ public class UserFieldController {
     public ResponseEntity<FindAllMyCompletedFieldsRes> findAllMyCompletedFields(
             @AuthenticationPrincipal User user,
             @RequestParam(value = "fieldType", required = false) FieldType fieldType,
-            @PageableDefault(page = 0, size = 5) Pageable pageable){
+            @PageableDefault(page = 0, size = 5) @SortDefault(sort = "field.createdAt", direction = Sort.Direction.ASC) Pageable pageable){
         FindAllMyCompletedFieldsRes result = userFieldService.findAllMyCompletedFields(user, fieldType, pageable);
         return ResponseDto.ok(result);
     }
