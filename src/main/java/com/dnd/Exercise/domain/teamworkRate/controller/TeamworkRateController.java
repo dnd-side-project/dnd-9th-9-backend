@@ -38,6 +38,17 @@ public class TeamworkRateController {
         return ResponseDto.ok("불꽃평가 등록 완료");
     }
 
+    @ApiOperation(value = "필드에 대한 유저의 평가 완료 여부 확인 💯", notes = "해당 필드에 대한 유저의 불꽃평가 완료 여부를 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(code = 400, message = "[F-011] 완료된 필드가 아닙니다. <br>" +
+                    "[F-012] 팀 멤버가 아닙니다.")
+    })
+    @GetMapping("/is-rating-done")
+    public ResponseEntity<Boolean> getIsRatingDone(@RequestParam Long fieldId, @AuthenticationPrincipal User user) {
+        Boolean isRatingDone = teamworkRateService.getIsRatingDone(fieldId, user);
+        return ResponseEntity.ok(isRatingDone);
+    }
+
     @ApiOperation(value = "불꽃 히스토리 확인 💯", notes = "마이페이지에서 불꽃 히스토리를 확인합니다.")
     @GetMapping("/history")
     public ResponseEntity<GetTeamworkRateHistoryRes> getTeamworkRateHistory(@RequestParam(required = false) FieldType fieldType, @RequestParam Integer page, @RequestParam Integer size,

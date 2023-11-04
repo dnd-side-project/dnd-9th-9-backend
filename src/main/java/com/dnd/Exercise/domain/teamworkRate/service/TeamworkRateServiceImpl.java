@@ -75,6 +75,17 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     }
 
     @Override
+    public Boolean getIsRatingDone(Long fieldId, User user) {
+        Field field = fieldUtil.getField(fieldId);
+
+        fieldUtil.validateIsMember(user, field);
+        validateIsFieldCompleted(field);
+
+        if (teamworkRateRepository.existsByFieldAndSubmitUser(field, user)) { return true; }
+        return false;
+    }
+
+    @Override
     public GetTeamworkRateHistoryRes getTeamworkRateHistory(FieldType fieldType, Integer page, Integer size, User user) {
         Pageable pageable = PageRequest.of(page,size, Sort.by("field.endDate").descending());
         Page<UserField> pagedUserFields = userFieldRepository.findCompletedFieldByUserAndType(user,fieldType,pageable);

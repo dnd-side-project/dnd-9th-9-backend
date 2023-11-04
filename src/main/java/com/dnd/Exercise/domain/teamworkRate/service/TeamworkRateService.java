@@ -9,5 +9,6 @@ import com.dnd.Exercise.domain.user.entity.User;
 public interface TeamworkRateService {
     void postTeamworkRate(PostTeamworkRateReq postTeamworkRateReq, User user);
     int getTeamworkRateOfField(Field field);
+    Boolean getIsRatingDone(Long fieldId, User user);
     GetTeamworkRateHistoryRes getTeamworkRateHistory(FieldType fieldType, Integer page, Integer size, User user);
 }
