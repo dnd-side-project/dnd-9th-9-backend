@@ -136,10 +136,9 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     }
 
     private List<Field> getCompletedFieldsOfUser(User user) {
-        List<UserField> userFields = userFieldRepository.findAllByUser(user);
+        List<UserField> userFields = userFieldRepository.findAllByUserAndFieldStatus(user, COMPLETED);
         List<Field> completedFields = userFields.stream()
                 .map(UserField::getField)
-                .filter(field -> field.getFieldStatus() == COMPLETED)
                 .collect(Collectors.toList());
         return completedFields;
     }
