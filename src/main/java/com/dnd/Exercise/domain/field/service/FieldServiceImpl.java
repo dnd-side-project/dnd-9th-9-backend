@@ -467,8 +467,11 @@ public class FieldServiceImpl implements FieldService{
 
         List<Integer> score = fieldUtil.getFieldSummary(myField.getId(), startDate, endDate);
         FindFieldResultDto home = new FindFieldResultDto(myField, score);
+
         FindFieldResultRes.FindFieldResultResBuilder resBuilder= FindFieldResultRes.builder()
                 .period(myField.getPeriod())
+                .startDate(startDate)
+                .endDate(endDate)
                 .home(home);
 
         if (!TEAM.equals(myField.getFieldType())){
