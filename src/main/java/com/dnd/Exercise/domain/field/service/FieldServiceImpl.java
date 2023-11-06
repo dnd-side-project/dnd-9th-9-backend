@@ -144,12 +144,9 @@ public class FieldServiceImpl implements FieldService{
 
     private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
         if (winStatus == WinStatus.WIN) {
-            home.addTotalScore(25);
+            home.addTotalScore(1);
         } else if (winStatus == WinStatus.LOSE) {
-            away.addTotalScore(25);
-        } else {
-            home.addTotalScore(12.5);
-            away.addTotalScore(12.5);
+            away.addTotalScore(1);
         }
     }
 
