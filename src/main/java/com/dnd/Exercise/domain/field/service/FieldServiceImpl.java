@@ -13,6 +13,8 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CA
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_PREFIX;
+import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
@@ -50,18 +52,21 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
+import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.s3.AwsS3Service;
 import com.dnd.Exercise.global.util.field.FieldUtil;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -83,6 +88,7 @@ public class FieldServiceImpl implements FieldService{
     private final AwsS3Service awsS3Service;
     private final FieldUtil fieldUtil;
     private final UserRepository userRepository;
+    private final RedisService redisService;
     private final String S3_FOLDER = "field-profile";
 
 
@@ -302,17 +308,32 @@ public class FieldServiceImpl implements FieldService{
 
         List<Field> allFields = fieldRepository.findAllByCond(RECRUITING, fieldType, myField.getPeriod());
 
-        // 기존에 추천해줬던 매치 제외시키는 로직 추가 필요
-        Field resultField = allFields.stream()
-                .filter(field -> !field.getId().equals(myField.getId()) && isFull(field))
+        List<String> matchedIdList = new ArrayList<>();
+        String redisValue = new String();
+        String OptionalRedisValue = redisService.getValues(REDIS_AUTO_PREFIX + myField.getId());
+        if (OptionalRedisValue != null){
+            redisValue = OptionalRedisValue;
+            matchedIdList.addAll(List.of(redisValue.split(REDIS_AUTO_SPLIT_REGEX)));
+        }
+
+        Optional<Field> resultField = allFields.stream()
+                .filter(field -> !field.getId().equals(myField.getId()) && isFull(field)
+                        && !matchedIdList.contains(String.valueOf(field.getId())))
                 .min(Comparator.comparingInt(field ->
                                 Math.abs(myField.getSkillLevel().ordinal() - field.getSkillLevel().ordinal())
                                 + Math.abs(myField.getStrength().ordinal() - field.getStrength().ordinal())
                                 + Math.abs(myField.getMaxSize() - field.getMaxSize())
-                ))
-                .orElseThrow(() -> new BusinessException(NO_SIMILAR_FIELD_FOUND));
+                ));
 
-        return fieldMapper.toAutoMatchingRes(resultField);
+        if (resultField.isEmpty()){
+            redisService.deleteValues(REDIS_AUTO_PREFIX + myField.getId());
+            throw new BusinessException(NO_SIMILAR_FIELD_FOUND);
+        }
+        redisService.setValues(REDIS_AUTO_PREFIX + myField.getId(),
+                redisValue + REDIS_AUTO_SPLIT_REGEX + resultField.get().getId(),
+                Duration.ofSeconds(60));
+
+        return fieldMapper.toAutoMatchingRes(resultField.get());
     }
 
     /**

@@ -12,4 +12,6 @@ public final class Constants {
 
     public static final String RANDOM_UID_BASE_STR = "matchup";
     public static final int RANDOM_UID_CODE_LENGTH = 4;
+    public static final String REDIS_AUTO_PREFIX = "AUTO_MATCHING";
+    public static final String REDIS_AUTO_SPLIT_REGEX = " ";
 }
