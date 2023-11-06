@@ -28,7 +28,7 @@ public class ActivityRingController {
             "<br> - 애플 연동 유저만 활동링을 업데이트 할 수 있습니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="활동링 정보 업데이트 완료"),
-            @ApiResponse(code=400, message="애플 연동 유저만 활동링을 업데이트 할 수 있습니다.")
+            @ApiResponse(code=400, message="[AR-002] 애플 연동 유저만 활동링을 업데이트 할 수 있습니다.")
     })
     @PostMapping("")
     public ResponseEntity<String> updateActivityRing(@RequestBody @Valid UpdateActivityRingReq updateActivityRingReq, @AuthenticationPrincipal User user) {

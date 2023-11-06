@@ -29,7 +29,7 @@ public class AuthController {
     @ApiOperation(value = "회원가입 🔐", notes = "일반 회원가입 시 사용합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="회원가입 완료"),
-            @ApiResponse(code=400, message="이미 사용중인 아이디 입니다.")
+            @ApiResponse(code=400, message="[A-003] 이미 사용중인 아이디 입니다.")
     })
     @PostMapping("/sign-up")
     public ResponseEntity<String> signUp(@RequestBody @Valid SignUpReq signUpReq) {
@@ -39,7 +39,7 @@ public class AuthController {
 
     @ApiOperation(value = "로그인 🔐", notes = "일반 로그인 시 사용합니다. <br> 발급받은 access 토큰은 추후 요청 시 Authorization 헤더에 'Bearer 토큰' 형태로 전송합니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="아이디 또는 비밀번호를 잘못 입력하였습니다.")
+            @ApiResponse(code=400, message="[A-001] 존재하지 않는 아이디입니다. or [A-002] 비밀번호가 일치하지 않습니다.")
     })
     @PostMapping("/login")
     public ResponseEntity<TokenRes> login(@RequestBody @Valid LoginReq loginReq) {
@@ -55,7 +55,7 @@ public class AuthController {
 
     @ApiOperation(value = "access 토큰 만료 시 재발급 🔐", notes = "refresh 토큰으로 access 토큰을 갱신합니다.")
     @ApiResponses({
-            @ApiResponse(code=401, message="유효하지 않은 JWT 토큰 입니다. or 만료된 JWT 토큰입니다. or 지원하지 않는 JWT 토큰입니다.")
+            @ApiResponse(code=401, message="[J-001] 유효하지 않은 JWT 토큰 입니다. or [J-002] 만료된 JWT 토큰입니다. or [J-003] 지원하지 않는 JWT 토큰입니다.")
     })
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenRes> refresh(@RequestBody @Valid RefreshReq refreshReq) {
@@ -78,7 +78,7 @@ public class AuthController {
             "- 전화번호 인증을 완료한 유저일 경우에 한해서만 아이디 찾기가 가능합니다. <br>" +
             "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
     @ApiResponses({
-            @ApiResponse(code=400, message="전화번호 인증이 사전 수행되어야 합니다.")
+            @ApiResponse(code=400, message="[V-004] 전화번호 인증이 사전 수행되어야 합니다.")
     })
     @GetMapping("/find-id")
     public ResponseEntity<FindIdRes> findId(@ModelAttribute @Valid FindIdReq findIdReq) {
@@ -93,7 +93,7 @@ public class AuthController {
             "- 전화번호 인증을 수행하지 않은 유저일 경우, '전화번호 인증이 사전 수행되어야 합니다.' 라는 오류메시지를 반환합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="비밀번호가 재설정 되었습니다."),
-            @ApiResponse(code=400, message="비밀번호가 일치하지 않습니다. or 전화번호 인증이 사전 수행되어야 합니다.")
+            @ApiResponse(code=400, message="[A-004] 비밀번호가 일치하지 않습니다. or [V-004] 전화번호 인증이 사전 수행되어야 합니다.")
     })
     @PostMapping("/change-pw")
     public ResponseEntity<String> changePw(@RequestBody @Valid ChangePwReq changePwReq) {
