@@ -69,7 +69,7 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(code=200, message="프로필 수정 완료")
     })
-    @PostMapping("/my/profile")
+    @PatchMapping("/my/profile")
     public ResponseEntity<String> updateProfile(@ModelAttribute @Valid UpdateMyProfileReq updateMyProfileReq, @AuthenticationPrincipal User user) {
         userService.updateProfile(updateMyProfileReq,user.getId());
         return ResponseDto.ok("프로필 수정 완료");
