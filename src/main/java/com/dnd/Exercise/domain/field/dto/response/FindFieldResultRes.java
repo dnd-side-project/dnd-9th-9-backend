@@ -22,4 +22,6 @@ public class FindFieldResultRes {
     private FindFieldResultDto home;
 
     private FindFieldResultDto away;
+
+    private int teamworkRate;
 }

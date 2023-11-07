@@ -45,4 +45,10 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long>, Use
     void deleteAllByFieldAndUserIdIn(Field field, List<Long> targetUserIds);
 
     void deleteByFieldAndUser(Field field, User user);
+
+    @Query("select uf " +
+            "from UserField uf join fetch uf.field " +
+            "where uf.user = :user " +
+            "and uf.field.fieldStatus = :fieldStatus")
+    List<UserField> findAllByUserAndFieldStatus(User user, FieldStatus fieldStatus);
 }
