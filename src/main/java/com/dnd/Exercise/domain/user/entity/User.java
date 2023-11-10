@@ -61,6 +61,8 @@ public class User extends BaseEntity implements UserDetails {
 
     private Boolean isAppleLinked;
 
+    private Boolean isDeleted;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FcmToken> fcmTokens = new ArrayList<>();
 
@@ -112,6 +114,7 @@ public class User extends BaseEntity implements UserDetails {
         this.isNotificationAgreed = isNotificationAgreed;
         this.oauthId = oauthId;
         this.email = email;
+        this.isDeleted = false;
     }
 
     public void addToken(FcmToken fcmToken) {
@@ -138,4 +141,6 @@ public class User extends BaseEntity implements UserDetails {
     public void updatePassword(String password) {
         this.password = password;
     }
+
+    public void updateIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 }
