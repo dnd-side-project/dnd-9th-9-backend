@@ -58,7 +58,7 @@ public class ExerciseController {
             "<br> - appleUid 는 '애플 데이터 상에서 해당 운동기록의 고유 id' 를 뜻합니다.")
     @ApiResponses({
             @ApiResponse(code=200, message="애플 운동기록 등록 성공"),
-            @ApiResponse(code=400, message="애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다.")
+            @ApiResponse(code=400, message="[E-003] 애플 연동을 수행한 유저만 애플 운동기록을 업로드 할 수 있습니다.")
     })
     @PostMapping("/apple-workouts")
     public ResponseEntity<String> postExerciseByApple (@RequestBody @Valid PostExerciseByAppleReq postExerciseByAppleReq, @AuthenticationPrincipal User user) {

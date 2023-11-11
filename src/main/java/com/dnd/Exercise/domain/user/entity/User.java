@@ -142,5 +142,7 @@ public class User extends BaseEntity implements UserDetails {
         this.password = password;
     }
 
+    public void updateTeamworkRate(int teamworkRate) { this.teamworkRate = teamworkRate; }
+
     public void updateIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 }

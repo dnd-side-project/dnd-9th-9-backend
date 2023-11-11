@@ -8,12 +8,18 @@ import static com.dnd.Exercise.domain.userField.entity.QUserField.userField;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
@@ -29,7 +35,7 @@ public class UserFieldRepositoryImpl implements UserFieldRepositoryCustom{
         JPAQuery<Long> countQuery = queryFactory
                 .select(userField.count())
                 .from(userField)
-                .join(userField.field, field).fetchJoin()
+                .join(userField.field, field)
                 .where(userField.user.id.eq(user.getId()))
                 .where(userField.field.fieldStatus.eq(COMPLETED),
                         evaluateEq(userField.field.fieldType, fieldType));
@@ -40,11 +46,23 @@ public class UserFieldRepositoryImpl implements UserFieldRepositoryCustom{
                 .where(userField.user.id.eq(user.getId()))
                 .where(userField.field.fieldStatus.eq(COMPLETED),
                         evaluateEq(userField.field.fieldType, fieldType))
-                .orderBy(field.createdAt.asc())
+                .orderBy(getOrderSpecifiers(pageable.getSort()).stream().toArray(OrderSpecifier[]::new))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
         return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
+    }
+
+    private List<OrderSpecifier> getOrderSpecifiers(Sort sort) {
+        List<OrderSpecifier> orderSpecifiers = new ArrayList<>();
+
+        sort.forEach(orderCond -> {
+            Order direction = orderCond.isAscending() ? Order.ASC : Order.DESC;
+            String property = orderCond.getProperty();
+            PathBuilder orderByExpression = new PathBuilder(UserField.class, "userField");
+            orderSpecifiers.add(new OrderSpecifier(direction, orderByExpression.get(property)));
+        });
+        return orderSpecifiers;
     }
 }
