@@ -10,4 +10,5 @@ public interface UserService {
     void updateProfile(UpdateMyProfileReq updateMyProfileReq, long userId);
     void updateAppleLinked(UpdateAppleLinkedReq updateAppleLinkedReq, long userId);
     void updateNotificationAgreed(UpdateNotificationAgreementReq updateNotificationAgreementReq, long userId);
+    void withdraw(long userId);
 }

@@ -144,5 +144,23 @@ public class User extends BaseEntity implements UserDetails {
 
     public void updateTeamworkRate(int teamworkRate) { this.teamworkRate = teamworkRate; }
 
-    public void updateIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
+    public void setToWithdrawUser() {
+        this.age = 0;
+        this.email = null;
+        this.password = null;
+        this.height = 0;
+        this.weight = 0;
+        this.isAppleLinked = false;
+        this.isNotificationAgreed = false;
+        this.phoneNum = null;
+        this.profileImg = null;
+        this.skillLevel = null;
+        this.oauthId = null;
+        this.teamworkRate = 0;
+
+        this.uid = "unknown";
+        this.name = "알수없음";
+
+        this.isDeleted = true;
+    }
 }

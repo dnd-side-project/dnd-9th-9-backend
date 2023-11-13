@@ -24,6 +24,8 @@ public interface FieldEntryRepository extends JpaRepository<FieldEntry, Long>, F
 
     void deleteAllByEntrantField(Field field);
 
+    void deleteAllByHostField(Field field);
+
     @EntityGraph(attributePaths = "hostField")
     Page<FieldEntry> findByEntrantUser(User user, Pageable pageable);
 
