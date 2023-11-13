@@ -32,4 +32,6 @@ public interface UserFieldService {
     void alertMembers(User user, Long id);
 
     void checkOwnBattle(User user);
+
+    List<FindAllFieldsDto> findAllMyRecruitingFields(User user);
 }

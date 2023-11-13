@@ -48,7 +48,15 @@ public class UserFieldController {
         return ResponseDto.ok(findAllMembersRes);
     }
 
-    @ApiOperation(value = "진행 중인 나의 필드 조회 📜", notes = "진행완료를 제외한 속해있는 모든 필드 조회")
+    @ApiOperation(value = "진행 전인 나의 필드 조회 📜", notes = "모집 중인 나의 모든 필드 조회")
+    @GetMapping("/recruiting")
+    public ResponseEntity<List<FindAllFieldsDto>> findAllMyRecruitingFields(
+            @AuthenticationPrincipal User user){
+        List<FindAllFieldsDto> result = userFieldService.findAllMyRecruitingFields(user);
+        return ResponseDto.ok(result);
+    }
+
+    @ApiOperation(value = "진행 중인 나의 필드 조회 📜", notes = "진행 중인 나의 모든 필드 조회")
     @GetMapping("/progress")
     public ResponseEntity<List<FindAllFieldsDto>> findAllMyInProgressFields(
             @AuthenticationPrincipal User user){

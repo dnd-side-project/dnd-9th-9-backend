@@ -116,6 +116,20 @@ public class UserFieldServiceImpl implements UserFieldService {
     }
 
     @Override
+    public List<FindAllFieldsDto> findAllMyRecruitingFields(User user) {
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
+                List.of(RECRUITING), List.of(TEAM, TEAM_BATTLE, DUEL));
+
+        return myUserFields.stream()
+                .filter(userField -> {
+                    Field field = userField.getField();
+                    return field.getOpponent() == null;
+                })
+                .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<FindAllFieldsDto> findAllMyInProgressFields(User user) {
         List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
                 List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE, DUEL));
