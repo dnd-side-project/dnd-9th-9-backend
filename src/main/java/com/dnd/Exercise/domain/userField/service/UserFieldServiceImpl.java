@@ -32,6 +32,7 @@ import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
 import com.dnd.Exercise.domain.userField.dto.response.BattleStatusDto;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMyCompletedFieldsRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindAllMyFieldsDto;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.TopPlayerDto;
@@ -116,7 +117,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     }
 
     @Override
-    public List<FindAllFieldsDto> findAllMyRecruitingFields(User user) {
+    public List<FindAllMyFieldsDto> findAllMyRecruitingFields(User user) {
         List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
                 List.of(RECRUITING), List.of(TEAM, TEAM_BATTLE, DUEL));
 
@@ -125,12 +126,17 @@ public class UserFieldServiceImpl implements UserFieldService {
                     Field field = userField.getField();
                     return field.getOpponent() == null;
                 })
-                .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
+                .map(userField -> {
+                    FindAllMyFieldsDto findAllMyFieldsDto =
+                            userFieldMapper.toFindAllMyFieldsDto(userField.getField());
+                    findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
+                    return findAllMyFieldsDto;
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<FindAllFieldsDto> findAllMyInProgressFields(User user) {
+    public List<FindAllMyFieldsDto> findAllMyInProgressFields(User user) {
         List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
                 List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE, DUEL));
 
@@ -139,7 +145,12 @@ public class UserFieldServiceImpl implements UserFieldService {
                     Field field = userField.getField();
                     return !(RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() == null);
                 })
-                .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
+                .map(userField -> {
+                    FindAllMyFieldsDto findAllMyFieldsDto =
+                            userFieldMapper.toFindAllMyFieldsDto(userField.getField());
+                    findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
+                    return findAllMyFieldsDto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -152,8 +163,13 @@ public class UserFieldServiceImpl implements UserFieldService {
         List<UserField> myUserFields = queryResult.getContent();
         Long totalCount = queryResult.getTotalElements();
 
-        List<FindAllFieldsDto> completedFields = myUserFields.stream()
-                .map(userField -> userFieldMapper.toFindAllFieldsDto(userField.getField()))
+        List<FindAllMyFieldsDto> completedFields = myUserFields.stream()
+                .map(userField -> {
+                    FindAllMyFieldsDto findAllMyFieldsDto =
+                            userFieldMapper.toFindAllMyFieldsDto(userField.getField());
+                    findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
+                    return findAllMyFieldsDto;
+                })
                 .collect(Collectors.toList());
 
         return FindAllMyCompletedFieldsRes.builder()

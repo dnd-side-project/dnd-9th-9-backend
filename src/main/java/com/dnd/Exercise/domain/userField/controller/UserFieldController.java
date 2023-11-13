@@ -1,11 +1,11 @@
 package com.dnd.Exercise.domain.userField.controller;
 
-import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMembersRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindAllMyCompletedFieldsRes;
+import com.dnd.Exercise.domain.userField.dto.response.FindAllMyFieldsDto;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.service.UserFieldService;
@@ -50,17 +50,17 @@ public class UserFieldController {
 
     @ApiOperation(value = "진행 전인 나의 필드 조회 📜", notes = "모집 중인 나의 모든 필드 조회")
     @GetMapping("/recruiting")
-    public ResponseEntity<List<FindAllFieldsDto>> findAllMyRecruitingFields(
+    public ResponseEntity<List<FindAllMyFieldsDto>> findAllMyRecruitingFields(
             @AuthenticationPrincipal User user){
-        List<FindAllFieldsDto> result = userFieldService.findAllMyRecruitingFields(user);
+        List<FindAllMyFieldsDto> result = userFieldService.findAllMyRecruitingFields(user);
         return ResponseDto.ok(result);
     }
 
     @ApiOperation(value = "진행 중인 나의 필드 조회 📜", notes = "진행 중인 나의 모든 필드 조회")
     @GetMapping("/progress")
-    public ResponseEntity<List<FindAllFieldsDto>> findAllMyInProgressFields(
+    public ResponseEntity<List<FindAllMyFieldsDto>> findAllMyInProgressFields(
             @AuthenticationPrincipal User user){
-        List<FindAllFieldsDto> result = userFieldService.findAllMyInProgressFields(user);
+        List<FindAllMyFieldsDto> result = userFieldService.findAllMyInProgressFields(user);
         return ResponseDto.ok(result);
     }
 
