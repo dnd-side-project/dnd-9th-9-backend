@@ -1,6 +1,7 @@
 package com.dnd.Exercise.domain.user.controller;
 
 import com.dnd.Exercise.domain.user.dto.request.*;
+import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.service.UserService;
@@ -106,5 +107,12 @@ public class UserController {
     public ResponseEntity<String> withdraw(@AuthenticationPrincipal User user) {
         userService.withdraw(user.getId());
         return ResponseDto.ok("회원 탈퇴 완료");
+    }
+
+    @ApiOperation(value = "회원 탈퇴 전 유저의 활동 내역 요약 👤", notes = "회원 탈퇴 전에 유저의 활동 내역을 보여줍니다.")
+    @GetMapping("/my/final-summary")
+    public ResponseEntity<GetFinalSummaryRes> getFinalSummary(@AuthenticationPrincipal User user) {
+        GetFinalSummaryRes getFinalSummaryRes = userService.getFinalSummary(user.getId());
+        return ResponseDto.ok(getFinalSummaryRes);
     }
 }

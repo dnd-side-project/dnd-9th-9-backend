@@ -1,12 +1,14 @@
 package com.dnd.Exercise.domain.user.service;
 
 import com.dnd.Exercise.domain.auth.service.AuthService;
+import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.dto.UserMapper;
 import com.dnd.Exercise.domain.user.dto.request.*;
+import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +39,7 @@ public class UserServiceImpl implements UserService {
     private final UserFieldRepository userFieldRepository;
     private final FieldEntryRepository fieldEntryRepository;
     private final FieldRepository fieldRepository;
+    private final ExerciseRepository exerciseRepository;
 
     private final FieldUtil fieldUtil;
 
@@ -110,6 +115,23 @@ public class UserServiceImpl implements UserService {
 
         setToWithdrawUser(user);
         authService.logout(user.getId());
+    }
+
+    @Override
+    public GetFinalSummaryRes getFinalSummary(long userId) {
+        User user = getUser(userId);
+
+        int activeDays = Long.valueOf(ChronoUnit.DAYS.between(user.getCreatedAt(), LocalDateTime.now())).intValue();
+        int recordCounts = exerciseRepository.countByUserId(userId);
+        int matchCounts = userFieldRepository.countAllCompletedFieldsByUserId(userId);
+        int teamworkRate = user.getTeamworkRate();
+
+        return GetFinalSummaryRes.builder()
+                .activeDays(activeDays)
+                .recordCounts(recordCounts)
+                .matchCounts(matchCounts)
+                .teamworkRate(teamworkRate)
+                .build();
     }
 
     private User getUser(long userId) {

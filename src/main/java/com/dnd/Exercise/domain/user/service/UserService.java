@@ -1,6 +1,7 @@
 package com.dnd.Exercise.domain.user.service;
 
 import com.dnd.Exercise.domain.user.dto.request.*;
+import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
 
 public interface UserService {
@@ -11,4 +12,5 @@ public interface UserService {
     void updateAppleLinked(UpdateAppleLinkedReq updateAppleLinkedReq, long userId);
     void updateNotificationAgreed(UpdateNotificationAgreementReq updateNotificationAgreementReq, long userId);
     void withdraw(long userId);
+    GetFinalSummaryRes getFinalSummary(long userId);
 }
