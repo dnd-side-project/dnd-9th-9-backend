@@ -237,6 +237,7 @@ public class UserFieldServiceImpl implements UserFieldService {
             throw new BusinessException(MUST_NOT_LEADER);
         }
         userFieldRepository.deleteByFieldAndUser(field, user);
+        field.subtractMember();
     }
 
     @Transactional
