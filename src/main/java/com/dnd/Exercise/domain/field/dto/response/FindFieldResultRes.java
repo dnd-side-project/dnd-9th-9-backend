@@ -24,6 +24,8 @@ public class FindFieldResultRes {
 
     private FindFieldResultDto away;
 
+    private int teamworkRate;
+
     private LocalDate startDate;
 
     private LocalDate endDate;

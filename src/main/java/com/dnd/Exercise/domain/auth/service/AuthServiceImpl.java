@@ -56,9 +56,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenRes login(LoginReq loginReq) {
-        User user = userRepository.findByUid(loginReq.getUid()).orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED));
+        User user = userRepository.findByUid(loginReq.getUid()).orElseThrow(() -> new BusinessException(ErrorCode.WRONG_ID));
         if (!passwordEncoder.matches(loginReq.getPassword(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.LOGIN_FAILED);
+            throw new BusinessException(ErrorCode.WRONG_PW);
         }
         TokenRes token = TokenRes.builder()
                 .accessToken(jwtTokenProvider.createAccessToken(user.getId()))

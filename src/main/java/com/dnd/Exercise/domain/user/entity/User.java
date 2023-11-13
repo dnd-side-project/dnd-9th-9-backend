@@ -138,4 +138,6 @@ public class User extends BaseEntity implements UserDetails {
     public void updatePassword(String password) {
         this.password = password;
     }
+
+    public void updateTeamworkRate(int teamworkRate) { this.teamworkRate = teamworkRate; }
 }
