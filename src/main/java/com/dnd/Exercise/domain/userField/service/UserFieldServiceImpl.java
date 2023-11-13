@@ -101,6 +101,13 @@ public class UserFieldServiceImpl implements UserFieldService {
         redisService.setValues(key, REDIS_NOTIFICATION_VERIFIED, Duration.ofHours(2));
     }
 
+    private FindAllMyFieldsDto getFindAllMyFieldsDto(User user, UserField userField) {
+        FindAllMyFieldsDto findAllMyFieldsDto =
+                userFieldMapper.toFindAllMyFieldsDto(userField.getField());
+        findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
+        return findAllMyFieldsDto;
+    }
+
     @Override
     public List<FindAllMembersRes> findAllMembers(Long fieldId) {
         Field field = fieldUtil.getField(fieldId);
@@ -122,18 +129,12 @@ public class UserFieldServiceImpl implements UserFieldService {
                 List.of(RECRUITING), List.of(TEAM, TEAM_BATTLE, DUEL));
 
         return myUserFields.stream()
-                .filter(userField -> {
-                    Field field = userField.getField();
-                    return field.getOpponent() == null;
-                })
-                .map(userField -> {
-                    FindAllMyFieldsDto findAllMyFieldsDto =
-                            userFieldMapper.toFindAllMyFieldsDto(userField.getField());
-                    findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
-                    return findAllMyFieldsDto;
-                })
+                .filter(userField -> userField.getField().getOpponent() == null)
+                .map(userField -> getFindAllMyFieldsDto(user, userField))
                 .collect(Collectors.toList());
     }
+
+
 
     @Override
     public List<FindAllMyFieldsDto> findAllMyInProgressFields(User user) {
@@ -141,16 +142,8 @@ public class UserFieldServiceImpl implements UserFieldService {
                 List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE, DUEL));
 
         return myUserFields.stream()
-                .filter(userField -> {
-                    Field field = userField.getField();
-                    return !(RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() == null);
-                })
-                .map(userField -> {
-                    FindAllMyFieldsDto findAllMyFieldsDto =
-                            userFieldMapper.toFindAllMyFieldsDto(userField.getField());
-                    findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
-                    return findAllMyFieldsDto;
-                })
+                .filter(userField -> userField.getField().getOpponent() != null)
+                .map(userField -> getFindAllMyFieldsDto(user, userField))
                 .collect(Collectors.toList());
     }
 
@@ -164,12 +157,7 @@ public class UserFieldServiceImpl implements UserFieldService {
         Long totalCount = queryResult.getTotalElements();
 
         List<FindAllMyFieldsDto> completedFields = myUserFields.stream()
-                .map(userField -> {
-                    FindAllMyFieldsDto findAllMyFieldsDto =
-                            userFieldMapper.toFindAllMyFieldsDto(userField.getField());
-                    findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
-                    return findAllMyFieldsDto;
-                })
+                .map(userField -> getFindAllMyFieldsDto(user, userField))
                 .collect(Collectors.toList());
 
         return FindAllMyCompletedFieldsRes.builder()
