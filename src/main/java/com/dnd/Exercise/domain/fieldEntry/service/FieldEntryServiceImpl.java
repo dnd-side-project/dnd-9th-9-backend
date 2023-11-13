@@ -154,6 +154,8 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         Field hostField = fieldEntry.getHostField();
         User entrantUser = fieldEntry.getEntrantUser();
 
+        fieldUtil.validateIsFull(hostField);
+        fieldUtil.validateIsFull(entrantField);
         fieldUtil.validateIsLeader(user.getId(), hostField.getLeaderId());
 
         if(entrantField == null) {
