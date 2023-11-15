@@ -14,7 +14,7 @@ public class FindFieldResultDto {
 
     private String profileImg;
 
-    private double totalScore;
+    private int totalScore;
 
     private Integer totalRecordCount;
 
@@ -34,7 +34,7 @@ public class FindFieldResultDto {
         this.totalExerciseTimeMinute = score.get(3);
     }
 
-    public void addTotalScore(double score){
+    public void addTotalScore(int score){
         this.totalScore += score;
     }
 }
