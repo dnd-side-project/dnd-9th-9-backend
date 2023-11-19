@@ -2,6 +2,7 @@ package com.dnd.Exercise.domain.user.controller;
 
 import com.dnd.Exercise.domain.user.dto.request.*;
 import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
+import com.dnd.Exercise.domain.user.dto.response.GetMatchSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.service.UserService;
@@ -114,5 +115,12 @@ public class UserController {
     public ResponseEntity<GetFinalSummaryRes> getFinalSummary(@AuthenticationPrincipal User user) {
         GetFinalSummaryRes getFinalSummaryRes = userService.getFinalSummary(user.getId());
         return ResponseDto.ok(getFinalSummaryRes);
+    }
+
+    @ApiOperation(value = "유저의 매칭 요약 👤", notes = "지금까지의 매칭 참여 횟수, 매칭 승률을 반환합니다.")
+    @GetMapping("/my/match-summary")
+    public ResponseEntity<GetMatchSummaryRes> getMatchSummary(@AuthenticationPrincipal User user) {
+        GetMatchSummaryRes getMatchSummaryRes = userService.getMatchSummary(user.getId());
+        return ResponseDto.ok(getMatchSummaryRes);
     }
 }

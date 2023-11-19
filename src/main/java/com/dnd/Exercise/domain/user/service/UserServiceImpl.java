@@ -3,12 +3,15 @@ package com.dnd.Exercise.domain.user.service;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.user.dto.UserMapper;
 import com.dnd.Exercise.domain.user.dto.request.*;
 import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
+import com.dnd.Exercise.domain.user.dto.response.GetMatchSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -26,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.*;
@@ -134,6 +138,23 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @Override
+    public GetMatchSummaryRes getMatchSummary(long userId) {
+        User user = getUser(userId);
+
+        int teamMatchCount = userFieldRepository.countCompletedFieldsByUserIdAndFieldType(userId,List.of(TEAM_BATTLE));
+        int duelMatchCount = userFieldRepository.countCompletedFieldsByUserIdAndFieldType(userId,List.of(DUEL));
+        int teamCount = userFieldRepository.countCompletedFieldsByUserIdAndFieldType(userId,List.of(TEAM));
+        int winningRate = getWinningRate(user);
+
+        return GetMatchSummaryRes.builder()
+                .teamMatchCount(teamMatchCount)
+                .duelMatchCount(duelMatchCount)
+                .teamCount(teamCount)
+                .winningRate(winningRate)
+                .build();
+    }
+
     private User getUser(long userId) {
         return userRepository.findById(userId).get();
     }
@@ -237,5 +258,18 @@ public class UserServiceImpl implements UserService {
             awsS3Service.deleteImage(user.getProfileImg());
         }
         user.setToWithdrawUser();
+    }
+
+    private int getWinningRate(User user) {
+        int totalMatchCount = userFieldRepository.countCompletedFieldsByUserIdAndFieldType(user.getId(),List.of(TEAM_BATTLE,DUEL));
+        int winMatchCount = Long.valueOf(
+                Optional.ofNullable(userFieldRepository.findByUserAndStatusInAndType(user, List.of(FieldStatus.COMPLETED), List.of(TEAM_BATTLE, DUEL)))
+                        .map(fields -> fields.stream()
+                                .map(UserField::getField)
+                                .filter(field -> fieldUtil.getFieldWinStatus(field) == WinStatus.WIN)
+                                .count())
+                        .orElse(0L)).intValue();
+        double winningRate = (double) winMatchCount / (double) totalMatchCount * 100.0;
+        return (int) Math.round(winningRate);
     }
 }

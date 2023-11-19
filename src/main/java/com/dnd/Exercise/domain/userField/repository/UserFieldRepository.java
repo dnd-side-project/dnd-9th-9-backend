@@ -64,4 +64,11 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long>, Use
             "where uf.user.id = :userId " +
                 "and uf.field.fieldStatus = 'COMPLETED'")
     int countAllCompletedFieldsByUserId(long userId);
+
+    @Query("select count(uf) " +
+            "from UserField uf " +
+            "where uf.user.id = :userId " +
+                "and uf.field.fieldType in :fieldType " +
+                "and uf.field.fieldStatus = 'COMPLETED'")
+    int countCompletedFieldsByUserIdAndFieldType(long userId, List<FieldType> fieldType);
 }
