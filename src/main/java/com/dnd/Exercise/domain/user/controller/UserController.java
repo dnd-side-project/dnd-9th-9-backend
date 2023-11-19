@@ -4,6 +4,7 @@ import com.dnd.Exercise.domain.user.dto.request.*;
 import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetMatchSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
+import com.dnd.Exercise.domain.user.entity.LoginType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.service.UserService;
 import com.dnd.Exercise.global.common.ResponseDto;
@@ -122,5 +123,12 @@ public class UserController {
     public ResponseEntity<GetMatchSummaryRes> getMatchSummary(@AuthenticationPrincipal User user) {
         GetMatchSummaryRes getMatchSummaryRes = userService.getMatchSummary(user.getId());
         return ResponseDto.ok(getMatchSummaryRes);
+    }
+
+    @ApiOperation(value = "연결된 계정 정보 확인 👤", notes = "현재 연결된 계정 정보를 반환합니다. (ex. 카카오 / 구글 / 애플 / 매치업)")
+    @GetMapping("/my/connected-account")
+    public ResponseEntity<LoginType> getConnectedAccount(@AuthenticationPrincipal User user) {
+        LoginType loginType = user.getLoginType();
+        return ResponseDto.ok(loginType);
     }
 }
