@@ -230,6 +230,8 @@ public class UserServiceImpl implements UserService {
         }
         else {
             exitOfMember(field,user);
+            fieldEntryRepository.deleteAllByHostField(field);
+            fieldEntryRepository.deleteAllByEntrantField(field);
         }
     }
 
