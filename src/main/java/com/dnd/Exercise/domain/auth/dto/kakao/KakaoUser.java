@@ -8,7 +8,7 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class KakaoInfo {
+public class KakaoUser {
     private Long id;
     private KakaoAccount kakaoAccount;
 }
