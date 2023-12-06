@@ -9,5 +9,5 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class OAuthLoginReq {
     @NotBlank
-    private String accessToken;
+    private String token;
 }
