@@ -37,4 +37,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long>, Exerc
     int sumDailyDurationMinuteOfUser(LocalDate exerciseDate, long userId);
 
     int countByExerciseDateAndUserId(LocalDate exerciseDate, long userId);
+
+    int countByUserId(long userId);
 }

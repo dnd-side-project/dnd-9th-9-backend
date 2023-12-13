@@ -61,6 +61,8 @@ public class User extends BaseEntity implements UserDetails {
 
     private Boolean isAppleLinked;
 
+    private Boolean isDeleted;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FcmToken> fcmTokens = new ArrayList<>();
 
@@ -112,6 +114,7 @@ public class User extends BaseEntity implements UserDetails {
         this.isNotificationAgreed = isNotificationAgreed;
         this.oauthId = oauthId;
         this.email = email;
+        this.isDeleted = false;
     }
 
     public void addToken(FcmToken fcmToken) {
@@ -140,4 +143,24 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     public void updateTeamworkRate(int teamworkRate) { this.teamworkRate = teamworkRate; }
+
+    public void setToWithdrawUser() {
+        this.age = 0;
+        this.email = null;
+        this.password = null;
+        this.height = 0;
+        this.weight = 0;
+        this.isAppleLinked = false;
+        this.isNotificationAgreed = false;
+        this.phoneNum = null;
+        this.profileImg = null;
+        this.skillLevel = null;
+        this.oauthId = null;
+        this.teamworkRate = 0;
+
+        this.uid = "unknown";
+        this.name = "알수없음";
+
+        this.isDeleted = true;
+    }
 }

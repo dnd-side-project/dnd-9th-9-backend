@@ -1,7 +1,10 @@
 package com.dnd.Exercise.domain.user.controller;
 
 import com.dnd.Exercise.domain.user.dto.request.*;
+import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
+import com.dnd.Exercise.domain.user.dto.response.GetMatchSummaryRes;
 import com.dnd.Exercise.domain.user.dto.response.GetProfileDetail;
+import com.dnd.Exercise.domain.user.entity.LoginType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.service.UserService;
 import com.dnd.Exercise.global.common.ResponseDto;
@@ -94,5 +97,38 @@ public class UserController {
     public ResponseEntity<String> updateNotificationAgreement(@RequestBody @Valid UpdateNotificationAgreementReq updateNotificationAgreementReq, @AuthenticationPrincipal User user) {
         userService.updateNotificationAgreed(updateNotificationAgreementReq, user.getId());
         return ResponseDto.ok("알림 수신여부 수정 완료");
+    }
+
+    @ApiOperation(value = "회원 탈퇴 👤", notes = "유저 탈퇴를 진행합니다. 진행 중인 매칭이 있다면 매칭이 완료된 후에 탈퇴할 수 있습니다.")
+    @ApiResponses({
+            @ApiResponse(code=200, message="회원 탈퇴 완료"),
+            @ApiResponse(code=400, message="[U-003] 진행 중인 매칭이 완료된 후에 탈퇴해 주세요. <br>" +
+                    "[U-004] 내가 속한 팀의 방장을 누군가에게 넘긴 후 탈퇴해 주세요.")
+    })
+    @GetMapping("/my/withdraw")
+    public ResponseEntity<String> withdraw(@AuthenticationPrincipal User user) {
+        userService.withdraw(user.getId());
+        return ResponseDto.ok("회원 탈퇴 완료");
+    }
+
+    @ApiOperation(value = "회원 탈퇴 전 유저의 활동 내역 요약 👤", notes = "회원 탈퇴 전에 유저의 활동 내역을 보여줍니다.")
+    @GetMapping("/my/final-summary")
+    public ResponseEntity<GetFinalSummaryRes> getFinalSummary(@AuthenticationPrincipal User user) {
+        GetFinalSummaryRes getFinalSummaryRes = userService.getFinalSummary(user.getId());
+        return ResponseDto.ok(getFinalSummaryRes);
+    }
+
+    @ApiOperation(value = "유저의 매칭 요약 👤", notes = "지금까지의 매칭 참여 횟수, 매칭 승률을 반환합니다.")
+    @GetMapping("/my/match-summary")
+    public ResponseEntity<GetMatchSummaryRes> getMatchSummary(@AuthenticationPrincipal User user) {
+        GetMatchSummaryRes getMatchSummaryRes = userService.getMatchSummary(user.getId());
+        return ResponseDto.ok(getMatchSummaryRes);
+    }
+
+    @ApiOperation(value = "연결된 계정 정보 확인 👤", notes = "현재 연결된 계정 정보를 반환합니다. (ex. 카카오 / 구글 / 애플 / 매치업)")
+    @GetMapping("/my/connected-account")
+    public ResponseEntity<LoginType> getConnectedAccount(@AuthenticationPrincipal User user) {
+        LoginType loginType = user.getLoginType();
+        return ResponseDto.ok(loginType);
     }
 }

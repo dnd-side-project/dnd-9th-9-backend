@@ -88,6 +88,10 @@ public enum ErrorCode {
 
     NEED_CALORIE_GOAL(HttpStatus.BAD_REQUEST, "U-002", "애플 연동 유저인 경우 목표 칼로리 값을 전송해야 합니다."),
 
+    CANNOT_WITHDRAW_WHILE_IN_MATCH(HttpStatus.BAD_REQUEST, "U-003", "진행 중인 매칭이 완료된 후에 탈퇴해 주세요."),
+
+    SELECT_LEADER_BEFORE_WITHDRAW(HttpStatus.BAD_REQUEST, "U-004", "내가 속한 팀의 방장을 누군가에게 넘긴 후 탈퇴해 주세요."),
+
     UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "S-001", "업로드 중 오류가 발생했습니다."),
 
     FILE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "S-002", "파일 삭제 중 오류가 발생했습니다."),

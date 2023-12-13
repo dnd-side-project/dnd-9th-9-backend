@@ -23,6 +23,7 @@ import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
+import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
 import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
 import com.dnd.Exercise.domain.notification.event.NotificationEvent;
@@ -65,6 +66,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final ExerciseRepository exerciseRepository;
     private final ActivityRingRepository activityRingRepository;
     private final UserRepository userRepository;
+    private final FieldEntryRepository fieldEntryRepository;
     private final FieldUtil fieldUtil;
     private final ApplicationEventPublisher eventPublisher;
     private final RedisService redisService;
@@ -255,6 +257,9 @@ public class UserFieldServiceImpl implements UserFieldService {
             throw new BusinessException(MUST_NOT_LEADER);
         }
         userFieldRepository.deleteByFieldAndUser(field, user);
+        field.subtractMember();
+        fieldEntryRepository.deleteAllByHostField(field);
+        fieldEntryRepository.deleteAllByEntrantField(field);
     }
 
     @Transactional

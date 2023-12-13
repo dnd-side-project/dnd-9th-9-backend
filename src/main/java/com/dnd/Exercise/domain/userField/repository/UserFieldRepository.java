@@ -51,4 +51,24 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long>, Use
             "where uf.user = :user " +
             "and uf.field.fieldStatus = :fieldStatus")
     List<UserField> findAllByUserAndFieldStatus(User user, FieldStatus fieldStatus);
+
+    @Query("select uf " +
+            "from UserField uf join fetch uf.field " +
+            "where uf.user = :user " +
+                "and uf.field.fieldStatus = 'RECRUITING' " +
+                "and uf.field.opponent = null")
+    List<UserField> findAllBeforeProgressFieldByUser(User user);
+
+    @Query("select count(uf) " +
+            "from UserField uf " +
+            "where uf.user.id = :userId " +
+                "and uf.field.fieldStatus = 'COMPLETED'")
+    int countAllCompletedFieldsByUserId(long userId);
+
+    @Query("select count(uf) " +
+            "from UserField uf " +
+            "where uf.user.id = :userId " +
+                "and uf.field.fieldType in :fieldType " +
+                "and uf.field.fieldStatus = 'COMPLETED'")
+    int countCompletedFieldsByUserIdAndFieldType(long userId, List<FieldType> fieldType);
 }

@@ -16,6 +16,7 @@ import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
+import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
@@ -155,4 +156,11 @@ public class FieldUtil {
         return userField.get(0);
     }
 
+    public Boolean isFieldInProgress(Field field) {
+        if (field.getFieldStatus() == FieldStatus.IN_PROGRESS ||
+                (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null)) {
+            return true;
+        }
+        return false;
+    }
 }
