@@ -112,7 +112,7 @@ public enum ErrorCode {
 
     UNMATCHING_PHONE_NUM(HttpStatus.BAD_REQUEST, "V-006", "회원정보에 등록된 전화번호와 일치하지 않습니다."),
 
-    INVALID_KAKAO_TOKEN(HttpStatus.UNAUTHORIZED, "K-001", "해당 액세스 토큰으로 카카오 유저 정보를 받아오지 못했습니다."),
+    INVALID_OAUTH_TOKEN(HttpStatus.UNAUTHORIZED, "OA-001", "해당 토큰으로 OAuth 유저 정보를 받아오지 못했습니다."),
 
     TEAMWORK_RATE_POSTED_ALREADY(HttpStatus.BAD_REQUEST, "TR-001", "해당 유저는 이미 불꽃평가 등록을 완료했습니다.");
 
