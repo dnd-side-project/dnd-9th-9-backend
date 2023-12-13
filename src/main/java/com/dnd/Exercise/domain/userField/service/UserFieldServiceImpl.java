@@ -272,7 +272,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .topic(NotificationTopic.CHEER)
-                .from(user.getName())
+                .userName(user.getName())
                 .build();
 
         eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
@@ -290,7 +290,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .topic(NotificationTopic.ALERT)
-                .from(user.getName())
+                .userName(user.getName())
                 .field(field)
                 .build();
 

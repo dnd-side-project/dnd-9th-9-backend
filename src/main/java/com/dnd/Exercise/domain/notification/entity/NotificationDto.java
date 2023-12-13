@@ -16,24 +16,36 @@ public class NotificationDto {
     private Field field;
 
     @Builder
-    public NotificationDto(NotificationTopic topic, String from, String to, Field field){
+    public NotificationDto(NotificationTopic topic, Field field, String userName){
         this.title = topic.getTitle();
         this.field = field;
         if (topic == NotificationTopic.CHEER){
-            this.content = from + "님이 응원해요❣";
+            this.content = userName + "님이 응원해요❣";
             this.notificationType = NotificationType.USER;
         } else if (topic == NotificationTopic.ALERT) {
-            this.content = from + "님이 " + field.getName() + " 팀을 깨웠어요💡";
+            this.content = userName + "님이 " + field.getName() + " 팀을 깨웠어요💡";
             this.notificationType = NotificationType.FIELD;
         }
     }
 
+    //유저 알림
     public Notification toEntity(User user){
         return Notification.builder()
                 .title(title)
                 .content(content)
                 .notificationType(notificationType)
                 .user(user)
+                .field(field)
+                .build();
+    }
+
+    //필드 알림
+    public Notification toEntity(){
+        return Notification.builder()
+                .title(title)
+                .content(content)
+                .notificationType(notificationType)
+                .user(null)
                 .field(field)
                 .build();
     }
