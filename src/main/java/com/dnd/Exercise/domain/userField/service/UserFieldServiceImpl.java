@@ -257,7 +257,7 @@ public class UserFieldServiceImpl implements UserFieldService {
             NotificationDto userNotificationDto = NotificationDto.builder()
                     .topic(NotificationTopic.EJECT)
                     .field(field)
-                    .userName(u.getName())
+                    .name(u.getName())
                     .notificationType(NotificationType.USER)
                     .build();
 
@@ -267,7 +267,7 @@ public class UserFieldServiceImpl implements UserFieldService {
             NotificationDto fieldNotificationDto = NotificationDto.builder()
                     .topic(NotificationTopic.EJECT)
                     .field(field)
-                    .userName(u.getName())
+                    .name(u.getName())
                     .notificationType(NotificationType.FIELD)
                     .build();
 
@@ -292,6 +292,15 @@ public class UserFieldServiceImpl implements UserFieldService {
         field.subtractMember();
         fieldEntryRepository.deleteAllByHostField(field);
         fieldEntryRepository.deleteAllByEntrantField(field);
+
+        NotificationDto userNotificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.EXIT)
+                .field(field)
+                .name(user.getName())
+                .notificationType(NotificationType.FIELD)
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(id), userNotificationDto));
     }
 
     @Transactional
@@ -304,7 +313,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .topic(NotificationTopic.CHEER)
-                .userName(user.getName())
+                .name(user.getName())
                 .notificationType(NotificationType.USER)
                 .build();
 
@@ -323,7 +332,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .topic(NotificationTopic.ALERT)
-                .userName(user.getName())
+                .name(user.getName())
                 .field(field)
                 .notificationType(NotificationType.USER)
                 .build();

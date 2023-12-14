@@ -23,6 +23,10 @@ import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryDto;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
+import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
+import com.dnd.Exercise.domain.notification.entity.NotificationType;
+import com.dnd.Exercise.domain.notification.event.NotificationEvent;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
@@ -32,6 +36,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,6 +53,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     private final UserFieldRepository userFieldRepository;
     private final FieldEntryMapper fieldEntryMapper;
     private final FieldUtil fieldUtil;
+    private final ApplicationEventPublisher eventPublisher;
 
     
     private void validateIsNotFull(Field field) {
@@ -154,8 +160,6 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         Field hostField = fieldEntry.getHostField();
         User entrantUser = fieldEntry.getEntrantUser();
 
-        fieldUtil.validateIsFull(hostField);
-        fieldUtil.validateIsFull(entrantField);
         fieldUtil.validateIsLeader(user.getId(), hostField.getLeaderId());
 
         if(entrantField == null) {
@@ -168,11 +172,53 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             if (hostField.getCurrentSize() == hostField.getMaxSize()){
                 fieldEntryRepository.deleteAllByHostFieldAndEntrantField(hostField, null);
             }
+
+            NotificationDto userNotificationDto = NotificationDto.builder()
+                    .topic(NotificationTopic.TEAM_ACCEPT)
+                    .field(hostField)
+                    .notificationType(NotificationType.USER)
+                    .build();
+
+            eventPublisher.publishEvent(new NotificationEvent(List.of(entrantUser), userNotificationDto));
+
+
+            NotificationDto fieldNotificationDto = NotificationDto.builder()
+                    .topic(NotificationTopic.TEAM_ACCEPT)
+                    .field(hostField)
+                    .name(entrantUser.getName())
+                    .notificationType(NotificationType.FIELD)
+                    .build();
+
+            eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(
+                    hostField.getId()), fieldNotificationDto));
         }
         else{
+            fieldUtil.validateIsFull(hostField);
+            fieldUtil.validateIsFull(entrantField);
+
             entrantField.changeOpponent(hostField);
             fieldEntryRepository.deleteAllByEntrantField(entrantField);
             fieldEntryRepository.deleteAllByHostFieldAndEntrantUser(hostField, null);
+
+            NotificationDto notificationDto = NotificationDto.builder()
+                    .topic(NotificationTopic.BATTLE_ACCEPT)
+                    .field(hostField)
+                    .name(entrantField.getName())
+                    .notificationType(NotificationType.FIELD)
+                    .build();
+
+            eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(
+                    hostField.getId()), notificationDto));
+
+            NotificationDto opponentNotificationDto = NotificationDto.builder()
+                    .topic(NotificationTopic.BATTLE_ACCEPT)
+                    .field(entrantField)
+                    .name(hostField.getName())
+                    .notificationType(NotificationType.FIELD)
+                    .build();
+
+            eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(
+                    entrantField.getId()), opponentNotificationDto));
         }
     }
 

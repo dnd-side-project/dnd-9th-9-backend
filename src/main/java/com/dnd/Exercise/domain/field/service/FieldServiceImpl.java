@@ -48,6 +48,10 @@ import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
+import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
+import com.dnd.Exercise.domain.notification.entity.NotificationType;
+import com.dnd.Exercise.domain.notification.event.NotificationEvent;
 import com.dnd.Exercise.domain.teamworkRate.service.TeamworkRateService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -68,6 +72,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -91,6 +96,7 @@ public class FieldServiceImpl implements FieldService{
     private final UserRepository userRepository;
     private final RedisService redisService;
     private final TeamworkRateService teamworkRateService;
+    private final ApplicationEventPublisher eventPublisher;
     private final String S3_FOLDER = "field-profile";
 
 
@@ -269,6 +275,14 @@ public class FieldServiceImpl implements FieldService{
         String imgUrl = s3Upload(updateFieldProfileReq.getProfileImg());
         fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
         field.changeProfileImg(imgUrl);
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.UPDATE_INFO)
+                .field(field)
+                .notificationType(NotificationType.FIELD)
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(id), notificationDto));
     }
 
 
@@ -282,6 +296,14 @@ public class FieldServiceImpl implements FieldService{
         validateDuelMaxSize(updateFieldInfoReq.getFieldType(), updateFieldInfoReq.getMaxSize());
 
         fieldMapper.updateFromInfoDto(updateFieldInfoReq, field);
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.UPDATE_INFO)
+                .field(field)
+                .notificationType(NotificationType.FIELD)
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(id), notificationDto));
     }
 
 
@@ -528,5 +550,14 @@ public class FieldServiceImpl implements FieldService{
         fieldUtil.validateIsMember(newLeader, field);
 
         field.changeLeader(newLeader.getId());
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(NotificationTopic.CHANGE_LEADER)
+                .field(field)
+                .name(newLeader.getName())
+                .notificationType(NotificationType.FIELD)
+                .build();
+
+        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(fieldId), notificationDto));
     }
 }
