@@ -18,7 +18,6 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
-import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
@@ -26,6 +25,7 @@ import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
 import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
+import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.event.NotificationEvent;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -235,7 +235,8 @@ public class UserFieldServiceImpl implements UserFieldService {
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
         fieldUtil.validateHaveOpponent(field);
 
-        List<Long> memberIds = fieldUtil.getMemberIds(fieldId);
+        List<User> members = fieldUtil.getMembers(fieldId);
+        List<Long> memberIds = members.stream().map(User::getId).collect(Collectors.toList());
 
         if (ids.contains(user.getId())){
             throw new BusinessException(BAD_REQUEST);
@@ -244,7 +245,38 @@ public class UserFieldServiceImpl implements UserFieldService {
             throw new BusinessException(NOT_MEMBER);
         }
 
+        field.subtractMember(ids.size());
         userFieldRepository.deleteAllByFieldAndUserIdIn(field, ids);
+
+
+        List<User> targetUsers = userRepository.findByIdIn(ids);
+        List<User> leftMembers = members.stream().filter(member
+                -> !ids.contains(member.getId())).collect(Collectors.toList());
+
+        targetUsers.forEach((User u) -> {
+            NotificationDto userNotificationDto = NotificationDto.builder()
+                    .topic(NotificationTopic.EJECT)
+                    .field(field)
+                    .userName(u.getName())
+                    .notificationType(NotificationType.USER)
+                    .build();
+
+            eventPublisher.publishEvent(new NotificationEvent(List.of(u), userNotificationDto));
+
+
+            NotificationDto fieldNotificationDto = NotificationDto.builder()
+                    .topic(NotificationTopic.EJECT)
+                    .field(field)
+                    .userName(u.getName())
+                    .notificationType(NotificationType.FIELD)
+                    .build();
+
+            eventPublisher.publishEvent(new NotificationEvent(leftMembers, fieldNotificationDto));
+        });
+
+
+
+
     }
 
     @Transactional
@@ -273,6 +305,7 @@ public class UserFieldServiceImpl implements UserFieldService {
         NotificationDto notificationDto = NotificationDto.builder()
                 .topic(NotificationTopic.CHEER)
                 .userName(user.getName())
+                .notificationType(NotificationType.USER)
                 .build();
 
         eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
@@ -292,6 +325,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .topic(NotificationTopic.ALERT)
                 .userName(user.getName())
                 .field(field)
+                .notificationType(NotificationType.USER)
                 .build();
 
         eventPublisher.publishEvent(new NotificationEvent(members, notificationDto));

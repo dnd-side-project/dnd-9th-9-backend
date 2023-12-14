@@ -5,7 +5,8 @@ public enum NotificationTopic {
     ALERT("깨우기"),
     MATCHING("매칭"),
     START("배틀 시작"),
-    COMPLETE("배틀 종료");
+    COMPLETE("배틀 종료"),
+    EJECT("팀원 퇴출");
 
     private String topic;
 

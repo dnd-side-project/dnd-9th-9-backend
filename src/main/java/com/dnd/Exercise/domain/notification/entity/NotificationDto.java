@@ -16,15 +16,21 @@ public class NotificationDto {
     private Field field;
 
     @Builder
-    public NotificationDto(NotificationTopic topic, Field field, String userName){
+    public NotificationDto(NotificationTopic topic,
+            Field field, String userName, NotificationType notificationType){
         this.title = topic.getTitle();
-        this.field = field;
+        this.notificationType = notificationType;
         if (topic == NotificationTopic.CHEER){
             this.content = userName + "님이 응원해요❣";
-            this.notificationType = NotificationType.USER;
         } else if (topic == NotificationTopic.ALERT) {
             this.content = userName + "님이 " + field.getName() + " 팀을 깨웠어요💡";
-            this.notificationType = NotificationType.FIELD;
+        } else if (topic == NotificationTopic.EJECT) {
+            if (NotificationType.FIELD.equals(notificationType)){
+                this.field = field;
+                this.content = field.getName() + "에서 " + userName + "님을 내보냈습니다";
+            } else {
+                this.content = field.getName() + "에서 퇴출되었습니다";
+            }
         }
     }
 
