@@ -33,16 +33,16 @@ public class NotificationDto {
                 this.field = field;
                 this.content = field.getName() + "에서 " + name + "님을 내보냈습니다";
             } else {
-                this.content = field.getName() + "에서 퇴출되었습니다";
+                this.content = field.getName() + "에서 퇴출되었습니다😢";
             }
         }
         else if (topic == EXIT){
             this.field = field;
-            this.content = name + "님이 " + field.getName() + "을 나갔습니다";
+            this.content = name + "님이 " + field.getName() + "을 나갔습니다😢";
         }
         else if (topic == CHANGE_LEADER){
             this.field = field;
-            this.content = name + "님이 " + field.getName() + "의 방장이 되었습니다";
+            this.content = name + "님이 " + field.getName() + "의 방장이 되었습니다✌";
         }
         else if (topic == UPDATE_INFO){
             this.field = field;
@@ -50,14 +50,14 @@ public class NotificationDto {
         }
         else if (topic == BATTLE_ACCEPT){
             this.field = field;
-            this.content = name + "팀과 배틀이 성사되었습니다";
+            this.content = name + "팀과 배틀이 성사되었습니다🔥";
         }
         else if (topic == TEAM_ACCEPT){
             if (NotificationType.FIELD.equals(notificationType)){
                 this.field = field;
-                this.content = name + "님이 입장했습니다";
+                this.content = name + "님이 입장했습니다☺";
             } else{
-                this.content = field.getName() + "팀에 소속되었습니다";
+                this.content = field.getName() + "팀에 소속되었습니다☺";
             }
         }
     }
