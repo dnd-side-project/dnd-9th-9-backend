@@ -37,6 +37,7 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldRes.FindFieldResBuilder;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldResultDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
@@ -124,11 +125,11 @@ public class FieldServiceImpl implements FieldService{
     public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond) {
         List<Field> fieldList = fieldRepository.findAllFieldsWithFilter(findAllFieldsCond);
 
-        List<FindAllFieldsDto> fieldResList = fieldList.stream().map(fieldMapper::toFindAllFieldsDto)
+        List<FindAllFieldsDto> fieldsInfos = fieldList.stream().map(fieldMapper::toFindAllFieldsDto)
                 .collect(Collectors.toList());
 
         return FindAllFieldsRes.builder()
-                .fieldsInfos(fieldResList)
+                .fieldsInfos(fieldsInfos)
                 .currentPageSize(findAllFieldsCond.getSize())
                 .build();
     }
@@ -143,19 +144,13 @@ public class FieldServiceImpl implements FieldService{
         Field myField = fieldUtil.getField(id);
         Boolean isMember = userFieldRepository.existsByFieldAndUser(myField, user);
 
-        FieldDto fieldDto = fieldMapper.toFieldDto(myField);
-        fieldDto.setFieldRole(determineFieldRole(user, myField, isMember));
+        FieldDto myFieldDto = fieldMapper.toFieldDto(myField);
+        myFieldDto.setFieldRole(determineFieldRole(user, myField, isMember));
 
-        FindFieldRes.FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(fieldDto);
-
-        Field opponentField = myField.getOpponent();
-        if (isMember && opponentField != null){
-            FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
-            resBuilder.assignedFieldDto(assignedFieldDto);
-        }
+        FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(myFieldDto);
+        updateAssignedField(myField, isMember, resBuilder);
         return resBuilder.build();
     }
-
 
     @Transactional
     @Override
@@ -163,9 +158,8 @@ public class FieldServiceImpl implements FieldService{
         Field field = fieldUtil.getField(id);
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
 
-        if(field.getProfileImg() != null){
-            awsS3Service.deleteImage(field.getProfileImg());
-        }
+        deleteProfileImgIfPresent(field);
+
         String imgUrl = s3Upload(updateFieldProfileReq.getProfileImg());
         fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
         field.changeProfileImg(imgUrl);
@@ -556,5 +550,18 @@ public class FieldServiceImpl implements FieldService{
         }else {
             return GUEST;
         }
+    }
+
+    private void updateAssignedField(Field myField, Boolean isMember, FindFieldResBuilder resBuilder) {
+        Field opponentField = myField.getOpponent();
+        if (isMember && opponentField != null){
+            FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
+            resBuilder.assignedFieldDto(assignedFieldDto);
+        }
+    }
+
+    private void deleteProfileImgIfPresent(Field field) {
+        if(field.getProfileImg() != null)
+            awsS3Service.deleteImage(field.getProfileImg());
     }
 }
