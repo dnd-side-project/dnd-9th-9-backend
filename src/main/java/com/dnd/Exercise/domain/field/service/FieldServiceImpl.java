@@ -15,6 +15,7 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHI
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_PREFIX;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
+import static com.dnd.Exercise.global.common.Constants.S3_FILED_PROFILE_FOLDER_NAME;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
@@ -46,6 +47,7 @@ import com.dnd.Exercise.domain.field.entity.enums.FieldSide;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
+import com.dnd.Exercise.domain.field.event.CreateEvent;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
@@ -72,6 +74,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -89,14 +92,13 @@ public class FieldServiceImpl implements FieldService{
     private final FieldMapper fieldMapper;
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
-    private final FieldEntryRepository fieldEntryRepository;
     private final AwsS3Service awsS3Service;
     private final FieldUtil fieldUtil;
     private final UserRepository userRepository;
     private final RedisService redisService;
     private final TeamworkRateService teamworkRateService;
-    private final String S3_FOLDER = "field-profile";
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
 
@@ -104,7 +106,6 @@ public class FieldServiceImpl implements FieldService{
     @Override
     public Long createField(CreateFieldReq createFieldReq, User user) {
         fieldUtil.validateNotHavingField(user, createFieldReq.getFieldType());
-
         validateDuelMaxSize(createFieldReq.getFieldType(), createFieldReq.getMaxSize());
 
         Long userId = user.getId();
@@ -113,10 +114,7 @@ public class FieldServiceImpl implements FieldService{
         Field field = createFieldReq.toEntity(userId, profileImg);
         Field savedField = fieldRepository.save(field);
 
-        UserField userField = new UserField(user, savedField);
-        userFieldRepository.save(userField);
-
-        fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
+        eventPublisher.publishEvent(CreateEvent.newEvent(user, savedField));
 
         return savedField.getId();
     }
@@ -477,7 +475,7 @@ public class FieldServiceImpl implements FieldService{
     private String s3Upload(MultipartFile profileImg) {
         String imgUrl = null;
         if (profileImg != null) {
-            imgUrl = awsS3Service.upload(profileImg, S3_FOLDER);
+            imgUrl = awsS3Service.upload(profileImg, S3_FILED_PROFILE_FOLDER_NAME);
         }
         return imgUrl;
     }
