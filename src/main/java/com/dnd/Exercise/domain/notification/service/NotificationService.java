@@ -9,14 +9,10 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 
 public interface NotificationService {
-
-    void sendByTokens(List<FcmToken> fcmTokens, NotificationDto notificationDto);
-
+    void sendNotificationAndSave(List<User> users, NotificationDto notificationDto);
+    void sendNotificationAndSave(User user, NotificationDto notificationDto);
     FindUserNotificationsRes findUserNotifications(User user, Pageable pageable);
-
     FindFieldNotificationsRes findFieldNotifications(User user, Long id, Pageable pageable);
-
     void readNotification(User user, Long id);
-
     void readAllNotifications(User user);
 }

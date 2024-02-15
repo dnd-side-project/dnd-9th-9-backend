@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface FcmTokenRepository extends CrudRepository<FcmToken, Long> {
 
     List<FcmToken> findByUserIn(List<User> users);
+
+    List<FcmToken> findByUser(User user);
 }

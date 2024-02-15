@@ -26,7 +26,7 @@ import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
 import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
 import com.dnd.Exercise.domain.notification.entity.NotificationType;
-import com.dnd.Exercise.domain.notification.event.NotificationEvent;
+import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.dto.UserFieldMapper;
@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -68,47 +67,11 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final UserRepository userRepository;
     private final FieldEntryRepository fieldEntryRepository;
     private final FieldUtil fieldUtil;
-    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
     private final RedisService redisService;
     
 
-    private TopPlayerDto getTopUserByCriteria(
-            RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
-        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
-            return activityRingRepository.findAccumulatedTopByDynamicCriteria(
-                    criterion, startDate, memberIds);
-        } else {
-            return exerciseRepository.findAccumulatedTopByDynamicCriteria(
-                    criterion, startDate, memberIds);
-        }
-    }
 
-    private void validateFcmTimeLimit(User fromUser, Object target) {
-        String prefix;
-        Long targetId;
-
-        if (target instanceof User) {
-            prefix = REDIS_CHEER_PREFIX;
-            targetId = ((User) target).getId();
-        } else {
-            prefix = REDIS_WAKEUP_PREFIX;
-            targetId = ((Field) target).getId();
-        }
-        String key = fromUser.getId() + prefix + targetId;
-
-        if (REDIS_NOTIFICATION_VERIFIED.equals(redisService.getValues(key))) {
-            throw new BusinessException(FCM_TIME_LIMIT);
-        }
-
-        redisService.setValues(key, REDIS_NOTIFICATION_VERIFIED, Duration.ofHours(2));
-    }
-
-    private FindAllMyFieldsDto getFindAllMyFieldsDto(User user, UserField userField) {
-        FindAllMyFieldsDto findAllMyFieldsDto =
-                userFieldMapper.toFindAllMyFieldsDto(userField.getField());
-        findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
-        return findAllMyFieldsDto;
-    }
 
     @Override
     public List<FindAllMembersRes> findAllMembers(Long fieldId) {
@@ -261,8 +224,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                     .notificationType(NotificationType.USER)
                     .build();
 
-            eventPublisher.publishEvent(new NotificationEvent(List.of(u), userNotificationDto));
-
+            notificationService.sendNotificationAndSave(u, userNotificationDto);
 
             NotificationDto fieldNotificationDto = NotificationDto.builder()
                     .topic(NotificationTopic.EJECT)
@@ -271,7 +233,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                     .notificationType(NotificationType.FIELD)
                     .build();
 
-            eventPublisher.publishEvent(new NotificationEvent(leftMembers, fieldNotificationDto));
+            notificationService.sendNotificationAndSave(leftMembers, fieldNotificationDto);
         });
 
 
@@ -300,7 +262,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .notificationType(NotificationType.FIELD)
                 .build();
 
-        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(id), userNotificationDto));
+        notificationService.sendNotificationAndSave(fieldUtil.getMembers(id), userNotificationDto);
     }
 
     @Transactional
@@ -317,7 +279,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .notificationType(NotificationType.USER)
                 .build();
 
-        eventPublisher.publishEvent(new NotificationEvent(List.of(targetUser), notificationDto));
+        notificationService.sendNotificationAndSave(targetUser, notificationDto);
     }
 
     @Override
@@ -337,7 +299,7 @@ public class UserFieldServiceImpl implements UserFieldService {
                 .notificationType(NotificationType.USER)
                 .build();
 
-        eventPublisher.publishEvent(new NotificationEvent(members, notificationDto));
+        notificationService.sendNotificationAndSave(members, notificationDto);
     }
 
     @Override
@@ -354,5 +316,43 @@ public class UserFieldServiceImpl implements UserFieldService {
         if (result.isEmpty()){
             throw new BusinessException(SHOULD_CREATE);
         }
+    }
+
+    private TopPlayerDto getTopUserByCriteria(
+            RankCriterion criterion, LocalDate startDate, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
+            return activityRingRepository.findAccumulatedTopByDynamicCriteria(
+                    criterion, startDate, memberIds);
+        } else {
+            return exerciseRepository.findAccumulatedTopByDynamicCriteria(
+                    criterion, startDate, memberIds);
+        }
+    }
+
+    private void validateFcmTimeLimit(User fromUser, Object target) {
+        String prefix;
+        Long targetId;
+
+        if (target instanceof User) {
+            prefix = REDIS_CHEER_PREFIX;
+            targetId = ((User) target).getId();
+        } else {
+            prefix = REDIS_WAKEUP_PREFIX;
+            targetId = ((Field) target).getId();
+        }
+        String key = fromUser.getId() + prefix + targetId;
+
+        if (REDIS_NOTIFICATION_VERIFIED.equals(redisService.getValues(key))) {
+            throw new BusinessException(FCM_TIME_LIMIT);
+        }
+
+        redisService.setValues(key, REDIS_NOTIFICATION_VERIFIED, Duration.ofHours(2));
+    }
+
+    private FindAllMyFieldsDto getFindAllMyFieldsDto(User user, UserField userField) {
+        FindAllMyFieldsDto findAllMyFieldsDto =
+                userFieldMapper.toFindAllMyFieldsDto(userField.getField());
+        findAllMyFieldsDto.setLeader(userField.getField().getLeaderId().equals(user.getId()));
+        return findAllMyFieldsDto;
     }
 }

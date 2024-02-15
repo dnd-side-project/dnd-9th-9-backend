@@ -2,6 +2,7 @@ package com.dnd.Exercise.domain.notification.service;
 
 import static com.dnd.Exercise.domain.notification.entity.NotificationType.FIELD;
 import static com.dnd.Exercise.domain.notification.entity.NotificationType.USER;
+import static com.dnd.Exercise.global.common.Constants.ASYNC_NOTIFICATION;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOTIFICATION_NOT_FOUND;
 import static java.util.stream.Collectors.toList;
@@ -16,6 +17,7 @@ import com.dnd.Exercise.domain.notification.dto.response.FindUserNotificationsRe
 import com.dnd.Exercise.domain.notification.dto.response.UserNotificationDto;
 import com.dnd.Exercise.domain.notification.entity.Notification;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.repository.NotificationRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.error.exception.BusinessException;
@@ -32,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,34 +49,28 @@ public class NotificationServiceImpl implements NotificationService{
     private final NotificationMapper notificationMapper;
     private final FieldUtil fieldUtil;
 
-
-    @Transactional
     @Override
-    public void sendByTokens(List<FcmToken> tokens, NotificationDto notificationDto) {
+    @Transactional
+    @Async(ASYNC_NOTIFICATION)
+    public void sendNotificationAndSave(List<User> users, NotificationDto notificationDto){
+        List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(users);
+        if (fcmTokens.size() != 0)
+            sendByTokens(fcmTokens, notificationDto);
 
-        ApnsConfig apnsConfig = notificationDto.toDefaultApnsConfig();
+        List<Notification> notifications = users.stream()
+                .map(notificationDto::toEntity).collect(toList());
+        notificationRepository.saveAll(notifications);
+    }
 
-        List<Message> messages = tokens.stream().map(token ->
-                makeMessage(apnsConfig, token)).collect(toList());
+    @Override
+    @Transactional
+    @Async(ASYNC_NOTIFICATION)
+    public void sendNotificationAndSave(User user, NotificationDto notificationDto){
+        List<FcmToken> fcmTokens = fcmTokenRepository.findByUser(user);
+        if (fcmTokens.size() != 0)
+            sendByTokens(fcmTokens, notificationDto);
 
-        BatchResponse response;
-        try {
-            response = firebaseMessaging.sendAll(messages);
-            if (response.getFailureCount() > 0) {
-                List<SendResponse> responses = response.getResponses();
-                List<FcmToken> failedTokens = new ArrayList<>();
-
-                for (int i = 0; i < responses.size(); i++) {
-                    if (!responses.get(i).isSuccessful()) {
-                        failedTokens.add(tokens.get(i));
-                    }
-                }
-                fcmTokenRepository.deleteAll(failedTokens);
-                log.info("List of tokens are not valid FCM token : " + failedTokens);
-            }
-        } catch (FirebaseMessagingException e) {
-            log.error("cannot send to memberList push message. error info : {}", e.getMessage());
-        }
+        notificationRepository.save(notificationDto.toEntity());
     }
 
     @Override
@@ -132,6 +129,33 @@ public class NotificationServiceImpl implements NotificationService{
     @Override
     public void readAllNotifications(User user) {
         notificationRepository.bulkIsRead(user.getId());
+    }
+
+    private void sendByTokens(List<FcmToken> tokens, NotificationDto notificationDto) {
+
+        ApnsConfig apnsConfig = notificationDto.toDefaultApnsConfig();
+
+        List<Message> messages = tokens.stream().map(token ->
+                makeMessage(apnsConfig, token)).collect(toList());
+
+        BatchResponse response;
+        try {
+            response = firebaseMessaging.sendAll(messages);
+            if (response.getFailureCount() > 0) {
+                List<SendResponse> responses = response.getResponses();
+                List<FcmToken> failedTokens = new ArrayList<>();
+
+                for (int i = 0; i < responses.size(); i++) {
+                    if (!responses.get(i).isSuccessful()) {
+                        failedTokens.add(tokens.get(i));
+                    }
+                }
+                fcmTokenRepository.deleteAll(failedTokens);
+                log.info("List of tokens are not valid FCM token : " + failedTokens);
+            }
+        } catch (FirebaseMessagingException e) {
+            log.error("cannot send to memberList push message. error info : {}", e.getMessage());
+        }
     }
 
     private static Message makeMessage(ApnsConfig apnsConfig, FcmToken token) {

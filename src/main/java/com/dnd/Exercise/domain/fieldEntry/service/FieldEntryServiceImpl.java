@@ -6,7 +6,6 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_APPLY;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.FORBIDDEN;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
 
@@ -26,7 +25,7 @@ import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
 import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
 import com.dnd.Exercise.domain.notification.entity.NotificationType;
-import com.dnd.Exercise.domain.notification.event.NotificationEvent;
+import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
@@ -53,19 +52,10 @@ public class FieldEntryServiceImpl implements FieldEntryService {
     private final UserFieldRepository userFieldRepository;
     private final FieldEntryMapper fieldEntryMapper;
     private final FieldUtil fieldUtil;
-    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     
-    private void validateIsNotFull(Field field) {
-        if(field.getCurrentSize() == field.getMaxSize()){
-            throw new BusinessException(ALREADY_FULL);
-        }
-    }
 
-    private Field getFieldByIdAndFieldType(Long fieldId, FieldType fieldType) {
-        return fieldRepository.findByIdAndFieldType(fieldId, fieldType)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
-    }
 
 
     @Transactional
@@ -179,7 +169,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                     .notificationType(NotificationType.USER)
                     .build();
 
-            eventPublisher.publishEvent(new NotificationEvent(List.of(entrantUser), userNotificationDto));
+            notificationService.sendNotificationAndSave(entrantUser, userNotificationDto);
 
 
             NotificationDto fieldNotificationDto = NotificationDto.builder()
@@ -189,8 +179,8 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                     .notificationType(NotificationType.FIELD)
                     .build();
 
-            eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(
-                    hostField.getId()), fieldNotificationDto));
+            notificationService.sendNotificationAndSave(fieldUtil.getMembers(
+                    hostField.getId()), fieldNotificationDto);
         }
         else{
             fieldUtil.validateIsFull(hostField);
@@ -207,8 +197,8 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                     .notificationType(NotificationType.FIELD)
                     .build();
 
-            eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(
-                    hostField.getId()), notificationDto));
+            notificationService.sendNotificationAndSave(fieldUtil.getMembers(
+                    hostField.getId()), notificationDto);
 
             NotificationDto opponentNotificationDto = NotificationDto.builder()
                     .topic(NotificationTopic.BATTLE_ACCEPT)
@@ -217,8 +207,8 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                     .notificationType(NotificationType.FIELD)
                     .build();
 
-            eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(
-                    entrantField.getId()), opponentNotificationDto));
+            notificationService.sendNotificationAndSave(fieldUtil.getMembers(
+                    entrantField.getId()), opponentNotificationDto);
         }
     }
 
@@ -299,5 +289,16 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                 .currentPageSize(pageable.getPageSize())
                 .currentPageNumber(pageable.getPageNumber())
                 .build();
+    }
+
+    private void validateIsNotFull(Field field) {
+        if(field.getCurrentSize() == field.getMaxSize()){
+            throw new BusinessException(ALREADY_FULL);
+        }
+    }
+
+    private Field getFieldByIdAndFieldType(Long fieldId, FieldType fieldType) {
+        return fieldRepository.findByIdAndFieldType(fieldId, fieldType)
+                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 }
