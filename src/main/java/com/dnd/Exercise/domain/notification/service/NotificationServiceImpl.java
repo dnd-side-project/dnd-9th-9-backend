@@ -73,10 +73,25 @@ public class NotificationServiceImpl implements NotificationService{
         notificationRepository.save(notificationDto.toEntity());
     }
 
+    @Transactional
+    @Override
+    public void readNotification(User user, Long id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(NOTIFICATION_NOT_FOUND));
+
+        isMyNotification(user, notification);
+        notification.isReadTrue();
+    }
+
+    @Transactional
+    @Override
+    public void readAllNotifications(User user) {
+        notificationRepository.bulkIsRead(user.getId());
+    }
+
     @Override
     public FindUserNotificationsRes findUserNotifications(User user, Pageable pageable) {
-        Page<Notification> queryResult = notificationRepository
-                .findByUserAndNotificationType(user, USER, pageable);
+        Page<Notification> queryResult = notificationRepository.findByUserAndNotificationType(user, USER, pageable);
 
         List<Notification> notifications = queryResult.getContent();
         Long totalCount = queryResult.getTotalElements();
@@ -97,8 +112,7 @@ public class NotificationServiceImpl implements NotificationService{
         Field field = fieldUtil.getField(id);
         fieldUtil.validateIsMember(user, field);
 
-        Page<Notification> queryResult = notificationRepository
-                .findByUserAndNotificationType(user, FIELD, pageable);
+        Page<Notification> queryResult = notificationRepository.findByUserAndNotificationType(user, FIELD, pageable);
 
         List<Notification> notifications = queryResult.getContent();
         Long totalCount = queryResult.getTotalElements();
@@ -114,54 +128,48 @@ public class NotificationServiceImpl implements NotificationService{
                 .build();
     }
 
-    @Transactional
-    @Override
-    public void readNotification(User user, Long id) {
-        Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOTIFICATION_NOT_FOUND));
-        if(!user.getId().equals(notification.getUser().getId())){
-            throw new BusinessException(FORBIDDEN);
-        }
-        notification.isReadTrue();
-    }
 
-    @Transactional
-    @Override
-    public void readAllNotifications(User user) {
-        notificationRepository.bulkIsRead(user.getId());
-    }
 
     private void sendByTokens(List<FcmToken> tokens, NotificationDto notificationDto) {
-
-        ApnsConfig apnsConfig = notificationDto.toDefaultApnsConfig();
-
-        List<Message> messages = tokens.stream().map(token ->
-                makeMessage(apnsConfig, token)).collect(toList());
-
+        List<Message> messages = getMessages(tokens, notificationDto);
         BatchResponse response;
         try {
             response = firebaseMessaging.sendAll(messages);
             if (response.getFailureCount() > 0) {
                 List<SendResponse> responses = response.getResponses();
-                List<FcmToken> failedTokens = new ArrayList<>();
-
-                for (int i = 0; i < responses.size(); i++) {
-                    if (!responses.get(i).isSuccessful()) {
-                        failedTokens.add(tokens.get(i));
-                    }
-                }
-                fcmTokenRepository.deleteAll(failedTokens);
-                log.info("List of tokens are not valid FCM token : " + failedTokens);
+                deleteFailedTokens(responses, tokens);
             }
         } catch (FirebaseMessagingException e) {
             log.error("cannot send to memberList push message. error info : {}", e.getMessage());
         }
     }
 
-    private static Message makeMessage(ApnsConfig apnsConfig, FcmToken token) {
+    private void deleteFailedTokens(List<SendResponse> responses, List<FcmToken> tokens){
+        List<FcmToken> failedTokens = new ArrayList<>();
+        for (int i = 0; i < responses.size(); i++) {
+            if (!responses.get(i).isSuccessful())
+                failedTokens.add(tokens.get(i));
+        }
+        fcmTokenRepository.deleteAll(failedTokens);
+        log.info("List of tokens are not valid FCM token : " + failedTokens);
+    }
+
+    private List<Message> getMessages(List<FcmToken> tokens, NotificationDto notificationDto) {
+        ApnsConfig apnsConfig = notificationDto.toDefaultApnsConfig();
+        return tokens.stream().map(token ->
+                makeMessage(apnsConfig, token)).collect(toList());
+    }
+
+    private Message makeMessage(ApnsConfig apnsConfig, FcmToken token) {
         return Message.builder()
                 .setApnsConfig(apnsConfig)
                 .setToken(String.valueOf(token.getToken()))
                 .build();
+    }
+
+    private void isMyNotification(User user, Notification notification) {
+        if(!user.getId().equals(notification.getUser().getId())){
+            throw new BusinessException(FORBIDDEN);
+        }
     }
 }
