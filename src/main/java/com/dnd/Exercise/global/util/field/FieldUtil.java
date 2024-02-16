@@ -71,11 +71,30 @@ public class FieldUtil {
 
     public List<Integer> calculateRecord(List<ActivityRing> activityRings, List<Exercise> exercises) {
         int totalRecordCount = exercises.size();
-        int goalAchievementCount = (int) activityRings.stream().filter(ActivityRing::getIsGoalAchieved).count();
-        int totalBurnedCalorie = activityRings.stream().mapToInt(ActivityRing::getBurnedCalorie).sum();
-        int totalExerciseTimeMinute = exercises.stream().mapToInt(Exercise::getDurationMinute).sum();
+        int goalAchievementCount = getGoalAchievementCount(activityRings);
+        int totalBurnedCalorie = getTotalBurnedCalorie(activityRings);
+        int totalExerciseTimeMinute = getTotalExerciseTimeMinute(exercises);
 
-        return List.of(totalRecordCount, goalAchievementCount, totalBurnedCalorie, totalExerciseTimeMinute);
+        return List.of(totalRecordCount, goalAchievementCount,
+                totalBurnedCalorie, totalExerciseTimeMinute);
+    }
+
+    private int getTotalExerciseTimeMinute(List<Exercise> exercises) {
+        return exercises.stream()
+                .mapToInt(Exercise::getDurationMinute)
+                .sum();
+    }
+
+    private int getTotalBurnedCalorie(List<ActivityRing> activityRings) {
+        return activityRings.stream()
+                .mapToInt(ActivityRing::getBurnedCalorie)
+                .sum();
+    }
+
+    private int getGoalAchievementCount(List<ActivityRing> activityRings) {
+        return (int) activityRings.stream()
+                .filter(ActivityRing::getIsGoalAchieved)
+                .count();
     }
 
     public Field getField(Long id) {
@@ -128,11 +147,16 @@ public class FieldUtil {
             return null;
         }
         Field opponent = field.getOpponent();
-        List<Integer> myScores = getFieldSummary(field.getId(),field.getStartDate(),field.getEndDate());
-        List<Integer> opponentScores = getFieldSummary(opponent.getId(),opponent.getStartDate(),opponent.getEndDate());
+        List<Integer> mySummary = getFieldSummary(field.getId(),field.getStartDate(),field.getEndDate());
+        List<Integer> opponentSummary = getFieldSummary(opponent.getId(),opponent.getStartDate(),opponent.getEndDate());
 
-        int result = IntStream.range(0, myScores.size())
-                .map(i -> Integer.compare(myScores.get(i), opponentScores.get(i))).sum();
+        return compareSummaries(mySummary, opponentSummary);
+    }
+
+    public WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {
+        int result = IntStream.range(0, 4)
+                .map(i -> Integer.compare(mySummary.get(i), opponentSummary.get(i)))
+                .sum();
 
         if (result > 0) return WinStatus.WIN;
         if (result < 0) return WinStatus.LOSE;

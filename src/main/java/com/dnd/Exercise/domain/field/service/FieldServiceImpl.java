@@ -125,13 +125,11 @@ public class FieldServiceImpl implements FieldService{
     public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond) {
         List<Field> fieldList = fieldRepository.findAllFieldsWithFilter(findAllFieldsCond);
 
-        List<FindAllFieldsDto> fieldsInfos = fieldList.stream().map(fieldMapper::toFindAllFieldsDto)
+        List<FindAllFieldsDto> fieldsInfos = fieldList.stream()
+                .map(fieldMapper::toFindAllFieldsDto)
                 .collect(Collectors.toList());
 
-        return FindAllFieldsRes.builder()
-                .fieldsInfos(fieldsInfos)
-                .currentPageSize(findAllFieldsCond.getSize())
-                .build();
+        return FindAllFieldsRes.from(fieldsInfos, findAllFieldsCond.getSize());
     }
 
     @Override
@@ -204,67 +202,61 @@ public class FieldServiceImpl implements FieldService{
         List<Field> allFittingFields = fieldRepository.findFullHouseFieldsByCond(RECRUITING, fieldType, period);
 
         String redisValue = redisService.getValues(REDIS_AUTO_PREFIX + myField.getId());
-        List<Long> matchedIds = getMatchedIds(redisValue);
+        List<String> matchedIds = getMatchedIds(redisValue);
 
         Field resultField = findBestMatchingField(myField, allFittingFields, matchedIds);
         setMatchedFieldsRedis(myField, redisValue, resultField);
         return fieldMapper.toAutoMatchingRes(resultField);
     }
 
-    /**
-     * HOME & opponent==null - 나의 필드 요약 정보 제공
-     * HOME & opponent!=null - 나의 필드 요약 정보, 승리 여부, 상대방 필드 이름 제공
-     * AWAY & opponent==null - 예외
-     * AWAY & opponent!=null - 상대 필드 요약 정보 제공
-     */
     @Override
-    public GetFieldExerciseSummaryRes getFieldExerciseSummary(User user, Long fieldId, FieldSideDateReq summaryReq) {
-        Field field = validateFieldAccess(user, fieldId);
-        validateIsRecruiting(field);
-        Field opponentField = field.getOpponent();
+    public GetFieldExerciseSummaryRes getMyFieldExerciseSummary(User user, Long fieldId, LocalDate targetDate) {
+        Field myField = validateFieldAccess(user, fieldId);
+        validateNotRecruiting(myField);
 
-        FieldSide fieldSide = summaryReq.getFieldSide();
-        LocalDate targetDate = summaryReq.getDate();
-
-        if (AWAY.equals(fieldSide) && opponentField == null) {
-            throw new BusinessException(OPPONENT_NOT_FOUND);
-        }
+        Field opponentField = myField.getOpponent();
 
         List<Integer> mySummary = fieldUtil.getFieldSummary(fieldId, targetDate);
-        GetFieldExerciseSummaryRes summaryRes = new GetFieldExerciseSummaryRes(mySummary);
+        GetFieldExerciseSummaryRes summaryRes = GetFieldExerciseSummaryRes.of(mySummary);
 
-        if (HOME.equals(fieldSide) && opponentField != null) {
-            List<Integer> opponentSummary = fieldUtil.getFieldSummary(opponentField.getId(), targetDate);
-
-            WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
+        if (opponentField != null) {
+            WinStatus winStatus = getWinStatus(targetDate, opponentField, mySummary);
             summaryRes.setWinStatus(winStatus);
             summaryRes.setOpponentFieldName(opponentField.getName());
         }
+        return summaryRes;
+    }
 
+    @Override
+    public GetFieldExerciseSummaryRes getOpponentFieldExerciseSummary(User user, Long fieldId, LocalDate targetDate) {
+        Field myField = validateFieldAccess(user, fieldId);
+        validateNotRecruiting(myField);
+
+        Field opponentField = myField.getOpponent();
+        validateOpponentPresence(opponentField);
+
+        List<Integer> opponentSummary = fieldUtil.getFieldSummary(opponentField.getId(), targetDate);
+        GetFieldExerciseSummaryRes summaryRes = GetFieldExerciseSummaryRes.of(opponentSummary);
         return summaryRes;
     }
 
     @Override
     public GetRankingRes getTeamRanking(User user, Long fieldId, FieldSideDateReq teamRankingReq) {
         Field field = validateFieldAccess(user, fieldId);
-        validateIsRecruiting(field);
+        validateNotRecruiting(field);
 
         LocalDate date = teamRankingReq.getDate();
         FieldSide fieldSide = teamRankingReq.getFieldSide();
 
-        if (AWAY.equals(fieldSide)){
-            field = field.getOpponent();
-        }
-        Long targetId = field.getId();
-        List<Long> memberIds = fieldUtil.getMemberIds(targetId);
-
+        if (AWAY.equals(fieldSide)) field = field.getOpponent();
+        List<Long> memberIds = fieldUtil.getMemberIds(field.getId());
         return toGetRankingRes(date, memberIds);
     }
 
     @Override
     public GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date) {
         Field field = validateFieldAccess(user, fieldId);
-        validateIsRecruiting(field);
+        validateNotRecruiting(field);
 
         Long opponentFieldId = field.getOpponent().getId();
 
@@ -279,7 +271,7 @@ public class FieldServiceImpl implements FieldService{
     public FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId,
             FindAllFieldRecordsReq recordsReq) {
         Field field = validateFieldAccess(user, fieldId);
-        validateIsRecruiting(field);
+        validateNotRecruiting(field);
 
         Long leaderId = field.getLeaderId();
         LocalDate targetDate = recordsReq.getDate();
@@ -310,9 +302,8 @@ public class FieldServiceImpl implements FieldService{
 
         if (recordsReq.getFieldType() != TEAM){
             List<Integer> mySummary = fieldUtil.getFieldSummary(fieldId, targetDate);
-            List<Integer> opponentSummary = fieldUtil.getFieldSummary(field.getOpponent().getId(), targetDate);
-
-            WinStatus winStatus = compareSummaries(mySummary, opponentSummary);
+            WinStatus winStatus = getWinStatus(targetDate, field.getOpponent(),
+                    mySummary);
             resBuilder.winStatus(winStatus);
         }
 
@@ -322,7 +313,7 @@ public class FieldServiceImpl implements FieldService{
     @Override
     public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
         Field field = validateFieldAccess(user, fieldId);
-        validateIsRecruiting(field);
+        validateNotRecruiting(field);
 
         Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
                 .orElseThrow(() -> new BusinessException(EXERCISE_NOT_FOUND));
@@ -411,22 +402,16 @@ public class FieldServiceImpl implements FieldService{
         return field;
     }
 
-    private void validateIsRecruiting(Field field) {
+    private void validateNotRecruiting(Field field) {
         if (field.getFieldStatus() == RECRUITING) {
             throw new BusinessException(RECRUITING_YET);
         }
     }
 
-    private Boolean isFull(Field field) {
-        return field.getCurrentSize() == field.getMaxSize();
-    }
-
-
     private String s3Upload(MultipartFile profileImg) {
         String imgUrl = null;
-        if (profileImg != null) {
+        if (profileImg != null)
             imgUrl = awsS3Service.upload(profileImg, S3_FILED_PROFILE_FOLDER_NAME);
-        }
         return imgUrl;
     }
 
@@ -439,26 +424,10 @@ public class FieldServiceImpl implements FieldService{
                 .build();
     }
 
-    private List<RankingDto> getRankingByCriteria(
-            RankCriterion criterion, LocalDate date, List<Long> memberIds) {
-        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
-            return activityRingRepository.findTopByDynamicCriteria(
-                    criterion, date, memberIds);
-        }
-        return exerciseRepository.findTopByDynamicCriteria(
-                criterion, date, memberIds);
-    }
-
-
-
-    private WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {
-        int result = IntStream.range(0, mySummary.size())
-                .map(i -> Integer.compare(mySummary.get(i), opponentSummary.get(i)))
-                .sum();
-
-        if (result > 0) return WinStatus.WIN;
-        if (result < 0) return WinStatus.LOSE;
-        return WinStatus.DRAW;
+    private List<RankingDto> getRankingByCriteria(RankCriterion criterion, LocalDate date, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED)
+            return activityRingRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+        return exerciseRepository.findTopByDynamicCriteria(criterion, date, memberIds);
     }
 
     private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
@@ -527,7 +496,7 @@ public class FieldServiceImpl implements FieldService{
                 Duration.ofSeconds(60));
     }
 
-    private Field findBestMatchingField(Field myField, List<Field> allFittingFields, List<Long> matchedIds) {
+    private Field findBestMatchingField(Field myField, List<Field> allFittingFields, List<String> matchedIds) {
         return allFittingFields.stream()
                 .filter(field -> isNotMyField(myField, field) && isNotMatchedField(matchedIds, field))
                 .min(Comparator.comparingInt(field -> calculateFieldDifference(myField, field)))
@@ -545,20 +514,19 @@ public class FieldServiceImpl implements FieldService{
                 + Math.abs(myField.getMaxSize() - field.getMaxSize());
     }
 
-    private boolean isNotMatchedField(List<Long> matchedIds, Field field) {
-        return !matchedIds.contains(field.getId());
+    private boolean isNotMatchedField(List<String> matchedIds, Field field) {
+        return !matchedIds.contains(String.valueOf(field.getId()));
     }
 
     private boolean isNotMyField(Field myField, Field field) {
         return !field.getId().equals(myField.getId());
     }
 
-    private List<Long> getMatchedIds(String redisValue) {
-        List<Long> matchedIds = new ArrayList<>();
+    private List<String> getMatchedIds(String redisValue) {
+        List<String> matchedIds = new ArrayList<>();
         if (redisValue != null){
-            List<Long> parsedIds = Arrays.stream(redisValue.split(REDIS_AUTO_SPLIT_REGEX))
-                    .map(Long::parseLong).collect(Collectors.toList());
-            matchedIds.addAll(parsedIds);
+            List<String> ids = List.of(redisValue.split(REDIS_AUTO_SPLIT_REGEX));
+            matchedIds.addAll(ids);
         }
         return matchedIds;
     }
@@ -571,5 +539,16 @@ public class FieldServiceImpl implements FieldService{
         fieldUtil.validateIsFull(myField);
         fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
         return myField;
+    }
+
+    private WinStatus getWinStatus(LocalDate targetDate, Field opponentField, List<Integer> mySummary) {
+        List<Integer> opponentSummary = fieldUtil.getFieldSummary(opponentField.getId(), targetDate);
+        return fieldUtil.compareSummaries(mySummary, opponentSummary);
+    }
+
+    private void validateOpponentPresence(Field opponentField) {
+        if (opponentField == null) {
+            throw new BusinessException(OPPONENT_NOT_FOUND);
+        }
     }
 }

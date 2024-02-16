@@ -194,23 +194,39 @@ public class FieldController {
         return ResponseDto.ok("팀장 변경 완료");
     }
 
-
-    @ApiOperation(value = " (대결 지표로 사용되는) 나의 필드 or 상대편 필드 하루 요약 조회 🔥",
+    @ApiOperation(value = " 대결 지표로 사용되는 나의 필드 하루 요약 조회 🔥",
             notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
-                    + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'하루 요약'에서 사용 <br>"
-                    + "배틀 상대가 있는 필드로 HOME 조회 시 나의 승리 여부와 상대 필드 이름도 조회됩니다.")
+                    + "'하루 요약'에서 사용 <br>"
+                    + "배틀 상대가 있는 필드로 조회 시 나의 승리 여부와 상대 필드 이름도 조회됩니다.")
+    @ApiResponses({
+            @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
+            @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
+            @ApiResponse(code=404, message="[F-008]필드를 찾을 수 없습니다. ")
+    })
+    @GetMapping("/{id}/rating-summary/mine")
+    public ResponseEntity<GetFieldExerciseSummaryRes> getMyFieldExerciseSummary (
+            @AuthenticationPrincipal User user,
+            @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
+            @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date) {
+        GetFieldExerciseSummaryRes result = fieldService.getMyFieldExerciseSummary(user, fieldId, date);
+        return ResponseDto.ok(result);
+    }
+
+    @ApiOperation(value = " 대결 지표로 사용되는 상대편 필드 하루 요약 조회 🔥",
+            notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
+                    + "'상대팀 진행 현황'에서 사용")
     @ApiResponses({
             @ApiResponse(code=400, message="[F-005] 현재 팀원 모집 중입니다."),
             @ApiResponse(code=403, message="[F-012] 팀 멤버가 아닙니다."),
             @ApiResponse(code=404, message="[F-008]필드를 찾을 수 없습니다. "
                     + "<br>[F-007] 매칭된 상대 필드가 없습니다.")
     })
-    @GetMapping("/{id}/rating-summary")
-    public ResponseEntity<GetFieldExerciseSummaryRes> getFieldExerciseSummary (
+    @GetMapping("/{id}/rating-summary/opponent")
+    public ResponseEntity<GetFieldExerciseSummaryRes> getOpponentFieldExerciseSummary (
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long fieldId,
-            @ModelAttribute @Valid FieldSideDateReq summaryReq) {
-        GetFieldExerciseSummaryRes result = fieldService.getFieldExerciseSummary(user, fieldId, summaryReq);
+            @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate date) {
+        GetFieldExerciseSummaryRes result = fieldService.getOpponentFieldExerciseSummary(user, fieldId, date);
         return ResponseDto.ok(result);
     }
 
