@@ -17,6 +17,7 @@ import com.dnd.Exercise.domain.notification.dto.response.FindUserNotificationsRe
 import com.dnd.Exercise.domain.notification.dto.response.UserNotificationDto;
 import com.dnd.Exercise.domain.notification.entity.Notification;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
 import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.repository.NotificationRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -52,29 +53,65 @@ public class NotificationServiceImpl implements NotificationService{
     @Override
     @Transactional
     @Async(ASYNC_NOTIFICATION)
-    public void sendNotificationAndSave(List<User> users, NotificationDto notificationDto){
-        List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(users);
-        if (fcmTokens.size() != 0)
-            sendByTokens(fcmTokens, notificationDto);
+    public void sendFieldNotification(NotificationTopic topic, Field field){
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(topic)
+                .field(field)
+                .notificationType(NotificationType.FIELD)
+                .build();
 
-        List<Notification> notifications = users.stream()
-                .map(notificationDto::toEntity).collect(toList());
-        notificationRepository.saveAll(notifications);
+        List<User> members = fieldUtil.getMembers(field.getId());
+        List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(members);
+        sendNotificationAndSave(notificationDto, fcmTokens);
     }
 
     @Override
     @Transactional
     @Async(ASYNC_NOTIFICATION)
-    public void sendNotificationAndSave(User user, NotificationDto notificationDto){
-        List<FcmToken> fcmTokens = fcmTokenRepository.findByUser(user);
-        if (fcmTokens.size() != 0)
-            sendByTokens(fcmTokens, notificationDto);
+    public void sendFieldNotification(NotificationTopic topic, Field field, String name){
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(topic)
+                .field(field)
+                .notificationType(NotificationType.FIELD)
+                .name(name)
+                .build();
 
-        notificationRepository.save(notificationDto.toEntity());
+        List<User> members = fieldUtil.getMembers(field.getId());
+        List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(members);
+        sendNotificationAndSave(notificationDto, fcmTokens);
     }
 
-    @Transactional
     @Override
+    @Transactional
+    @Async(ASYNC_NOTIFICATION)
+    public void sendUserNotification(NotificationTopic topic, Field field, User user){
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(topic)
+                .field(field)
+                .notificationType(NotificationType.USER)
+                .name(user.getName())
+                .build();
+
+        List<FcmToken> fcmTokens = fcmTokenRepository.findByUser(user);
+        sendNotificationAndSave(notificationDto, fcmTokens);
+    }
+
+    @Override
+    @Transactional
+    @Async(ASYNC_NOTIFICATION)
+    public void sendUserNotification(NotificationTopic topic, String name, User user) {
+        NotificationDto notificationDto = NotificationDto.builder()
+                .topic(topic)
+                .notificationType(NotificationType.USER)
+                .name(name)
+                .build();
+
+        List<FcmToken> fcmTokens = fcmTokenRepository.findByUser(user);
+        sendNotificationAndSave(notificationDto, fcmTokens);
+    }
+
+    @Override
+    @Transactional
     public void readNotification(User user, Long id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(NOTIFICATION_NOT_FOUND));
@@ -83,8 +120,8 @@ public class NotificationServiceImpl implements NotificationService{
         notification.isReadTrue();
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void readAllNotifications(User user) {
         notificationRepository.bulkIsRead(user.getId());
     }
@@ -128,8 +165,6 @@ public class NotificationServiceImpl implements NotificationService{
                 .build();
     }
 
-
-
     private void sendByTokens(List<FcmToken> tokens, NotificationDto notificationDto) {
         List<Message> messages = getMessages(tokens, notificationDto);
         BatchResponse response;
@@ -152,6 +187,11 @@ public class NotificationServiceImpl implements NotificationService{
         }
         fcmTokenRepository.deleteAll(failedTokens);
         log.info("List of tokens are not valid FCM token : " + failedTokens);
+    }
+
+    private void sendNotificationAndSave(NotificationDto notificationDto, List<FcmToken> fcmTokens) {
+        if (fcmTokens.size() != 0) sendByTokens(fcmTokens, notificationDto);
+        notificationRepository.save(notificationDto.toEntity());
     }
 
     private List<Message> getMessages(List<FcmToken> tokens, NotificationDto notificationDto) {

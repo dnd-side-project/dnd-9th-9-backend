@@ -13,6 +13,8 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CA
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.CHANGE_LEADER;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.UPDATE_INFO;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_PREFIX;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
 import static com.dnd.Exercise.global.common.Constants.S3_FILED_PROFILE_FOLDER_NAME;
@@ -50,10 +52,6 @@ import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.event.CreateEvent;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
-import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
-import com.dnd.Exercise.domain.notification.entity.NotificationDto;
-import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
-import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.teamworkRate.service.TeamworkRateService;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -164,13 +162,7 @@ public class FieldServiceImpl implements FieldService{
         fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
         field.changeProfileImg(imgUrl);
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.UPDATE_INFO)
-                .field(field)
-                .notificationType(NotificationType.FIELD)
-                .build();
-
-        notificationService.sendNotificationAndSave(fieldUtil.getMembers(id), notificationDto);
+        notificationService.sendFieldNotification(UPDATE_INFO, field);
     }
 
 
@@ -185,13 +177,7 @@ public class FieldServiceImpl implements FieldService{
 
         fieldMapper.updateFromInfoDto(updateFieldInfoReq, field);
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.UPDATE_INFO)
-                .field(field)
-                .notificationType(NotificationType.FIELD)
-                .build();
-
-        notificationService.sendNotificationAndSave(fieldUtil.getMembers(id), notificationDto);
+        notificationService.sendFieldNotification(UPDATE_INFO, field);
     }
 
 
@@ -439,14 +425,7 @@ public class FieldServiceImpl implements FieldService{
 
         field.changeLeader(newLeader.getId());
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.CHANGE_LEADER)
-                .field(field)
-                .name(newLeader.getName())
-                .notificationType(NotificationType.FIELD)
-                .build();
-
-        notificationService.sendNotificationAndSave(fieldUtil.getMembers(fieldId), notificationDto);
+        notificationService.sendFieldNotification(CHANGE_LEADER, field, newLeader.getName());
     }
 
     private Field validateFieldAccess(User user, Long fieldId) {

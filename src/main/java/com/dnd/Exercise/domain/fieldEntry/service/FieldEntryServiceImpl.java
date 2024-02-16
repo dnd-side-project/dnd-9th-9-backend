@@ -2,6 +2,8 @@ package com.dnd.Exercise.domain.fieldEntry.service;
 
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.DUEL;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM_BATTLE;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.BATTLE_ACCEPT;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.TEAM_ACCEPT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_APPLY;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
@@ -22,9 +24,6 @@ import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryDto;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.entity.FieldEntry;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
-import com.dnd.Exercise.domain.notification.entity.NotificationDto;
-import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
-import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -163,24 +161,8 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                 fieldEntryRepository.deleteAllByHostFieldAndEntrantField(hostField, null);
             }
 
-            NotificationDto userNotificationDto = NotificationDto.builder()
-                    .topic(NotificationTopic.TEAM_ACCEPT)
-                    .field(hostField)
-                    .notificationType(NotificationType.USER)
-                    .build();
-
-            notificationService.sendNotificationAndSave(entrantUser, userNotificationDto);
-
-
-            NotificationDto fieldNotificationDto = NotificationDto.builder()
-                    .topic(NotificationTopic.TEAM_ACCEPT)
-                    .field(hostField)
-                    .name(entrantUser.getName())
-                    .notificationType(NotificationType.FIELD)
-                    .build();
-
-            notificationService.sendNotificationAndSave(fieldUtil.getMembers(
-                    hostField.getId()), fieldNotificationDto);
+            notificationService.sendUserNotification(TEAM_ACCEPT, hostField, entrantUser);
+            notificationService.sendFieldNotification(TEAM_ACCEPT, hostField, entrantUser.getName());
         }
         else{
             fieldUtil.validateIsFull(hostField);
@@ -190,25 +172,8 @@ public class FieldEntryServiceImpl implements FieldEntryService {
             fieldEntryRepository.deleteAllByEntrantField(entrantField);
             fieldEntryRepository.deleteAllByHostFieldAndEntrantUser(hostField, null);
 
-            NotificationDto notificationDto = NotificationDto.builder()
-                    .topic(NotificationTopic.BATTLE_ACCEPT)
-                    .field(hostField)
-                    .name(entrantField.getName())
-                    .notificationType(NotificationType.FIELD)
-                    .build();
-
-            notificationService.sendNotificationAndSave(fieldUtil.getMembers(
-                    hostField.getId()), notificationDto);
-
-            NotificationDto opponentNotificationDto = NotificationDto.builder()
-                    .topic(NotificationTopic.BATTLE_ACCEPT)
-                    .field(entrantField)
-                    .name(hostField.getName())
-                    .notificationType(NotificationType.FIELD)
-                    .build();
-
-            notificationService.sendNotificationAndSave(fieldUtil.getMembers(
-                    entrantField.getId()), opponentNotificationDto);
+            notificationService.sendFieldNotification(BATTLE_ACCEPT, hostField, entrantField.getName());
+            notificationService.sendFieldNotification(BATTLE_ACCEPT, entrantField, hostField.getName());
         }
     }
 

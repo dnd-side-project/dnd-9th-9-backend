@@ -6,6 +6,10 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CA
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.ALERT;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.CHEER;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.EJECT;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.EXIT;
 import static com.dnd.Exercise.global.common.Constants.REDIS_CHEER_PREFIX;
 import static com.dnd.Exercise.global.common.Constants.REDIS_NOTIFICATION_VERIFIED;
 import static com.dnd.Exercise.global.common.Constants.REDIS_WAKEUP_PREFIX;
@@ -23,9 +27,6 @@ import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
-import com.dnd.Exercise.domain.notification.entity.NotificationDto;
-import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
-import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -213,32 +214,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
 
         List<User> targetUsers = userRepository.findByIdIn(ids);
-        List<User> leftMembers = members.stream().filter(member
-                -> !ids.contains(member.getId())).collect(Collectors.toList());
-
-        targetUsers.forEach((User u) -> {
-            NotificationDto userNotificationDto = NotificationDto.builder()
-                    .topic(NotificationTopic.EJECT)
-                    .field(field)
-                    .name(u.getName())
-                    .notificationType(NotificationType.USER)
-                    .build();
-
-            notificationService.sendNotificationAndSave(u, userNotificationDto);
-
-            NotificationDto fieldNotificationDto = NotificationDto.builder()
-                    .topic(NotificationTopic.EJECT)
-                    .field(field)
-                    .name(u.getName())
-                    .notificationType(NotificationType.FIELD)
-                    .build();
-
-            notificationService.sendNotificationAndSave(leftMembers, fieldNotificationDto);
-        });
-
-
-
-
+        targetUsers.forEach((User u) -> notificationService.sendUserNotification(EJECT, field, u));
     }
 
     @Transactional
@@ -255,14 +231,7 @@ public class UserFieldServiceImpl implements UserFieldService {
         fieldEntryRepository.deleteAllByHostField(field);
         fieldEntryRepository.deleteAllByEntrantField(field);
 
-        NotificationDto userNotificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.EXIT)
-                .field(field)
-                .name(user.getName())
-                .notificationType(NotificationType.FIELD)
-                .build();
-
-        notificationService.sendNotificationAndSave(fieldUtil.getMembers(id), userNotificationDto);
+        notificationService.sendFieldNotification(EXIT, field, user.getName());
     }
 
     @Transactional
@@ -273,33 +242,16 @@ public class UserFieldServiceImpl implements UserFieldService {
 
         validateFcmTimeLimit(user, targetUser);
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.CHEER)
-                .name(user.getName())
-                .notificationType(NotificationType.USER)
-                .build();
-
-        notificationService.sendNotificationAndSave(targetUser, notificationDto);
+        notificationService.sendUserNotification(CHEER, user.getName(), targetUser);
     }
 
     @Override
     public void alertMembers(User user, Long id) {
         Field field = fieldUtil.getField(id);
         fieldUtil.validateIsMember(user, field);
-
-        List<User> members = fieldUtil.getMembers(id);
-        members.remove(user);
-
         validateFcmTimeLimit(user, field);
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.ALERT)
-                .name(user.getName())
-                .field(field)
-                .notificationType(NotificationType.USER)
-                .build();
-
-        notificationService.sendNotificationAndSave(members, notificationDto);
+        notificationService.sendFieldNotification(ALERT, field, user.getName());
     }
 
     @Override
