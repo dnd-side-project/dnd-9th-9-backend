@@ -195,7 +195,6 @@ public class FieldController {
     }
 
 
-    //  양방향 매핑 고려
     @ApiOperation(value = " (대결 지표로 사용되는) 나의 필드 or 상대편 필드 하루 요약 조회 🔥",
             notes = "특정 하루에 대한 [기록횟수, 오늘까지의 활동링 달성 횟수, 운동시간, 소모 칼로리] 정보 조회 <br>"
                     + "우리팀 요약: HOME, 상대팀 요약: AWAY <br>'하루 요약'에서 사용 <br>"

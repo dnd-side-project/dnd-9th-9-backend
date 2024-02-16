@@ -48,6 +48,7 @@ import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldSide;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
+import com.dnd.Exercise.domain.field.entity.enums.Period;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.event.CreateEvent;
@@ -66,6 +67,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -196,42 +198,17 @@ public class FieldServiceImpl implements FieldService{
 
     @Override
     public AutoMatchingRes autoMatching(FieldType fieldType, User user) {
-        UserField userField = fieldUtil.validateHavingField(user, fieldType);
+        Field myField = checkAutoMatchingValidity(fieldType, user);
 
-        Field myField = userField.getField();
+        Period period = myField.getPeriod();
+        List<Field> allFittingFields = fieldRepository.findFullHouseFieldsByCond(RECRUITING, fieldType, period);
 
-        fieldUtil.validateHaveOpponent(myField);
-        fieldUtil.validateIsFull(myField);
-        fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
+        String redisValue = redisService.getValues(REDIS_AUTO_PREFIX + myField.getId());
+        List<Long> matchedIds = getMatchedIds(redisValue);
 
-        List<Field> allFields = fieldRepository.findAllByCond(RECRUITING, fieldType, myField.getPeriod());
-
-        List<String> matchedIdList = new ArrayList<>();
-        String redisValue = new String();
-        String OptionalRedisValue = redisService.getValues(REDIS_AUTO_PREFIX + myField.getId());
-        if (OptionalRedisValue != null){
-            redisValue = OptionalRedisValue;
-            matchedIdList.addAll(List.of(redisValue.split(REDIS_AUTO_SPLIT_REGEX)));
-        }
-
-        Optional<Field> resultField = allFields.stream()
-                .filter(field -> !field.getId().equals(myField.getId()) && isFull(field)
-                        && !matchedIdList.contains(String.valueOf(field.getId())))
-                .min(Comparator.comparingInt(field ->
-                                Math.abs(myField.getSkillLevel().ordinal() - field.getSkillLevel().ordinal())
-                                + Math.abs(myField.getStrength().ordinal() - field.getStrength().ordinal())
-                                + Math.abs(myField.getMaxSize() - field.getMaxSize())
-                ));
-
-        if (resultField.isEmpty()){
-            redisService.deleteValues(REDIS_AUTO_PREFIX + myField.getId());
-            throw new BusinessException(NO_SIMILAR_FIELD_FOUND);
-        }
-        redisService.setValues(REDIS_AUTO_PREFIX + myField.getId(),
-                redisValue + REDIS_AUTO_SPLIT_REGEX + resultField.get().getId(),
-                Duration.ofSeconds(60));
-
-        return fieldMapper.toAutoMatchingRes(resultField.get());
+        Field resultField = findBestMatchingField(myField, allFittingFields, matchedIds);
+        setMatchedFieldsRedis(myField, redisValue, resultField);
+        return fieldMapper.toAutoMatchingRes(resultField);
     }
 
     /**
@@ -542,5 +519,57 @@ public class FieldServiceImpl implements FieldService{
     private void deleteProfileImgIfPresent(Field field) {
         if(field.getProfileImg() != null)
             awsS3Service.deleteImage(field.getProfileImg());
+    }
+
+    private void setMatchedFieldsRedis(Field myField, String redisValue, Field resultField) {
+        redisService.setValues(REDIS_AUTO_PREFIX + myField.getId(),
+                redisValue + REDIS_AUTO_SPLIT_REGEX + resultField.getId(),
+                Duration.ofSeconds(60));
+    }
+
+    private Field findBestMatchingField(Field myField, List<Field> allFittingFields, List<Long> matchedIds) {
+        return allFittingFields.stream()
+                .filter(field -> isNotMyField(myField, field) && isNotMatchedField(matchedIds, field))
+                .min(Comparator.comparingInt(field -> calculateFieldDifference(myField, field)))
+                .orElseThrow(() -> handleNoMatchingFieldFound(myField));
+    }
+
+    private BusinessException handleNoMatchingFieldFound(Field myField) {
+        redisService.deleteValues(REDIS_AUTO_PREFIX + myField.getId());
+        return new BusinessException(NO_SIMILAR_FIELD_FOUND);
+    }
+
+    private int calculateFieldDifference(Field myField, Field field) {
+        return Math.abs(myField.getSkillLevel().ordinal() - field.getSkillLevel().ordinal())
+                + Math.abs(myField.getStrength().ordinal() - field.getStrength().ordinal())
+                + Math.abs(myField.getMaxSize() - field.getMaxSize());
+    }
+
+    private boolean isNotMatchedField(List<Long> matchedIds, Field field) {
+        return !matchedIds.contains(field.getId());
+    }
+
+    private boolean isNotMyField(Field myField, Field field) {
+        return !field.getId().equals(myField.getId());
+    }
+
+    private List<Long> getMatchedIds(String redisValue) {
+        List<Long> matchedIds = new ArrayList<>();
+        if (redisValue != null){
+            List<Long> parsedIds = Arrays.stream(redisValue.split(REDIS_AUTO_SPLIT_REGEX))
+                    .map(Long::parseLong).collect(Collectors.toList());
+            matchedIds.addAll(parsedIds);
+        }
+        return matchedIds;
+    }
+
+    private Field checkAutoMatchingValidity(FieldType fieldType, User user) {
+        UserField userField = fieldUtil.validateHavingField(user, fieldType);
+        Field myField = userField.getField();
+
+        fieldUtil.validateHaveOpponent(myField);
+        fieldUtil.validateIsFull(myField);
+        fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
+        return myField;
     }
 }

@@ -18,9 +18,10 @@ public interface FieldRepository extends JpaRepository<Field, Long>, FieldReposi
     @Query(value =
             "select f from Field f "
                     + "where f.fieldStatus = :fieldStatus and f.fieldType = :type "
-                    + "and f.period = :period"
+                    + "and f.period = :period "
+                    + "and f.currentSize = f.maxSize"
     )
-    List<Field> findAllByCond(@Param("fieldStatus") FieldStatus fieldStatus,
+    List<Field> findFullHouseFieldsByCond(@Param("fieldStatus") FieldStatus fieldStatus,
                         @Param("type") FieldType fieldType,
                         @Param("period") Period period);
 
