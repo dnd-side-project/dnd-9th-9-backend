@@ -7,6 +7,7 @@ import com.dnd.Exercise.domain.fcmToken.entity.FcmToken;
 import com.dnd.Exercise.domain.fcmToken.repository.FcmTokenRepository;
 import com.dnd.Exercise.domain.notification.entity.Notification;
 import com.dnd.Exercise.domain.notification.entity.NotificationDto;
+import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.repository.NotificationRepository;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -36,14 +37,16 @@ public class NotificationEventListener {
 
         List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(users);
 
-        if (fcmTokens.size() != 0){
-            notificationService.sendByTokens(fcmTokens, notificationDto);
+        if (fcmTokens.size() != 0) notificationService.sendByTokens(fcmTokens, notificationDto);
+
+        if (NotificationType.FIELD.equals(notificationDto.getNotificationType())){
+            notificationRepository.save(notificationDto.toEntity());
         }
-
-        List<Notification> notifications = users.stream()
-                .map(notificationDto::toEntity).collect(toList());
-
-        notificationRepository.saveAll(notifications);
+        else {
+            List<Notification> notifications = users.stream()
+                    .map(notificationDto::toEntity).collect(toList());
+            notificationRepository.saveAll(notifications);
+        }
     }
 
 
