@@ -19,4 +19,17 @@ public class GetRankingRes {
     private List<RankingDto> recordCountRanking;
 
     private List<RankingDto> goalAchievedCountRanking;
+
+    public static GetRankingRes from(
+            List<RankingDto> exerciseTime,
+            List<RankingDto> burnedCalorie,
+            List<RankingDto> recordCount,
+            List<RankingDto> goalAchievedCount){
+        return GetRankingRes.builder()
+                .recordCountRanking(exerciseTime)
+                .exerciseTimeRanking(burnedCalorie)
+                .burnedCalorieRanking(recordCount)
+                .goalAchievedCountRanking(goalAchievedCount)
+                .build();
+    }
 }

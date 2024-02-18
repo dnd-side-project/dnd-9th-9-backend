@@ -42,31 +42,18 @@ public class FieldUtil {
     private final FieldRepository fieldRepository;
 
     public List<Long> getMemberIds(Long fieldId) {
-        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
+        return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
+    }
+
+    public List<Long> getMemberIds(List<Long> fieldIds) {
+        List<UserField> allMembers = userFieldRepository.findAllByFieldIdIn(fieldIds);
         return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
     }
 
     public List<User> getMembers(Long fieldId){
-        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
         return allMembers.stream().map(UserField::getUser).collect(Collectors.toList());
-    }
-
-    public List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {
-        return activityRingRepository.findAllByDateAndUserIdIn(date, memberIds);
-    }
-
-    public List<Exercise> getExercises(LocalDate date, List<Long> memberIds) {
-        return exerciseRepository.findAllByExerciseDateAndUserIdIn(date, memberIds);
-    }
-
-    public List<ActivityRing> getActivityRings(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
-        return activityRingRepository.findAllByDateBetweenAndUserIdIn(
-                startDate, endDate, memberIds);
-    }
-
-    public List<Exercise> getExercises(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
-        return exerciseRepository.findAllByExerciseDateBetweenAndUserIdIn(
-                startDate, endDate, memberIds);
     }
 
     public List<Integer> calculateRecord(List<ActivityRing> activityRings, List<Exercise> exercises) {
@@ -142,13 +129,31 @@ public class FieldUtil {
         return calculateRecord(activityRings, exercises);
     }
 
+    public List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {
+        return activityRingRepository.findAllByDateAndUserIdIn(date, memberIds);
+    }
+
+    public List<ActivityRing> getActivityRings(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
+        return activityRingRepository.findAllByDateBetweenAndUserIdIn(startDate, endDate, memberIds);
+    }
+
+    public List<Exercise> getExercises(LocalDate date, List<Long> memberIds) {
+        return exerciseRepository.findAllByExerciseDateAndUserIdIn(date, memberIds);
+    }
+
+    public List<Exercise> getExercises(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
+        return exerciseRepository.findAllByExerciseDateBetweenAndUserIdIn(
+                startDate, endDate, memberIds);
+    }
+
     public WinStatus getFieldWinStatus(Field field) {
-        if (TEAM.equals(field.getFieldType())) {
-            return null;
-        }
+        if (TEAM.equals(field.getFieldType())) return null;
         Field opponent = field.getOpponent();
-        List<Integer> mySummary = getFieldSummary(field.getId(),field.getStartDate(),field.getEndDate());
-        List<Integer> opponentSummary = getFieldSummary(opponent.getId(),opponent.getStartDate(),opponent.getEndDate());
+        LocalDate startDate = field.getStartDate();
+        LocalDate endDate = field.getEndDate();
+
+        List<Integer> mySummary = getFieldSummary(field.getId(), startDate, endDate);
+        List<Integer> opponentSummary = getFieldSummary(opponent.getId(), startDate, endDate);
 
         return compareSummaries(mySummary, opponentSummary);
     }
@@ -165,8 +170,7 @@ public class FieldUtil {
 
     public void validateNotHavingField(User user, FieldType fieldType){
         if (!userFieldRepository.findByUserAndStatusInAndType(
-                user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType))
-                .isEmpty()){
+                user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType)).isEmpty()){
             throw new BusinessException(HAVING_IN_PROGRESS);
         }
     }
@@ -174,17 +178,13 @@ public class FieldUtil {
     public UserField validateHavingField(User user, FieldType fieldType){
         List<UserField> userField = userFieldRepository.findByUserAndStatusInAndType(
                 user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType));
-        if (userField.isEmpty()){
+        if (userField.isEmpty())
             throw new BusinessException(SHOULD_CREATE);
-        }
         return userField.get(0);
     }
 
     public Boolean isFieldInProgress(Field field) {
-        if (field.getFieldStatus() == FieldStatus.IN_PROGRESS ||
-                (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null)) {
-            return true;
-        }
-        return false;
+        return field.getFieldStatus() == FieldStatus.IN_PROGRESS ||
+                (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null);
     }
 }

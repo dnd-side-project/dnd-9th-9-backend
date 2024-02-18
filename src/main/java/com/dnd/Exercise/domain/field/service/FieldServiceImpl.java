@@ -4,7 +4,6 @@ import static com.dnd.Exercise.domain.field.dto.response.FieldRole.GUEST;
 import static com.dnd.Exercise.domain.field.dto.response.FieldRole.LEADER;
 import static com.dnd.Exercise.domain.field.dto.response.FieldRole.MEMBER;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldSide.AWAY;
-import static com.dnd.Exercise.domain.field.entity.enums.FieldSide.HOME;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.COMPLETED;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
@@ -31,7 +30,7 @@ import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
-import com.dnd.Exercise.domain.field.dto.response.ElementWiseWinDto;
+import com.dnd.Exercise.domain.field.dto.response.ElementWiseWin;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
 import com.dnd.Exercise.domain.field.dto.response.FieldRole;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
@@ -65,14 +64,10 @@ import com.dnd.Exercise.global.s3.AwsS3Service;
 import com.dnd.Exercise.global.util.field.FieldUtil;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -109,9 +104,9 @@ public class FieldServiceImpl implements FieldService{
         fieldUtil.validateNotHavingField(user, createFieldReq.getFieldType());
         validateDuelMaxSize(createFieldReq.getFieldType(), createFieldReq.getMaxSize());
 
-        Long userId = user.getId();
         String profileImg = s3Upload(createFieldReq.getProfileImg());
 
+        Long userId = user.getId();
         Field field = createFieldReq.toEntity(userId, profileImg);
         Field savedField = fieldRepository.save(field);
 
@@ -211,8 +206,7 @@ public class FieldServiceImpl implements FieldService{
 
     @Override
     public GetFieldExerciseSummaryRes getMyFieldExerciseSummary(User user, Long fieldId, LocalDate targetDate) {
-        Field myField = validateFieldAccess(user, fieldId);
-        validateNotRecruiting(myField);
+        Field myField = validateFieldRecordAccess(user, fieldId);
 
         Field opponentField = myField.getOpponent();
 
@@ -229,8 +223,7 @@ public class FieldServiceImpl implements FieldService{
 
     @Override
     public GetFieldExerciseSummaryRes getOpponentFieldExerciseSummary(User user, Long fieldId, LocalDate targetDate) {
-        Field myField = validateFieldAccess(user, fieldId);
-        validateNotRecruiting(myField);
+        Field myField = validateFieldRecordAccess(user, fieldId);
 
         Field opponentField = myField.getOpponent();
         validateOpponentPresence(opponentField);
@@ -242,8 +235,7 @@ public class FieldServiceImpl implements FieldService{
 
     @Override
     public GetRankingRes getTeamRanking(User user, Long fieldId, FieldSideDateReq teamRankingReq) {
-        Field field = validateFieldAccess(user, fieldId);
-        validateNotRecruiting(field);
+        Field field = validateFieldRecordAccess(user, fieldId);
 
         LocalDate date = teamRankingReq.getDate();
         FieldSide fieldSide = teamRankingReq.getFieldSide();
@@ -255,65 +247,33 @@ public class FieldServiceImpl implements FieldService{
 
     @Override
     public GetRankingRes getDuelRanking(User user, Long fieldId, LocalDate date) {
-        Field field = validateFieldAccess(user, fieldId);
-        validateNotRecruiting(field);
+        Field field = validateFieldRecordAccess(user, fieldId);
 
         Long opponentFieldId = field.getOpponent().getId();
-
-        Long memberId = fieldUtil.getMemberIds(fieldId).get(0);
-        Long opponentMemberId = fieldUtil.getMemberIds(opponentFieldId).get(0);
-        List<Long> memberIds = List.of(memberId, opponentMemberId);
-
-        return toGetRankingRes(date, memberIds);
+        List<Long> targetUserIds = fieldUtil.getMemberIds(List.of(fieldId, opponentFieldId));
+        return toGetRankingRes(date, targetUserIds);
     }
 
     @Override
-    public FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId,
-            FindAllFieldRecordsReq recordsReq) {
-        Field field = validateFieldAccess(user, fieldId);
-        validateNotRecruiting(field);
+    public FindAllFieldRecordsRes findAllFieldRecords(User user, Long fieldId, FindAllFieldRecordsReq recordsReq) {
+        Field field = validateFieldRecordAccess(user, fieldId);
+        LocalDate targetDate = recordsReq.getDate();
+        Pageable pageable = getPageable(recordsReq);
+
+        List<Long> targetUserIds = getTargetUserIds(field);
 
         Long leaderId = field.getLeaderId();
-        LocalDate targetDate = recordsReq.getDate();
+        Page<FindFieldRecordDto> fieldRecordPage = exerciseRepository.findAllByUserAndDate(
+                targetDate, targetUserIds, pageable, leaderId);
 
-        Pageable pageable = PageRequest.of(recordsReq.getPage(), recordsReq.getSize());
-
-        List<Long> memberIds = fieldUtil.getMemberIds(fieldId);
-        if (recordsReq.getFieldType() == DUEL){
-            memberIds.addAll(fieldUtil.getMemberIds(field.getOpponent().getId()));
-        }
-
-        Page<FindFieldRecordDto> allWithUser = exerciseRepository.findAllWithUser(
-                targetDate, memberIds, pageable, leaderId);
-
-        List<FindFieldRecordDto> recordList = allWithUser.getContent();
-        Long totalCount = allWithUser.getTotalElements();
-
-        long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), field.getEndDate());
-
-        FindAllFieldRecordsRes.FindAllFieldRecordsResBuilder resBuilder =
-                FindAllFieldRecordsRes.builder()
-                        .recordList(recordList)
-                        .rule(field.getRule())
-                        .daysLeft(daysLeft)
-                        .totalCount(totalCount)
-                        .currentPageNumber(pageable.getPageNumber())
-                        .currentPageSize(pageable.getPageSize());
-
-        if (recordsReq.getFieldType() != TEAM){
-            List<Integer> mySummary = fieldUtil.getFieldSummary(fieldId, targetDate);
-            WinStatus winStatus = getWinStatus(targetDate, field.getOpponent(),
-                    mySummary);
-            resBuilder.winStatus(winStatus);
-        }
-
-        return resBuilder.build();
+        FindAllFieldRecordsRes result = FindAllFieldRecordsRes.from(fieldRecordPage, field, pageable);
+        updateWinStatusIfNotTeam(field, targetDate, result);
+        return result;
     }
 
     @Override
     public FindFieldRecordDto findFieldRecord(User user, Long fieldId, Long exerciseId) {
-        Field field = validateFieldAccess(user, fieldId);
-        validateNotRecruiting(field);
+        Field field = validateFieldRecordAccess(user, fieldId);
 
         Exercise exercise = exerciseRepository.findWithUserById(exerciseId)
                 .orElseThrow(() -> new BusinessException(EXERCISE_NOT_FOUND));
@@ -330,55 +290,30 @@ public class FieldServiceImpl implements FieldService{
     public void checkFieldStatus() {
         List<Field> fieldList = fieldRepository.findAll();
         for (Field field : fieldList) {
-            if (RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() != null) {
-                field.changeFieldStatus(IN_PROGRESS);
-                field.updateDate(field.getPeriod());
-            } else if (IN_PROGRESS.equals(field.getFieldStatus()) && LocalDate.now()
-                    .equals(field.getEndDate())) {
-                field.changeFieldStatus(COMPLETED);
-            }
+            updateFieldStatus(field);
         }
     }
 
-    //Badge 구현 후 BadgeList 불러오는 로직 추가 필요
     @Override
     public FindFieldResultRes findFieldResult(User user, Long fieldId) {
-        Field myField = validateFieldAccess(user, fieldId);
+        Field myField = validateFieldRecordAccess(user, fieldId);
 
-        if(!COMPLETED.equals(myField.getFieldStatus())){
-            throw new BusinessException(NOT_COMPLETED);
-        }
+        validateCompleted(myField);
 
         LocalDate startDate = myField.getStartDate();
         LocalDate endDate = myField.getEndDate();
 
-        List<Integer> score = fieldUtil.getFieldSummary(myField.getId(), startDate, endDate);
-        FindFieldResultDto home = new FindFieldResultDto(myField, score);
+        List<Integer> mySummary = fieldUtil.getFieldSummary(myField.getId(), startDate, endDate);
+        FindFieldResultDto home = FindFieldResultDto.from(myField, mySummary);
 
-        FindFieldResultRes.FindFieldResultResBuilder resBuilder= FindFieldResultRes.builder()
-                .period(myField.getPeriod())
-                .startDate(startDate)
-                .endDate(endDate)
-                .home(home)
-                .teamworkRate(teamworkRateService.getTeamworkRateOfField(myField));
+        int teamworkRate = teamworkRateService.getTeamworkRateOfField(myField);
+        FindFieldResultRes result = FindFieldResultRes.from(home, myField, teamworkRate);
 
-        if (!TEAM.equals(myField.getFieldType())){
-            Field opponentField = myField.getOpponent();
-            List<Integer> opponentScore = fieldUtil.getFieldSummary(opponentField.getId(), startDate, endDate);
+        updateIfNotTeam(myField, mySummary, home, result);
 
-            FindFieldResultDto away = new FindFieldResultDto(opponentField, opponentScore);
-
-            List<WinStatus> elementWiseWinList = elementWiseWinToList(score, opponentScore);
-            ElementWiseWinDto elementWiseWin = new ElementWiseWinDto(elementWiseWinList);
-            elementWiseWinList.forEach(winStatus -> addTotalScore(winStatus, home, away));
-
-            WinStatus winStatus = compareScore(home.getTotalScore(), away.getTotalScore());
-
-            resBuilder.away(away).elementWiseWin(elementWiseWin).winStatus(winStatus);
-        }
-
-        return resBuilder.build();
+        return result;
     }
+
 
     @Transactional
     @Override
@@ -386,9 +321,7 @@ public class FieldServiceImpl implements FieldService{
         Field field = fieldUtil.getField(fieldId);
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
 
-        User newLeader = userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
-
+        User newLeader = userRepository.findById(id).orElseThrow(() -> new BusinessException(NOT_FOUND));
         fieldUtil.validateIsMember(newLeader, field);
 
         field.changeLeader(newLeader.getId());
@@ -396,64 +329,73 @@ public class FieldServiceImpl implements FieldService{
         notificationService.sendFieldNotification(CHANGE_LEADER, field, newLeader.getName());
     }
 
-    private Field validateFieldAccess(User user, Long fieldId) {
+
+    private void updateIfNotTeam(Field myField, List<Integer> mySummary, FindFieldResultDto home, FindFieldResultRes result) {
+        if (!TEAM.equals(myField.getFieldType())){
+            Field opponentField = myField.getOpponent();
+
+            List<Integer> opponentSummary = getPeriodSummary(opponentField);
+            FindFieldResultDto away = FindFieldResultDto.from(opponentField, opponentSummary);
+
+            List<WinStatus> elementWiseWinStatus = getElementWiseWinStatus(mySummary, opponentSummary);
+            elementWiseWinStatus.forEach(winStatus -> addTotalScore(winStatus, home, away));
+
+            ElementWiseWin elementWiseWin = ElementWiseWin.from(elementWiseWinStatus);
+            WinStatus winStatus = compareScore(home.getTotalScore(), away.getTotalScore());
+
+            result.updateIfNotTeam(away, elementWiseWin, winStatus);
+        }
+    }
+
+    private List<Integer> getPeriodSummary(Field field) {
+        Long opponentFieldId = field.getId();
+        LocalDate startDate = field.getStartDate();
+        LocalDate endDate = field.getEndDate();
+
+        List<Integer> summary = fieldUtil.getFieldSummary(opponentFieldId, startDate, endDate);
+        return summary;
+    }
+
+
+    private Field validateFieldRecordAccess(User user, Long fieldId) {
         Field field = fieldUtil.getField(fieldId);
         fieldUtil.validateIsMember(user, field);
+        validateNotRecruiting(field);
         return field;
     }
 
     private void validateNotRecruiting(Field field) {
-        if (field.getFieldStatus() == RECRUITING) {
+        if (RECRUITING.equals(field.getFieldStatus())) {
             throw new BusinessException(RECRUITING_YET);
         }
     }
 
-    private String s3Upload(MultipartFile profileImg) {
-        String imgUrl = null;
-        if (profileImg != null)
-            imgUrl = awsS3Service.upload(profileImg, S3_FILED_PROFILE_FOLDER_NAME);
-        return imgUrl;
-    }
-
-    private GetRankingRes toGetRankingRes(LocalDate date, List<Long> memberIds) {
-        return GetRankingRes.builder()
-                .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
-                .exerciseTimeRanking(getRankingByCriteria(EXERCISE_TIME, date, memberIds))
-                .burnedCalorieRanking(getRankingByCriteria(BURNED_CALORIE, date, memberIds))
-                .goalAchievedCountRanking(getRankingByCriteria(GOAL_ACHIEVED, date, memberIds))
-                .build();
-    }
-
-    private List<RankingDto> getRankingByCriteria(RankCriterion criterion, LocalDate date, List<Long> memberIds) {
-        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED)
-            return activityRingRepository.findTopByDynamicCriteria(criterion, date, memberIds);
-        return exerciseRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+    private void validateCompleted(Field myField) {
+        if(!COMPLETED.equals(myField.getFieldStatus())){
+            throw new BusinessException(NOT_COMPLETED);
+        }
     }
 
     private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
-        if (winStatus == WinStatus.WIN) {
+        if (winStatus == WinStatus.WIN)
             home.addTotalScore(1);
-        } else if (winStatus == WinStatus.LOSE) {
+        else if (winStatus == WinStatus.LOSE)
             away.addTotalScore(1);
-        }
     }
 
-    private List<WinStatus> elementWiseWinToList(List<Integer> myScores, List<Integer> opponentScores){
-        WinStatus recordCount = compareScore(myScores.get(0), opponentScores.get(0));
-        WinStatus goalAchievedCount = compareScore(myScores.get(1), opponentScores.get(1));
-        WinStatus burnedCalorie = compareScore(myScores.get(2), opponentScores.get(2));
-        WinStatus exerciseTimeMinute = compareScore(myScores.get(3), opponentScores.get(3));
-        return List.of(recordCount, goalAchievedCount, burnedCalorie, exerciseTimeMinute);
+    private List<WinStatus> getElementWiseWinStatus(List<Integer> myScores, List<Integer> opponentScores){
+        List<WinStatus> winStatusList = new ArrayList<>();
+        for (int idx = 0; idx < myScores.size(); idx++){
+            WinStatus winStatus = compareScore(myScores.get(idx), opponentScores.get(idx));
+            winStatusList.add(winStatus);
+        }
+        return winStatusList;
     }
 
     private WinStatus compareScore(Double myScore, Double opponentScore) {
-        if (myScore > opponentScore) {
-            return WinStatus.WIN;
-        } else if (myScore < opponentScore) {
-            return WinStatus.LOSE;
-        } else {
-            return WinStatus.DRAW;
-        }
+        if (myScore > opponentScore) return WinStatus.WIN;
+        else if (myScore < opponentScore) return WinStatus.LOSE;
+        else return WinStatus.DRAW;
     }
 
     private WinStatus compareScore(Integer myScore, Integer opponentScore) {
@@ -468,13 +410,11 @@ public class FieldServiceImpl implements FieldService{
     }
 
     private FieldRole determineFieldRole(User user, Field myField, Boolean isMember) {
-        if (user.getId().equals(myField.getLeaderId())){
-            return LEADER;
-        } else if (isMember) {
-            return MEMBER;
-        }else {
-            return GUEST;
-        }
+        Long userId = user.getId();
+        Long leaderId = myField.getLeaderId();
+        if (userId.equals(leaderId)) return LEADER;
+        else if (isMember) return MEMBER;
+        else return GUEST;
     }
 
     private void updateAssignedField(Field myField, Boolean isMember, FindFieldResBuilder resBuilder) {
@@ -541,14 +481,71 @@ public class FieldServiceImpl implements FieldService{
         return myField;
     }
 
+    private void validateOpponentPresence(Field opponentField) {
+        if (opponentField == null) {
+            throw new BusinessException(OPPONENT_NOT_FOUND);
+        }
+    }
+
+    private void updateWinStatusIfNotTeam(Field field, LocalDate targetDate, FindAllFieldRecordsRes result) {
+        if (field.getFieldType() != TEAM){
+            List<Integer> mySummary = fieldUtil.getFieldSummary(field.getId(), targetDate);
+            WinStatus winStatus = getWinStatus(targetDate, field.getOpponent(), mySummary);
+            result.setWinStatus(winStatus);
+        }
+    }
+
     private WinStatus getWinStatus(LocalDate targetDate, Field opponentField, List<Integer> mySummary) {
         List<Integer> opponentSummary = fieldUtil.getFieldSummary(opponentField.getId(), targetDate);
         return fieldUtil.compareSummaries(mySummary, opponentSummary);
     }
 
-    private void validateOpponentPresence(Field opponentField) {
-        if (opponentField == null) {
-            throw new BusinessException(OPPONENT_NOT_FOUND);
+    private List<Long> getTargetUserIds(Field field) {
+        List<Long> memberIds;
+        Long myFieldId = field.getId();
+        if (field.getFieldType() == DUEL){
+            Long opponentFieldId = field.getOpponent().getId();
+            memberIds = fieldUtil.getMemberIds(List.of(opponentFieldId, myFieldId));
         }
+        else {
+            memberIds = fieldUtil.getMemberIds(myFieldId);
+        }
+        return memberIds;
+    }
+
+    private PageRequest getPageable(FindAllFieldRecordsReq recordsReq) {
+        int page = recordsReq.getPage();
+        int size = recordsReq.getSize();
+        return PageRequest.of(page, size);
+    }
+
+    private void updateFieldStatus(Field field) {
+        if (RECRUITING.equals(field.getFieldStatus()) && field.getOpponent() != null) {
+            field.changeFieldStatus(IN_PROGRESS);
+            field.updateDate(field.getPeriod());
+        } else if (IN_PROGRESS.equals(field.getFieldStatus()) && LocalDate.now().equals(field.getEndDate())) {
+            field.changeFieldStatus(COMPLETED);
+        }
+    }
+
+    private String s3Upload(MultipartFile profileImg) {
+        String imgUrl = null;
+        if (profileImg != null)
+            imgUrl = awsS3Service.upload(profileImg, S3_FILED_PROFILE_FOLDER_NAME);
+        return imgUrl;
+    }
+
+    private GetRankingRes toGetRankingRes(LocalDate date, List<Long> memberIds) {
+        List<RankingDto> recordCount = getRankingByCriteria(RECORD_COUNT, date, memberIds);
+        List<RankingDto> exerciseTime = getRankingByCriteria(EXERCISE_TIME, date, memberIds);
+        List<RankingDto> burnedCalorie = getRankingByCriteria(BURNED_CALORIE, date, memberIds);
+        List<RankingDto> goalAchievedCount = getRankingByCriteria(GOAL_ACHIEVED, date, memberIds);
+        return GetRankingRes.from(recordCount, exerciseTime, burnedCalorie, goalAchievedCount);
+    }
+
+    private List<RankingDto> getRankingByCriteria(RankCriterion criterion, LocalDate date, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED)
+            return activityRingRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+        return exerciseRepository.findTopByDynamicCriteria(criterion, date, memberIds);
     }
 }

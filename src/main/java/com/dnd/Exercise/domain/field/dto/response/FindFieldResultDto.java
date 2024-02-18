@@ -24,14 +24,16 @@ public class FindFieldResultDto {
 
     private Integer totalExerciseTimeMinute;
 
-    public FindFieldResultDto(Field field, List<Integer> score){
-        this.name = field.getName();
-        this.profileImg = field.getProfileImg();
-        this.totalScore = 0;
-        this.totalRecordCount = score.get(0);
-        this.goalAchievedCount = score.get(1);
-        this.totalBurnedCalorie = score.get(2);
-        this.totalExerciseTimeMinute = score.get(3);
+    public static FindFieldResultDto from(Field field, List<Integer> score){
+        return FindFieldResultDto.builder()
+                .name(field.getName())
+                .profileImg(field.getProfileImg())
+                .totalScore(0)
+                .totalRecordCount(score.get(0))
+                .goalAchievedCount(score.get(1))
+                .totalBurnedCalorie(score.get(2))
+                .totalExerciseTimeMinute(score.get(3))
+                .build();
     }
 
     public void addTotalScore(int score){

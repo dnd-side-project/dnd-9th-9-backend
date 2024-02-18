@@ -24,7 +24,14 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long>, Use
                      + "join fetch uf.user "
                      + "where uf.field.id = :id"
      )
-     List<UserField> findAllByField(@Param("id") Long id);
+     List<UserField> findAllByFieldId(@Param("id") Long id);
+
+    @Query(value =
+            "select uf from UserField uf "
+                    + "join fetch uf.user "
+                    + "where uf.field.id in :ids"
+    )
+    List<UserField> findAllByFieldIdIn(@Param("ids") List<Long> ids);
 
 
      @EntityGraph(attributePaths = "field")
