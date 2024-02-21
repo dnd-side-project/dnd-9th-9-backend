@@ -1,8 +1,6 @@
 package com.dnd.Exercise.domain.fieldEntry.controller;
 
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
-import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
-import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryRes;
@@ -15,6 +13,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -94,8 +93,8 @@ public class FieldEntryController {
     @PostMapping("/team")
     public ResponseEntity<String> createTeamFieldEntry(
             @AuthenticationPrincipal User user,
-            @RequestBody @Valid TeamFieldEntryReq fieldEntryReq){
-        fieldEntryService.createTeamFieldEntry(user, fieldEntryReq);
+            @RequestParam @NotNull Long fieldId){
+        fieldEntryService.createTeamFieldEntry(user, fieldId);
         return ResponseDto.ok("팀 신청 완료");
     }
 
@@ -115,8 +114,8 @@ public class FieldEntryController {
     @PostMapping("/battle")
     public ResponseEntity<String> createBattleFieldEntry(
             @AuthenticationPrincipal User user,
-            @RequestBody @Valid BattleFieldEntryReq fieldEntryReq){
-        fieldEntryService.createBattleFieldEntry(user, fieldEntryReq);
+            @RequestParam @NotNull Long fieldId){
+        fieldEntryService.createBattleFieldEntry(user, fieldId);
         return ResponseDto.ok("배틀 신청 완료");
     }
 

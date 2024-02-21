@@ -5,7 +5,6 @@ import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM_BATTLE;
 import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.BATTLE_ACCEPT;
 import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.TEAM_ACCEPT;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_APPLY;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_LEADER;
@@ -15,9 +14,7 @@ import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.fieldEntry.dto.FieldEntryMapper;
-import com.dnd.Exercise.domain.fieldEntry.dto.request.BattleFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.request.FieldDirection;
-import com.dnd.Exercise.domain.fieldEntry.dto.request.TeamFieldEntryReq;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryDto;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllBattleEntryRes;
 import com.dnd.Exercise.domain.fieldEntry.dto.response.FindAllTeamEntryDto;
@@ -58,91 +55,52 @@ public class FieldEntryServiceImpl implements FieldEntryService {
 
     @Transactional
     @Override
-    public void createTeamFieldEntry(User user, TeamFieldEntryReq fieldEntryReq) {
-        FieldType fieldType = fieldEntryReq.getTeamType().toFieldType();
-        Field hostField = getFieldByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType);
-
-        fieldUtil.validateHaveOpponent(hostField);
-
-        validateIsNotFull(hostField);
-
-        if(fieldEntryRepository.existsByEntrantUserAndHostField(user, hostField)){
-            throw new BusinessException(ALREADY_APPLY);
-        }
-
-        fieldUtil.validateNotHavingField(user, fieldType);
-
+    public void createTeamFieldEntry(User user, Long fieldId) {
+        Field hostField = fieldUtil.getField(fieldId);
+        FieldType fieldType = checkCreateTeamFieldEntryValidity(user, hostField);
         FieldEntry fieldEntry = FieldEntry.builder()
-                .entrantUser(user).hostField(hostField).fieldType(fieldType).build();
+                .entrantUser(user)
+                .hostField(hostField)
+                .fieldType(fieldType)
+                .build();
+
         fieldEntryRepository.save(fieldEntry);
     }
 
     @Transactional
     @Override
-    public void createBattleFieldEntry(User user, BattleFieldEntryReq fieldEntryReq) {
-        FieldType fieldType = fieldEntryReq.getBattleType().toFieldType();
-        Field hostField = getFieldByIdAndFieldType(fieldEntryReq.getTargetFieldId(), fieldType);
+    public void createBattleFieldEntry(User user, Long fieldId) {
+        Field hostField = fieldUtil.getField(fieldId);
+        FieldType fieldType = hostField.getFieldType();
 
-        UserField myUserField = fieldUtil.validateHavingField(user, fieldType);
-        
-        Field myField = myUserField.getField();
-
-        if(myField.equals(hostField)){
-            throw new BusinessException(BAD_REQUEST);
-        }
-
-        fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
-        fieldUtil.validateHaveOpponent(myField);
-        fieldUtil.validateIsFull(myField);
-
-        fieldUtil.validateHaveOpponent(hostField);
-        fieldUtil.validateIsFull(hostField);
-
-        if(fieldEntryRepository.existsByEntrantFieldAndHostField(myField, hostField)){
-            throw new BusinessException(ALREADY_APPLY);
-        }
-
-        if(!myField.getPeriod().equals(hostField.getPeriod())){
-            throw new BusinessException(PERIOD_NOT_MATCH);
-        }
-
+        Field myField = checkCreateBattleFieldEntryValidity(user, hostField, fieldType);
         FieldEntry fieldEntry = FieldEntry.builder()
-                .entrantField(myField).hostField(hostField).fieldType(fieldType).build();
+                .entrantField(myField)
+                .hostField(hostField)
+                .fieldType(fieldType)
+                .build();
+
         fieldEntryRepository.save(fieldEntry);
     }
-
-
 
 
     @Transactional
     @Override
     public void deleteFieldEntry(User user, Long entryId) {
-        FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+        FieldEntry fieldEntry = getFieldEntry(entryId);
 
         Field entrantField = fieldEntry.getEntrantField();
-        Field hostField = fieldEntry.getHostField();
+        User entrantUser = fieldEntry.getEntrantUser();
 
-
-        if(fieldEntry.getEntrantField() == null){
-            if(!fieldEntry.getEntrantUser().equals(user)
-                    && !hostField.getLeaderId().equals(user.getId())){
-                throw new BusinessException(BAD_REQUEST);
-            }
-        }else{
-            if(!entrantField.getLeaderId().equals(user.getId())
-                    && !hostField.getLeaderId().equals(user.getId())){
-                throw new BusinessException(MUST_LEADER);
-            }
-        }
+        if(entrantUser != null) checkDeleteTeamEntryValidity(user, fieldEntry);
+        else if(entrantField != null) checkDeleteBattleEntryValidity(user, fieldEntry);
         fieldEntryRepository.deleteById(entryId);
     }
 
     @Transactional
     @Override
     public void acceptFieldEntry(User user, Long entryId) {
-        FieldEntry fieldEntry = fieldEntryRepository.findById(entryId)
-                .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
+        FieldEntry fieldEntry = getFieldEntry(entryId);
 
         Field entrantField = fieldEntry.getEntrantField();
         Field hostField = fieldEntry.getHostField();
@@ -151,7 +109,7 @@ public class FieldEntryServiceImpl implements FieldEntryService {
         fieldUtil.validateIsLeader(user.getId(), hostField.getLeaderId());
 
         if(entrantField == null) {
-            validateIsNotFull(hostField);
+            fieldUtil.validateIsNotFull(hostField);
             hostField.addMember();
             UserField userField = new UserField(entrantUser, hostField);
             userFieldRepository.save(userField);
@@ -256,14 +214,79 @@ public class FieldEntryServiceImpl implements FieldEntryService {
                 .build();
     }
 
-    private void validateIsNotFull(Field field) {
-        if(field.getCurrentSize() == field.getMaxSize()){
-            throw new BusinessException(ALREADY_FULL);
+    private void validateDuplicateTeamApply(User user, Field hostField) {
+        if(fieldEntryRepository.existsByEntrantUserAndHostField(user, hostField)){
+            throw new BusinessException(ALREADY_APPLY);
         }
     }
 
-    private Field getFieldByIdAndFieldType(Long fieldId, FieldType fieldType) {
-        return fieldRepository.findByIdAndFieldType(fieldId, fieldType)
+    private void validateDuplicateBattleApply(Field hostField, Field myField) {
+        if(fieldEntryRepository.existsByEntrantFieldAndHostField(myField, hostField)){
+            throw new BusinessException(ALREADY_APPLY);
+        }
+    }
+
+    private void validateSamePeriod(Field hostField, Field myField) {
+        if(!myField.getPeriod().equals(hostField.getPeriod())){
+            throw new BusinessException(PERIOD_NOT_MATCH);
+        }
+    }
+
+    private void validateIsMyField(Field hostField, Field myField) {
+        if(myField.equals(hostField)){
+            throw new BusinessException(BAD_REQUEST);
+        }
+    }
+
+    private FieldType checkCreateTeamFieldEntryValidity(User user, Field hostField) {
+        FieldType fieldType = hostField.getFieldType();
+
+        fieldUtil.validateHaveOpponent(hostField);
+        fieldUtil.validateIsNotFull(hostField);
+        validateDuplicateTeamApply(user, hostField);
+        fieldUtil.validateNotHavingField(user, fieldType);
+        return fieldType;
+    }
+
+    private Field checkCreateBattleFieldEntryValidity(User user, Field hostField, FieldType fieldType) {
+        UserField myUserField = fieldUtil.validateHavingField(user, fieldType);
+        Field myField = myUserField.getField();
+
+        validateIsMyField(hostField, myField);
+        fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
+        fieldUtil.validateHaveOpponent(myField);
+        fieldUtil.validateIsFull(myField);
+
+        fieldUtil.validateHaveOpponent(hostField);
+        fieldUtil.validateIsFull(hostField);
+
+        validateDuplicateBattleApply(hostField, myField);
+        validateSamePeriod(hostField, myField);
+        return myField;
+    }
+
+    private void checkDeleteBattleEntryValidity(User user, FieldEntry fieldEntry) {
+        Long entrantLeaderId = fieldEntry.getEntrantField().getLeaderId();
+        Long hostLeaderId = fieldEntry.getHostField().getLeaderId();
+        Long userId = user.getId();
+
+        if(!entrantLeaderId.equals(userId) && !hostLeaderId.equals(userId)){
+            throw new BusinessException(MUST_LEADER);
+        }
+    }
+
+    private void checkDeleteTeamEntryValidity(User user, FieldEntry fieldEntry) {
+        Long entrantUserId = fieldEntry.getEntrantUser().getId();
+        Long hostLeaderId = fieldEntry.getHostField().getLeaderId();
+        Long userId = user.getId();
+
+        if(!entrantUserId.equals(userId) && !hostLeaderId.equals(userId)){
+            throw new BusinessException(BAD_REQUEST);
+        }
+    }
+
+    private FieldEntry getFieldEntry(Long entryId) {
+        return fieldEntryRepository.findById(entryId)
                 .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 }

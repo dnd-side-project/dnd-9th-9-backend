@@ -3,6 +3,7 @@ package com.dnd.Exercise.global.util.field;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
@@ -110,6 +111,12 @@ public class FieldUtil {
     public void validateIsFull(Field field) {
         if(field.getCurrentSize() != field.getMaxSize()){
             throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    public void validateIsNotFull(Field field) {
+        if(field.getCurrentSize() == field.getMaxSize()){
+            throw new BusinessException(ALREADY_FULL);
         }
     }
 
