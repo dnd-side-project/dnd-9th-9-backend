@@ -177,16 +177,15 @@ public class FieldUtil {
 
     public void validateNotHavingField(User user, FieldType fieldType){
         if (!userFieldRepository.findByUserAndStatusInAndType(
-                user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType)).isEmpty()){
+                user, List.of(RECRUITING, IN_PROGRESS), fieldType).isEmpty()){
             throw new BusinessException(HAVING_IN_PROGRESS);
         }
     }
 
     public UserField validateHavingField(User user, FieldType fieldType){
         List<UserField> userField = userFieldRepository.findByUserAndStatusInAndType(
-                user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType));
-        if (userField.isEmpty())
-            throw new BusinessException(SHOULD_CREATE);
+                user, List.of(RECRUITING, IN_PROGRESS), fieldType);
+        if (userField.isEmpty()) throw new BusinessException(SHOULD_CREATE);
         return userField.get(0);
     }
 

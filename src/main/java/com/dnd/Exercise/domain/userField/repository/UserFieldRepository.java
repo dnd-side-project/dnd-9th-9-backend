@@ -44,9 +44,29 @@ public interface UserFieldRepository extends JpaRepository<UserField, Long>, Use
                      + "and uf.field.fieldStatus in :fieldStatuses "
                      + "and uf.field.fieldType in :fieldTypes"
      )
-     List<UserField> findByUserAndStatusInAndType(@Param("user") User user,
+     List<UserField> findByUserAndStatusInAndTypeIn(@Param("user") User user,
              @Param("fieldStatuses") List<FieldStatus> fieldStatuses,
              @Param("fieldTypes") List<FieldType> fieldTypes);
+
+    @Query(value =
+            "select uf from UserField uf "
+                    + "join fetch uf.field "
+                    + "where uf.user = :user "
+                    + "and uf.field.fieldStatus in :fieldStatuses "
+                    + "and uf.field.fieldType = :fieldType"
+    )
+    List<UserField> findByUserAndStatusInAndType(@Param("user") User user,
+            @Param("fieldStatuses") List<FieldStatus> fieldStatuses,
+            @Param("fieldType") FieldType fieldTypes);
+
+    @Query(value =
+            "select uf from UserField uf "
+                    + "join fetch uf.field "
+                    + "where uf.user = :user "
+                    + "and uf.field.fieldStatus in :fieldStatuses"
+    )
+    List<UserField> findByUserAndStatusIn(@Param("user") User user,
+            @Param("fieldStatuses") List<FieldStatus> fieldStatuses);
 
 
     void deleteAllByFieldAndUserIdIn(Field field, List<Long> targetUserIds);

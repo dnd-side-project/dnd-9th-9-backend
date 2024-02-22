@@ -26,7 +26,7 @@ import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
-import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
+import com.dnd.Exercise.domain.BattleEntry.repository.BattleEntryRepository;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -66,7 +66,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final ExerciseRepository exerciseRepository;
     private final ActivityRingRepository activityRingRepository;
     private final UserRepository userRepository;
-    private final FieldEntryRepository fieldEntryRepository;
+    private final BattleEntryRepository battleEntryRepository;
     private final FieldUtil fieldUtil;
     private final NotificationService notificationService;
     private final RedisService redisService;
@@ -78,7 +78,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     public List<FindAllMembersRes> findAllMembers(Long fieldId) {
         Field field = fieldUtil.getField(fieldId);
         Long leaderId = field.getLeaderId();
-        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
 
         return allMembers.stream().map(member -> {
                     FindAllMembersRes findAllMembersRes =
@@ -91,8 +91,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public List<FindAllMyFieldsDto> findAllMyRecruitingFields(User user) {
-        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
-                List.of(RECRUITING), List.of(TEAM, TEAM_BATTLE, DUEL));
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusIn(user, List.of(RECRUITING));
 
         return myUserFields.stream()
                 .filter(userField -> userField.getField().getOpponent() == null)
@@ -104,7 +103,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public List<FindAllMyFieldsDto> findAllMyInProgressFields(User user) {
-        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndTypeIn(user,
                 List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE, DUEL));
 
         return myUserFields.stream()
@@ -137,7 +136,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     @Override
     public FindMyBattleStatusRes findMyBattleStatus(User user, BattleType battleType) {
         List<UserField> inProgressUserField = userFieldRepository.findByUserAndStatusInAndType(user,
-                List.of(IN_PROGRESS), List.of(battleType.toFieldType()));
+                List.of(IN_PROGRESS), battleType.toFieldType());
 
         if (inProgressUserField.isEmpty()){
             return null;
@@ -166,7 +165,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     @Override
     public FindMyTeamStatusRes findMyTeamStatus(User user) {
         List<UserField> inProgressUserField = userFieldRepository.findByUserAndStatusInAndType(user,
-                List.of(IN_PROGRESS), List.of(TEAM));
+                List.of(IN_PROGRESS), TEAM);
 
         if (inProgressUserField.isEmpty()){
             return null;
@@ -228,8 +227,8 @@ public class UserFieldServiceImpl implements UserFieldService {
         }
         userFieldRepository.deleteByFieldAndUser(field, user);
         field.subtractMember();
-        fieldEntryRepository.deleteAllByHostField(field);
-        fieldEntryRepository.deleteAllByEntrantField(field);
+        battleEntryRepository.deleteAllByHostField(field);
+        battleEntryRepository.deleteAllByEntrantField(field);
 
         notificationService.sendFieldNotification(EXIT, field, user.getName());
     }
@@ -256,7 +255,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public void checkOwnBattle(User user) {
-        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndType(user,
+        List<UserField> myUserFields = userFieldRepository.findByUserAndStatusInAndTypeIn(user,
                 List.of(RECRUITING, IN_PROGRESS), List.of(TEAM, TEAM_BATTLE));
 
         List<UserField> result = myUserFields.stream()
