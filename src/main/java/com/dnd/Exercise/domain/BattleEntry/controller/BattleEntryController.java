@@ -45,10 +45,10 @@ public class BattleEntryController {
                     + "<br>[C-000] 잘못된 요청 - 나의 필드에 배틀 신청을 했을 경우"),
             @ApiResponse(code=403, message = "팀장 권한이 필요합니다.")
     })
-    @PostMapping("/apply")
+    @PostMapping("/apply/{id}")
     public ResponseEntity<String> createBattleEntry(
             @AuthenticationPrincipal User user,
-            @RequestParam @NotNull Long fieldId){
+            @Parameter(description = "FieldId값") @PathVariable("id") Long fieldId){
         battleEntryService.createBattleEntry(user, fieldId);
         return ResponseDto.ok("배틀 신청 완료");
     }

@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.user.service;
 
+import com.dnd.Exercise.domain.MemberEntry.repository.MemberEntryRepository;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
@@ -42,6 +43,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserFieldRepository userFieldRepository;
     private final BattleEntryRepository battleEntryRepository;
+    private final MemberEntryRepository memberEntryRepository;
     private final FieldRepository fieldRepository;
     private final ExerciseRepository exerciseRepository;
 
@@ -198,7 +200,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void deleteMyEntrantRequest(User user) {
-        battleEntryRepository.deleteAllByEntrantUser(user);
+        memberEntryRepository.deleteAllByEntrantUser(user);
     }
 
     private void exitBeforeProgressFields(User user) {

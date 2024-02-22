@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.field.event;
 
+import com.dnd.Exercise.domain.MemberEntry.repository.MemberEntryRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.BattleEntry.repository.BattleEntryRepository;
 import com.dnd.Exercise.domain.user.entity.User;
@@ -18,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FieldEventListener {
 
     private final UserFieldRepository userFieldRepository;
-    private final BattleEntryRepository battleEntryRepository;
+    private final MemberEntryRepository memberEntryRepository;
 
     @EventListener
     public void handleFieldCreateEvent(CreateEvent createEvent) {
@@ -28,7 +29,7 @@ public class FieldEventListener {
         UserField userField = new UserField(creator, field);
         userFieldRepository.save(userField);
 
-        battleEntryRepository.deleteAllByEntrantUserAndFieldType(creator, field.getFieldType());
+        memberEntryRepository.deleteAllByEntrantUserIdAndType(creator.getId(), field.getFieldType());
     }
 
 
