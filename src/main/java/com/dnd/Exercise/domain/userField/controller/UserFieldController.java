@@ -72,7 +72,7 @@ public class UserFieldController {
     public ResponseEntity<FindAllMyCompletedFieldsRes> findAllMyCompletedFields(
             @AuthenticationPrincipal User user,
             @RequestParam(value = "fieldType", required = false) FieldType fieldType,
-            @PageableDefault(page = 0, size = 5) @SortDefault(sort = "field.createdAt", direction = Sort.Direction.ASC) Pageable pageable){
+            @PageableDefault(page = 0, size = 5) Pageable pageable){
         FindAllMyCompletedFieldsRes result = userFieldService.findAllMyCompletedFields(user, fieldType, pageable);
         return ResponseDto.ok(result);
     }
@@ -159,13 +159,5 @@ public class UserFieldController {
             @Parameter(description = "유저 ID") @PathVariable("id") Long id){
         userFieldService.cheerMember(user ,id);
         return ResponseDto.ok("응원하기 완료");
-    }
-
-    @ApiOperation(value = "필드 보유 여부 확인 💡", notes = "자동매칭 전 사용")
-    @GetMapping("/check")
-    public ResponseEntity<String> checkOwnBattle(
-            @AuthenticationPrincipal User user){
-        userFieldService.checkOwnBattle(user);
-        return ResponseDto.ok("보유 여부 확인 완료");
     }
 }
