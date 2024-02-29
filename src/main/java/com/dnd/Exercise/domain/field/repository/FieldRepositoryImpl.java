@@ -31,7 +31,7 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
                 .select(field)
                 .from(field)
                 .where(whereClause)
-                .orderBy(field.id.desc())
+                .orderBy(field.id.asc())
                 .limit(findAllFieldsCond.getSize())
                 .fetch();
     }

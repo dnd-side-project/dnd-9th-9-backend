@@ -16,9 +16,9 @@ public class TopPlayerDto {
         this.value = 0;
     }
 
-    public void updateIfLarger(int newValue, String newName) {
+    public void updateIfLarger(Long newValue, String newName) {
         if (this.value < newValue) {
-            this.value = newValue;
+            this.value = Math.toIntExact(newValue);
             this.name = newName;
         }
     }

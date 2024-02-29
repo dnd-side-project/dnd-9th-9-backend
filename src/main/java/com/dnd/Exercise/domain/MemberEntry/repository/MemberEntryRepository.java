@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 public interface MemberEntryRepository extends CrudRepository<MemberEntry, Long> {
 
@@ -27,5 +28,6 @@ public interface MemberEntryRepository extends CrudRepository<MemberEntry, Long>
     @Query(value = "DELETE FROM MemberEntry me "
                     + "WHERE me.entrantUser.id = :userId "
                     + "AND me.hostField.fieldType = :fieldType")
-    void deleteAllByEntrantUserIdAndType(Long userId, FieldType fieldType);
+    void deleteAllByEntrantUserIdAndType(
+            @Param("userId") Long userId, @Param("fieldType") FieldType fieldType);
 }
