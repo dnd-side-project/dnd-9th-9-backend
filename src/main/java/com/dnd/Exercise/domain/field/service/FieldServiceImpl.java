@@ -39,7 +39,6 @@ import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsDto;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldsRes;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRecordDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldRes;
-import com.dnd.Exercise.domain.field.dto.response.FindFieldRes.FindFieldResBuilder;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldResultDto;
 import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.dto.response.GetFieldExerciseSummaryRes;
@@ -145,9 +144,9 @@ public class FieldServiceImpl implements FieldService{
         FieldDto myFieldDto = fieldMapper.toFieldDto(myField);
         myFieldDto.setFieldRole(determineFieldRole(user, myField, isMember));
 
-        FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(myFieldDto);
-        updateAssignedField(myField, isMember, resBuilder);
-        return resBuilder.build();
+        FindFieldRes result = FindFieldRes.from(myFieldDto);
+        updateAssignedField(myField, isMember, result);
+        return result;
     }
 
     @Transactional
@@ -531,11 +530,11 @@ public class FieldServiceImpl implements FieldService{
         }
     }
 
-    private void updateAssignedField(Field myField, Boolean isMember, FindFieldResBuilder resBuilder) {
+    private void updateAssignedField(Field myField, Boolean isMember, FindFieldRes res) {
         Field opponentField = myField.getOpponent();
         if (isMember && opponentField != null){
             FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
-            resBuilder.assignedFieldDto(assignedFieldDto);
+            res.updateAssignedField(assignedFieldDto);
         }
     }
 
