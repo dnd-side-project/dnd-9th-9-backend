@@ -13,8 +13,11 @@ import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CA
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.EXERCISE_TIME;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.GOAL_ACHIEVED;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.RECORD_COUNT;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.CHANGE_LEADER;
+import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.UPDATE_INFO;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_PREFIX;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
+import static com.dnd.Exercise.global.common.Constants.S3_FILED_PROFILE_FOLDER_NAME;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
@@ -46,12 +49,9 @@ import com.dnd.Exercise.domain.field.entity.enums.FieldSide;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
+import com.dnd.Exercise.domain.field.event.CreateEvent;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
-import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
-import com.dnd.Exercise.domain.notification.entity.NotificationDto;
-import com.dnd.Exercise.domain.notification.entity.NotificationTopic;
-import com.dnd.Exercise.domain.notification.entity.NotificationType;
-import com.dnd.Exercise.domain.notification.event.NotificationEvent;
+import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.teamworkRate.service.TeamworkRateService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.user.repository.UserRepository;
@@ -90,125 +90,20 @@ public class FieldServiceImpl implements FieldService{
     private final FieldMapper fieldMapper;
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
-    private final FieldEntryRepository fieldEntryRepository;
     private final AwsS3Service awsS3Service;
     private final FieldUtil fieldUtil;
     private final UserRepository userRepository;
     private final RedisService redisService;
     private final TeamworkRateService teamworkRateService;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
-    private final String S3_FOLDER = "field-profile";
 
-
-    private Field validateFieldAccess(User user, Long fieldId) {
-        Field field = fieldUtil.getField(fieldId);
-        fieldUtil.validateIsMember(user, field);
-        return field;
-    }
-
-    private void validateIsRecruiting(Field field) {
-        if (field.getFieldStatus() == RECRUITING) {
-            throw new BusinessException(RECRUITING_YET);
-        }
-    }
-
-    private Boolean isFull(Field field) {
-        return field.getCurrentSize() == field.getMaxSize();
-    }
-
-
-    private String s3Upload(MultipartFile profileImg) {
-        String imgUrl = null;
-        if (profileImg != null) {
-            imgUrl = awsS3Service.upload(profileImg, S3_FOLDER);
-        }
-        return imgUrl;
-    }
-
-    private GetRankingRes toGetRankingRes(LocalDate date, List<Long> memberIds) {
-        return GetRankingRes.builder()
-                .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
-                .exerciseTimeRanking(getRankingByCriteria(EXERCISE_TIME, date, memberIds))
-                .burnedCalorieRanking(getRankingByCriteria(BURNED_CALORIE, date, memberIds))
-                .goalAchievedCountRanking(getRankingByCriteria(GOAL_ACHIEVED, date, memberIds))
-                .build();
-    }
-
-    private List<RankingDto> getRankingByCriteria(
-            RankCriterion criterion, LocalDate date, List<Long> memberIds) {
-        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
-            return activityRingRepository.findTopByDynamicCriteria(
-                    criterion, date, memberIds);
-        }
-        return exerciseRepository.findTopByDynamicCriteria(
-                criterion, date, memberIds);
-    }
-
-
-
-    private WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {
-        int result = IntStream.range(0, mySummary.size())
-                .map(i -> Integer.compare(mySummary.get(i), opponentSummary.get(i)))
-                .sum();
-
-        if (result > 0) return WinStatus.WIN;
-        if (result < 0) return WinStatus.LOSE;
-        return WinStatus.DRAW;
-    }
-
-    private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
-        if (winStatus == WinStatus.WIN) {
-            home.addTotalScore(1);
-        } else if (winStatus == WinStatus.LOSE) {
-            away.addTotalScore(1);
-        }
-    }
-
-    private List<WinStatus> elementWiseWinToList(List<Integer> myScores, List<Integer> opponentScores){
-        WinStatus recordCount = compareScore(myScores.get(0), opponentScores.get(0));
-        WinStatus goalAchievedCount = compareScore(myScores.get(1), opponentScores.get(1));
-        WinStatus burnedCalorie = compareScore(myScores.get(2), opponentScores.get(2));
-        WinStatus exerciseTimeMinute = compareScore(myScores.get(3), opponentScores.get(3));
-        return List.of(recordCount, goalAchievedCount, burnedCalorie, exerciseTimeMinute);
-    }
-
-    private WinStatus compareScore(Double myScore, Double opponentScore) {
-        if (myScore > opponentScore) {
-            return WinStatus.WIN;
-        } else if (myScore < opponentScore) {
-            return WinStatus.LOSE;
-        } else {
-            return WinStatus.DRAW;
-        }
-    }
-
-    private WinStatus compareScore(Integer myScore, Integer opponentScore) {
-        return compareScore(myScore.doubleValue(), opponentScore.doubleValue());
-    }
-
-
-    private static void validateDuelMaxSize(FieldType fieldType, int maxSize) {
-        if (DUEL.equals(fieldType) && maxSize != 1) {
-            throw new BusinessException(DUEL_MAX_ONE);
-        }
-    }
-
-    private FieldRole determineFieldRole(User user, Field myField, Boolean isMember) {
-        if (user.getId().equals(myField.getLeaderId())){
-            return LEADER;
-        } else if (isMember) {
-            return MEMBER;
-        }else {
-            return GUEST;
-        }
-    }
 
 
     @Transactional
     @Override
     public Long createField(CreateFieldReq createFieldReq, User user) {
         fieldUtil.validateNotHavingField(user, createFieldReq.getFieldType());
-
         validateDuelMaxSize(createFieldReq.getFieldType(), createFieldReq.getMaxSize());
 
         Long userId = user.getId();
@@ -217,10 +112,7 @@ public class FieldServiceImpl implements FieldService{
         Field field = createFieldReq.toEntity(userId, profileImg);
         Field savedField = fieldRepository.save(field);
 
-        UserField userField = new UserField(user, savedField);
-        userFieldRepository.save(userField);
-
-        fieldEntryRepository.deleteAllByEntrantUserAndFieldType(user, field.getFieldType());
+        eventPublisher.publishEvent(CreateEvent.newEvent(user, savedField));
 
         return savedField.getId();
     }
@@ -230,11 +122,11 @@ public class FieldServiceImpl implements FieldService{
     public FindAllFieldsRes findAllFields(FindAllFieldsCond findAllFieldsCond) {
         List<Field> fieldList = fieldRepository.findAllFieldsWithFilter(findAllFieldsCond);
 
-        List<FindAllFieldsDto> fieldResList = fieldList.stream().map(fieldMapper::toFindAllFieldsDto)
+        List<FindAllFieldsDto> fieldsInfos = fieldList.stream().map(fieldMapper::toFindAllFieldsDto)
                 .collect(Collectors.toList());
 
         return FindAllFieldsRes.builder()
-                .fieldsInfos(fieldResList)
+                .fieldsInfos(fieldsInfos)
                 .currentPageSize(findAllFieldsCond.getSize())
                 .build();
     }
@@ -249,19 +141,13 @@ public class FieldServiceImpl implements FieldService{
         Field myField = fieldUtil.getField(id);
         Boolean isMember = userFieldRepository.existsByFieldAndUser(myField, user);
 
-        FieldDto fieldDto = fieldMapper.toFieldDto(myField);
-        fieldDto.setFieldRole(determineFieldRole(user, myField, isMember));
+        FieldDto myFieldDto = fieldMapper.toFieldDto(myField);
+        myFieldDto.setFieldRole(determineFieldRole(user, myField, isMember));
 
-        FindFieldRes.FindFieldResBuilder resBuilder = FindFieldRes.builder().fieldDto(fieldDto);
-
-        Field opponentField = myField.getOpponent();
-        if (isMember && opponentField != null){
-            FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
-            resBuilder.assignedFieldDto(assignedFieldDto);
-        }
-        return resBuilder.build();
+        FindFieldRes result = FindFieldRes.from(myFieldDto);
+        updateAssignedField(myField, isMember, result);
+        return result;
     }
-
 
     @Transactional
     @Override
@@ -269,20 +155,13 @@ public class FieldServiceImpl implements FieldService{
         Field field = fieldUtil.getField(id);
         fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
 
-        if(field.getProfileImg() != null){
-            awsS3Service.deleteImage(field.getProfileImg());
-        }
+        deleteProfileImgIfPresent(field);
+
         String imgUrl = s3Upload(updateFieldProfileReq.getProfileImg());
         fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
         field.changeProfileImg(imgUrl);
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.UPDATE_INFO)
-                .field(field)
-                .notificationType(NotificationType.FIELD)
-                .build();
-
-        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(id), notificationDto));
+        notificationService.sendFieldNotification(UPDATE_INFO, field);
     }
 
 
@@ -297,13 +176,7 @@ public class FieldServiceImpl implements FieldService{
 
         fieldMapper.updateFromInfoDto(updateFieldInfoReq, field);
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.UPDATE_INFO)
-                .field(field)
-                .notificationType(NotificationType.FIELD)
-                .build();
-
-        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(id), notificationDto));
+        notificationService.sendFieldNotification(UPDATE_INFO, field);
     }
 
 
@@ -551,13 +424,122 @@ public class FieldServiceImpl implements FieldService{
 
         field.changeLeader(newLeader.getId());
 
-        NotificationDto notificationDto = NotificationDto.builder()
-                .topic(NotificationTopic.CHANGE_LEADER)
-                .field(field)
-                .name(newLeader.getName())
-                .notificationType(NotificationType.FIELD)
-                .build();
+        notificationService.sendFieldNotification(CHANGE_LEADER, field, newLeader.getName());
+    }
 
-        eventPublisher.publishEvent(new NotificationEvent(fieldUtil.getMembers(fieldId), notificationDto));
+    private Field validateFieldAccess(User user, Long fieldId) {
+        Field field = fieldUtil.getField(fieldId);
+        fieldUtil.validateIsMember(user, field);
+        return field;
+    }
+
+    private void validateIsRecruiting(Field field) {
+        if (field.getFieldStatus() == RECRUITING) {
+            throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    private Boolean isFull(Field field) {
+        return field.getCurrentSize() == field.getMaxSize();
+    }
+
+
+    private String s3Upload(MultipartFile profileImg) {
+        String imgUrl = null;
+        if (profileImg != null) {
+            imgUrl = awsS3Service.upload(profileImg, S3_FILED_PROFILE_FOLDER_NAME);
+        }
+        return imgUrl;
+    }
+
+    private GetRankingRes toGetRankingRes(LocalDate date, List<Long> memberIds) {
+        return GetRankingRes.builder()
+                .recordCountRanking(getRankingByCriteria(RECORD_COUNT, date, memberIds))
+                .exerciseTimeRanking(getRankingByCriteria(EXERCISE_TIME, date, memberIds))
+                .burnedCalorieRanking(getRankingByCriteria(BURNED_CALORIE, date, memberIds))
+                .goalAchievedCountRanking(getRankingByCriteria(GOAL_ACHIEVED, date, memberIds))
+                .build();
+    }
+
+    private List<RankingDto> getRankingByCriteria(
+            RankCriterion criterion, LocalDate date, List<Long> memberIds) {
+        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED) {
+            return activityRingRepository.findTopByDynamicCriteria(
+                    criterion, date, memberIds);
+        }
+        return exerciseRepository.findTopByDynamicCriteria(
+                criterion, date, memberIds);
+    }
+
+
+
+    private WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {
+        int result = IntStream.range(0, mySummary.size())
+                .map(i -> Integer.compare(mySummary.get(i), opponentSummary.get(i)))
+                .sum();
+
+        if (result > 0) return WinStatus.WIN;
+        if (result < 0) return WinStatus.LOSE;
+        return WinStatus.DRAW;
+    }
+
+    private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
+        if (winStatus == WinStatus.WIN) {
+            home.addTotalScore(1);
+        } else if (winStatus == WinStatus.LOSE) {
+            away.addTotalScore(1);
+        }
+    }
+
+    private List<WinStatus> elementWiseWinToList(List<Integer> myScores, List<Integer> opponentScores){
+        WinStatus recordCount = compareScore(myScores.get(0), opponentScores.get(0));
+        WinStatus goalAchievedCount = compareScore(myScores.get(1), opponentScores.get(1));
+        WinStatus burnedCalorie = compareScore(myScores.get(2), opponentScores.get(2));
+        WinStatus exerciseTimeMinute = compareScore(myScores.get(3), opponentScores.get(3));
+        return List.of(recordCount, goalAchievedCount, burnedCalorie, exerciseTimeMinute);
+    }
+
+    private WinStatus compareScore(Double myScore, Double opponentScore) {
+        if (myScore > opponentScore) {
+            return WinStatus.WIN;
+        } else if (myScore < opponentScore) {
+            return WinStatus.LOSE;
+        } else {
+            return WinStatus.DRAW;
+        }
+    }
+
+    private WinStatus compareScore(Integer myScore, Integer opponentScore) {
+        return compareScore(myScore.doubleValue(), opponentScore.doubleValue());
+    }
+
+
+    private static void validateDuelMaxSize(FieldType fieldType, int maxSize) {
+        if (DUEL.equals(fieldType) && maxSize != 1) {
+            throw new BusinessException(DUEL_MAX_ONE);
+        }
+    }
+
+    private FieldRole determineFieldRole(User user, Field myField, Boolean isMember) {
+        if (user.getId().equals(myField.getLeaderId())){
+            return LEADER;
+        } else if (isMember) {
+            return MEMBER;
+        }else {
+            return GUEST;
+        }
+    }
+
+    private void updateAssignedField(Field myField, Boolean isMember, FindFieldRes res) {
+        Field opponentField = myField.getOpponent();
+        if (isMember && opponentField != null){
+            FindAllFieldsDto assignedFieldDto = fieldMapper.toFindAllFieldsDto(opponentField);
+            res.updateAssignedField(assignedFieldDto);
+        }
+    }
+
+    private void deleteProfileImgIfPresent(Field field) {
+        if(field.getProfileImg() != null)
+            awsS3Service.deleteImage(field.getProfileImg());
     }
 }

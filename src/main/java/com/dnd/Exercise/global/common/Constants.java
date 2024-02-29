@@ -14,4 +14,6 @@ public final class Constants {
     public static final int RANDOM_UID_CODE_LENGTH = 4;
     public static final String REDIS_AUTO_PREFIX = "AUTO_MATCHING";
     public static final String REDIS_AUTO_SPLIT_REGEX = " ";
+
+    public static final String S3_FILED_PROFILE_FOLDER_NAME = "field-profile";
 }
