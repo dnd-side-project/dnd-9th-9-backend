@@ -3,6 +3,7 @@ package com.dnd.Exercise.domain.user.service;
 import com.dnd.Exercise.domain.MemberEntry.repository.MemberEntryRepository;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
+import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
@@ -21,7 +22,6 @@ import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.dto.ErrorCode;
 import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.s3.AwsS3Service;
-import com.dnd.Exercise.global.util.field.FieldUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     private final FieldRepository fieldRepository;
     private final ExerciseRepository exerciseRepository;
 
-    private final FieldUtil fieldUtil;
+    private final FieldBusiness fieldBusiness;
 
     private final UserMapper userMapper;
 
@@ -193,7 +193,7 @@ public class UserServiceImpl implements UserService {
 
         myUserFields.forEach(myUserField -> {
             Field myField = myUserField.getField();
-            if (fieldUtil.isFieldInProgress(myField)) {
+            if (fieldBusiness.isFieldInProgress(myField)) {
                 throw new BusinessException(ErrorCode.CANNOT_WITHDRAW_WHILE_IN_MATCH);
             }
         });
@@ -269,7 +269,7 @@ public class UserServiceImpl implements UserService {
         int winMatchCount = Optional.ofNullable(userFieldRepository.findByUserAndStatusInAndTypeIn(user, List.of(FieldStatus.COMPLETED), List.of(TEAM_BATTLE, DUEL)))
                 .map(fields -> fields.stream()
                         .map(UserField::getField)
-                        .filter(field -> fieldUtil.getFieldWinStatus(field) == WinStatus.WIN)
+                        .filter(field -> fieldBusiness.getFieldWinStatus(field) == WinStatus.WIN)
                         .count())
                 .orElse(0L).intValue();
         double winningRate = (double) winMatchCount / (double) totalMatchCount * 100.0;

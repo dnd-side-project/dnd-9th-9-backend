@@ -15,6 +15,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 
+import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
@@ -34,11 +35,9 @@ import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.exception.BusinessException;
-import com.dnd.Exercise.global.util.field.FieldUtil;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,14 +55,14 @@ public class UserFieldServiceImpl implements UserFieldService {
     private final UserFieldRepository userFieldRepository;
     private final UserRepository userRepository;
     private final BattleEntryRepository battleEntryRepository;
-    private final FieldUtil fieldUtil;
+    private final FieldBusiness fieldBusiness;
     private final NotificationService notificationService;
     private final RedisService redisService;
     
 
     @Override
     public List<FindAllMembersRes> findAllMembers(Long fieldId) {
-        Field field = fieldUtil.getField(fieldId);
+        Field field = fieldBusiness.getField(fieldId);
         Long leaderId = field.getLeaderId();
         List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
 
@@ -119,7 +118,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     @Transactional
     @Override
     public void ejectMember(User user, Long fieldId, List<Long> ids) {
-        Field field = fieldUtil.getField(fieldId);
+        Field field = fieldBusiness.getField(fieldId);
         checkEjectMemberValidity(user, field, ids);
 
         field.subtractMember(ids.size());
@@ -132,7 +131,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     @Transactional
     @Override
     public void exitField(User user, Long id) {
-        Field field = fieldUtil.getField(id);
+        Field field = fieldBusiness.getField(id);
         checkExitFieldValidity(user, field);
         removeUserFromField(user, field);
         clearBattleEntries(field);
@@ -153,8 +152,8 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     @Override
     public void alertMembers(User user, Long id) {
-        Field field = fieldUtil.getField(id);
-        fieldUtil.validateIsMember(user, field);
+        Field field = fieldBusiness.getField(id);
+        fieldBusiness.validateIsMember(user, field);
 
         String key = validateAlertTimeLimit(user, field);
         redisService.setValues(key, REDIS_NOTIFICATION_VERIFIED, Duration.ofHours(2));
@@ -164,7 +163,7 @@ public class UserFieldServiceImpl implements UserFieldService {
 
     private FindMyTeamStatusRes createFindMyTeamStatusRes(UserField userField) {
         Field myField = userField.getField();
-        List<Long> memberIds = fieldUtil.getMemberIds(myField.getId());
+        List<Long> memberIds = fieldBusiness.getMemberIds(myField.getId());
         LocalDate startDate = myField.getStartDate();
 
         List<AccumulatedActivityDto> activityValues =
@@ -189,14 +188,14 @@ public class UserFieldServiceImpl implements UserFieldService {
         Long fieldId = myField.getId();
         LocalDate startDate = myField.getStartDate();
 
-        List<Integer> score = fieldUtil.getFieldSummary(fieldId, startDate, LocalDate.now());
+        List<Integer> score = fieldBusiness.getFieldSummary(fieldId, startDate, LocalDate.now());
         BattleStatusDto battleStatusDto = BattleStatusDto.from(myField.getName(), score);
         return battleStatusDto;
     }
 
     private void checkEjectMemberValidity(User user, Field field, List<Long> ids) {
-        fieldUtil.validateIsLeader(user.getId(), field.getLeaderId());
-        fieldUtil.validateHaveOpponent(field);
+        fieldBusiness.validateIsLeader(user.getId(), field.getLeaderId());
+        fieldBusiness.validateHaveOpponent(field);
         validateUserNotEjectingThemselves(user, ids);
         validateSelectedMembersPresent(field.getId(), ids);
     }
@@ -208,15 +207,15 @@ public class UserFieldServiceImpl implements UserFieldService {
     }
 
     private void validateSelectedMembersPresent(Long fieldId, List<Long> ids) {
-        List<Long> memberIds = fieldUtil.getMemberIds(fieldId);
+        List<Long> memberIds = fieldBusiness.getMemberIds(fieldId);
         if (!memberIds.containsAll(ids)) {
             throw new BusinessException(NOT_MEMBER);
         }
     }
 
     private void checkExitFieldValidity(User user, Field field) {
-        fieldUtil.validateHaveOpponent(field);
-        fieldUtil.validateIsMember(user, field);
+        fieldBusiness.validateHaveOpponent(field);
+        fieldBusiness.validateIsMember(user, field);
         validateIsNotLeader(user, field);
     }
 

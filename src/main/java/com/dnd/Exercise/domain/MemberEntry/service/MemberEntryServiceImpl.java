@@ -11,6 +11,7 @@ import com.dnd.Exercise.domain.MemberEntry.dtos.response.FindMemberEntriesDto;
 import com.dnd.Exercise.domain.MemberEntry.dtos.response.FindMemberEntriesRes;
 import com.dnd.Exercise.domain.MemberEntry.entity.MemberEntry;
 import com.dnd.Exercise.domain.MemberEntry.repository.MemberEntryRepository;
+import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.notification.service.NotificationService;
@@ -18,7 +19,6 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
-import com.dnd.Exercise.global.util.field.FieldUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class MemberEntryServiceImpl implements MemberEntryService{
 
-    private final FieldUtil fieldUtil;
+    private final FieldBusiness fieldBusiness;
     private final MemberEntryRepository memberEntryRepository;
     private final UserFieldRepository userFieldRepository;
     private final NotificationService notificationService;
@@ -38,7 +38,7 @@ public class MemberEntryServiceImpl implements MemberEntryService{
     @Override
     @Transactional
     public void createMemberEntry(User user, Long fieldId) {
-        Field hostField = fieldUtil.getField(fieldId);
+        Field hostField = fieldBusiness.getField(fieldId);
         checkCreateMemberEntryValidity(user, hostField);
 
         MemberEntry memberEntry = MemberEntry.from(user, hostField);
@@ -73,8 +73,8 @@ public class MemberEntryServiceImpl implements MemberEntryService{
 
     @Override
     public FindMemberEntriesRes findReceivedMemberEntries(User user, Long fieldId, Pageable pageable) {
-        Field field = fieldUtil.getField(fieldId);
-        fieldUtil.validateIsMember(user, field);
+        Field field = fieldBusiness.getField(fieldId);
+        fieldBusiness.validateIsMember(user, field);
 
         Page<MemberEntry> memberEntryPage = memberEntryRepository.findAllByHostField(field, pageable);
         Page<FindMemberEntriesDto> memberEntriesDtoPage = memberEntryPage.map(FindMemberEntriesDto::from);
@@ -98,18 +98,18 @@ public class MemberEntryServiceImpl implements MemberEntryService{
     }
 
     private void checkAcceptMemberEntryValidity(User user, Field hostField) {
-        fieldUtil.validateIsLeader(user.getId(), hostField.getLeaderId());
-        fieldUtil.validateIsNotFull(hostField);
+        fieldBusiness.validateIsLeader(user.getId(), hostField.getLeaderId());
+        fieldBusiness.validateIsNotFull(hostField);
     }
 
 
     private void checkCreateMemberEntryValidity(User user, Field hostField) {
         FieldType fieldType = hostField.getFieldType();
 
-        fieldUtil.validateHaveOpponent(hostField);
-        fieldUtil.validateIsNotFull(hostField);
+        fieldBusiness.validateHaveOpponent(hostField);
+        fieldBusiness.validateIsNotFull(hostField);
         validateDuplicateTeamApply(user, hostField);
-        fieldUtil.validateNotHavingField(user, fieldType);
+        fieldBusiness.validateNotHavingField(user, fieldType);
     }
 
     private void validateDuplicateTeamApply(User user, Field hostField) {

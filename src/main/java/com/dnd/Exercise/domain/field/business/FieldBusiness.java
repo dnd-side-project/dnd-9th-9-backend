@@ -1,14 +1,19 @@
-package com.dnd.Exercise.global.util.field;
+package com.dnd.Exercise.domain.field.business;
 
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.DUEL;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM;
+import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_PREFIX;
+import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.DUEL_MAX_ONE;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NO_SIMILAR_FIELD_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 
@@ -16,6 +21,9 @@ import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
 import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
+import com.dnd.Exercise.domain.field.dto.response.ElementWiseWin;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldResultDto;
+import com.dnd.Exercise.domain.field.dto.response.FindFieldResultRes;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
@@ -24,23 +32,27 @@ import com.dnd.Exercise.domain.field.repository.FieldRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
+import com.dnd.Exercise.global.common.RedisService;
 import com.dnd.Exercise.global.error.exception.BusinessException;
+import com.dnd.Exercise.global.s3.AwsS3Service;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class FieldUtil {
-
+public class FieldBusiness {
     private final UserFieldRepository userFieldRepository;
     private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
     private final FieldRepository fieldRepository;
+    private final AwsS3Service awsS3Service;
+    private final RedisService redisService;
 
     public List<Long> getMemberIds(Long fieldId) {
         List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
@@ -193,4 +205,101 @@ public class FieldUtil {
         return field.getFieldStatus() == FieldStatus.IN_PROGRESS ||
                 (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null);
     }
+
+    public void validateDuelMaxSize(FieldType fieldType, int maxSize) {
+        if (DUEL.equals(fieldType) && maxSize != 1) {
+            throw new BusinessException(DUEL_MAX_ONE);
+        }
+    }
+
+    public void updateIfNotTeam(Field myField, List<Integer> mySummary, FindFieldResultDto home, FindFieldResultRes result) {
+        if (!TEAM.equals(myField.getFieldType())){
+            Field opponentField = myField.getOpponent();
+
+            List<Integer> opponentSummary = getPeriodSummary(opponentField);
+            FindFieldResultDto away = FindFieldResultDto.from(opponentField, opponentSummary);
+
+            List<WinStatus> elementWiseWinStatus = getElementWiseWinStatus(mySummary, opponentSummary);
+            elementWiseWinStatus.forEach(winStatus -> addTotalScore(winStatus, home, away));
+
+            ElementWiseWin elementWiseWin = ElementWiseWin.from(elementWiseWinStatus);
+            WinStatus winStatus = compareScore(home.getTotalScore(), away.getTotalScore());
+
+            result.updateIfNotTeam(away, elementWiseWin, winStatus);
+        }
+    }
+
+    private List<Integer> getPeriodSummary(Field field) {
+        Long opponentFieldId = field.getId();
+        LocalDate startDate = field.getStartDate();
+        LocalDate endDate = field.getEndDate();
+
+        List<Integer> summary = getFieldSummary(opponentFieldId, startDate, endDate);
+        return summary;
+    }
+
+    private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
+        if (winStatus == WinStatus.WIN)
+            home.addTotalScore(1);
+        else if (winStatus == WinStatus.LOSE)
+            away.addTotalScore(1);
+    }
+
+    private List<WinStatus> getElementWiseWinStatus(List<Integer> myScores, List<Integer> opponentScores){
+        List<WinStatus> winStatusList = new ArrayList<>();
+        for (int idx = 0; idx < myScores.size(); idx++){
+            WinStatus winStatus = compareScore(myScores.get(idx), opponentScores.get(idx));
+            winStatusList.add(winStatus);
+        }
+        return winStatusList;
+    }
+
+    private WinStatus compareScore(Double myScore, Double opponentScore) {
+        if (myScore > opponentScore) return WinStatus.WIN;
+        else if (myScore < opponentScore) return WinStatus.LOSE;
+        else return WinStatus.DRAW;
+    }
+
+    private WinStatus compareScore(Integer myScore, Integer opponentScore) {
+        return compareScore(myScore.doubleValue(), opponentScore.doubleValue());
+    }
+
+    public void deleteProfileImgIfPresent(Field field) {
+        if(field.getProfileImg() != null)
+            awsS3Service.deleteImage(field.getProfileImg());
+    }
+
+    public Field findBestMatchingField(Field myField, List<Field> allFittingFields, List<String> matchedIds) {
+        return allFittingFields.stream()
+                .filter(field -> myField.isNotSameField(field) && field.isNotMatchedField(matchedIds))
+                .min(Comparator.comparingInt(myField::calculateFieldDifference))
+                .orElseThrow(() -> handleNoMatchingFieldFound(myField));
+    }
+
+    public List<String> getMatchedIds(String redisValue) {
+        List<String> matchedIds = new ArrayList<>();
+        if (redisValue != null){
+            List<String> ids = List.of(redisValue.split(REDIS_AUTO_SPLIT_REGEX));
+            matchedIds.addAll(ids);
+        }
+        return matchedIds;
+    }
+
+    public List<Long> getTargetUserIds(Field field) {
+        List<Long> memberIds;
+        Long myFieldId = field.getId();
+        if (field.getFieldType() == DUEL){
+            Long opponentFieldId = field.getOpponent().getId();
+            memberIds = getMemberIds(List.of(opponentFieldId, myFieldId));
+        }
+        else memberIds = getMemberIds(myFieldId);
+        return memberIds;
+    }
+
+    private BusinessException handleNoMatchingFieldFound(Field myField) {
+        redisService.deleteValues(REDIS_AUTO_PREFIX + myField.getId());
+        return new BusinessException(NO_SIMILAR_FIELD_FOUND);
+    }
+
+
 }

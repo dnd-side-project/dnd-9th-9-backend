@@ -8,6 +8,7 @@ import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
 
 import com.dnd.Exercise.domain.BattleEntry.dto.response.FindBattleEntriesDto;
 import com.dnd.Exercise.domain.BattleEntry.entity.BattleEntry;
+import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
@@ -18,7 +19,6 @@ import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
-import com.dnd.Exercise.global.util.field.FieldUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class BattleEntryServiceImpl implements BattleEntryService {
 
-    private final FieldUtil fieldUtil;
+    private final FieldBusiness fieldBusiness;
     private final BattleEntryRepository battleEntryRepository;
     private final UserFieldRepository userFieldRepository;
     private final NotificationService notificationService;
@@ -42,7 +42,7 @@ public class BattleEntryServiceImpl implements BattleEntryService {
     @Transactional
     @Override
     public void createBattleEntry(User user, Long fieldId) {
-        Field hostField = fieldUtil.getField(fieldId);
+        Field hostField = fieldBusiness.getField(fieldId);
         Field myField = checkCreateBattleFieldEntryValidity(user, hostField);
 
         BattleEntry battleEntry = BattleEntry.from(myField, hostField);
@@ -77,8 +77,8 @@ public class BattleEntryServiceImpl implements BattleEntryService {
 
     @Override
     public FindBattleEntriesRes findSentBattleEntries(User user, Long fieldId, Pageable pageable) {
-        Field field = fieldUtil.getField(fieldId);
-        fieldUtil.validateIsMember(user, field);
+        Field field = fieldBusiness.getField(fieldId);
+        fieldBusiness.validateIsMember(user, field);
 
         Page<BattleEntry> battleEntryPage = battleEntryRepository.findByEntrantField(field, pageable);
         Page<FindBattleEntriesDto> battleEntriesDtoPage = battleEntryPage.map(FindBattleEntriesDto::toSentEntryDto);
@@ -88,8 +88,8 @@ public class BattleEntryServiceImpl implements BattleEntryService {
 
     @Override
     public FindBattleEntriesRes findReceivedBattleEntries(User user, Long fieldId, Pageable pageable) {
-        Field field = fieldUtil.getField(fieldId);
-        fieldUtil.validateIsMember(user, field);
+        Field field = fieldBusiness.getField(fieldId);
+        fieldBusiness.validateIsMember(user, field);
 
         Page<BattleEntry> battleEntryPage = battleEntryRepository.findByHostField(field, pageable);
         Page<FindBattleEntriesDto> battleEntriesDtoPage = battleEntryPage.map(FindBattleEntriesDto::toReceivedEntryDto);
@@ -114,16 +114,16 @@ public class BattleEntryServiceImpl implements BattleEntryService {
 
     private Field checkCreateBattleFieldEntryValidity(User user, Field hostField) {
         FieldType fieldType = hostField.getFieldType();
-        UserField myUserField = fieldUtil.validateHavingField(user, fieldType);
+        UserField myUserField = fieldBusiness.validateHavingField(user, fieldType);
         Field myField = myUserField.getField();
 
         validateIsMyField(hostField, myField);
-        fieldUtil.validateIsLeader(user.getId(), myField.getLeaderId());
-        fieldUtil.validateHaveOpponent(myField);
-        fieldUtil.validateIsFull(myField);
+        fieldBusiness.validateIsLeader(user.getId(), myField.getLeaderId());
+        fieldBusiness.validateHaveOpponent(myField);
+        fieldBusiness.validateIsFull(myField);
 
-        fieldUtil.validateHaveOpponent(hostField);
-        fieldUtil.validateIsFull(hostField);
+        fieldBusiness.validateHaveOpponent(hostField);
+        fieldBusiness.validateIsFull(hostField);
 
         validateDuplicateBattleApply(hostField, myField);
         validateSamePeriod(hostField, myField);
@@ -163,13 +163,13 @@ public class BattleEntryServiceImpl implements BattleEntryService {
     private void checkCancelBattleEntryValidity(User user, BattleEntry battleEntry) {
         Long entrantLeaderId = battleEntry.getEntrantField().getLeaderId();
         Long userId = user.getId();
-        fieldUtil.validateIsLeader(userId, entrantLeaderId);
+        fieldBusiness.validateIsLeader(userId, entrantLeaderId);
     }
 
     private void checkAcceptBattleEntryValidity(User user, Field entrantField, Field hostField) {
-        fieldUtil.validateIsLeader(user.getId(), hostField.getLeaderId());
-        fieldUtil.validateIsFull(hostField);
-        fieldUtil.validateIsFull(entrantField);
+        fieldBusiness.validateIsLeader(user.getId(), hostField.getLeaderId());
+        fieldBusiness.validateIsFull(hostField);
+        fieldBusiness.validateIsFull(entrantField);
     }
 
     private BattleEntry getBattleEntry(Long entryId) {
