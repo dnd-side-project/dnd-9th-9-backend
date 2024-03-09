@@ -9,7 +9,10 @@ import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.ONE_WEEK;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.THREE_WEEKS;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.TWO_WEEKS;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_COMPLETED;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.OPPONENT_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static javax.persistence.FetchType.LAZY;
@@ -131,10 +134,6 @@ public class Field extends BaseEntity {
         this.currentSize -= cnt;
     }
 
-    public void changeProfileImg(String imgUrl){
-        this.profileImg = imgUrl;
-    }
-
     public void changeLeader(Long leaderId){
         this.leaderId = leaderId;
     }
@@ -164,6 +163,36 @@ public class Field extends BaseEntity {
         }
     }
 
+    public void validateHaveOpponent() {
+        if(this.opponent != null){
+            throw new BusinessException(ALREADY_IN_PROGRESS);
+        }
+    }
+
+    public void validateIsFull() {
+        if(this.currentSize != this.maxSize){
+            throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    public void validateIsNotFull() {
+        if(this.currentSize == this.maxSize){
+            throw new BusinessException(ALREADY_FULL);
+        }
+    }
+
+    public void validateIsLeader(Long userId) {
+        if(!userId.equals(this.leaderId)){
+            throw new BusinessException(NOT_LEADER);
+        }
+    }
+
+    public void validateOpponentPresence() {
+        if (this.opponent == null) {
+            throw new BusinessException(OPPONENT_NOT_FOUND);
+        }
+    }
+
     public FieldRole determineFieldRole(User user, Boolean isMember) {
         Long userId = user.getId();
         if (userId.equals(this.leaderId)) return LEADER;
@@ -183,12 +212,6 @@ public class Field extends BaseEntity {
 
     public boolean isNotSameField(Field field) {
         return !field.getId().equals(this.id);
-    }
-
-    public void validateOpponentPresence() {
-        if (this.opponent == null) {
-            throw new BusinessException(OPPONENT_NOT_FOUND);
-        }
     }
 
     public void updateFieldStatusForScheduler() {

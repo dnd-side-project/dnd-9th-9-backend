@@ -33,4 +33,9 @@ public class GetFieldExerciseSummaryRes {
                 .totalExerciseTimeMinute(summary.get(3))
                 .build();
     }
+
+    public void changeFrom(WinStatus winStatus, String opponentFieldName){
+        this.winStatus = winStatus;
+        this.opponentFieldName = opponentFieldName;
+    }
 }

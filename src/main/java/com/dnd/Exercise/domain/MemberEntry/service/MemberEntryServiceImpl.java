@@ -98,16 +98,16 @@ public class MemberEntryServiceImpl implements MemberEntryService{
     }
 
     private void checkAcceptMemberEntryValidity(User user, Field hostField) {
-        fieldBusiness.validateIsLeader(user.getId(), hostField.getLeaderId());
-        fieldBusiness.validateIsNotFull(hostField);
+        hostField.validateIsLeader(user.getId());
+        hostField.validateIsNotFull();
     }
 
 
     private void checkCreateMemberEntryValidity(User user, Field hostField) {
         FieldType fieldType = hostField.getFieldType();
 
-        fieldBusiness.validateHaveOpponent(hostField);
-        fieldBusiness.validateIsNotFull(hostField);
+        hostField.validateHaveOpponent();
+        hostField.validateIsNotFull();
         validateDuplicateTeamApply(user, hostField);
         fieldBusiness.validateNotHavingField(user, fieldType);
     }

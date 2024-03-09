@@ -32,8 +32,8 @@ public interface FieldMapper{
 
     @BeanMapping(nullValuePropertyMappingStrategy = SET_TO_NULL,
             unmappedTargetPolicy = ReportingPolicy.IGNORE)
-    @Mapping(source = "profileImg", target = "field.profileImg", ignore = true)
-    void updateFromProfileDto(UpdateFieldProfileReq dto, @MappingTarget Field field);
+    @Mapping(source = "imgUrl", target = "field.profileImg", ignore = true)
+    void updateFromProfileDto(UpdateFieldProfileReq dto, String imgUrl, @MappingTarget Field field);
 
     @BeanMapping(nullValuePropertyMappingStrategy = SET_TO_NULL,
             unmappedTargetPolicy = ReportingPolicy.IGNORE)

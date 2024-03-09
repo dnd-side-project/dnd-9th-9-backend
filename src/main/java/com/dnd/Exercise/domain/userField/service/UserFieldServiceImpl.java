@@ -194,8 +194,8 @@ public class UserFieldServiceImpl implements UserFieldService {
     }
 
     private void checkEjectMemberValidity(User user, Field field, List<Long> ids) {
-        fieldBusiness.validateIsLeader(user.getId(), field.getLeaderId());
-        fieldBusiness.validateHaveOpponent(field);
+        field.validateIsLeader(user.getId());
+        field.validateHaveOpponent();
         validateUserNotEjectingThemselves(user, ids);
         validateSelectedMembersPresent(field.getId(), ids);
     }
@@ -214,7 +214,7 @@ public class UserFieldServiceImpl implements UserFieldService {
     }
 
     private void checkExitFieldValidity(User user, Field field) {
-        fieldBusiness.validateHaveOpponent(field);
+        field.validateHaveOpponent();
         fieldBusiness.validateIsMember(user, field);
         validateIsNotLeader(user, field);
     }

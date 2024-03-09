@@ -118,12 +118,12 @@ public class BattleEntryServiceImpl implements BattleEntryService {
         Field myField = myUserField.getField();
 
         validateIsMyField(hostField, myField);
-        fieldBusiness.validateIsLeader(user.getId(), myField.getLeaderId());
-        fieldBusiness.validateHaveOpponent(myField);
-        fieldBusiness.validateIsFull(myField);
+        myField.validateIsLeader(user.getId());
+        myField.validateHaveOpponent();
+        myField.validateIsFull();
 
-        fieldBusiness.validateHaveOpponent(hostField);
-        fieldBusiness.validateIsFull(hostField);
+        hostField.validateHaveOpponent();
+        hostField.validateIsFull();
 
         validateDuplicateBattleApply(hostField, myField);
         validateSamePeriod(hostField, myField);
@@ -161,15 +161,14 @@ public class BattleEntryServiceImpl implements BattleEntryService {
     }
 
     private void checkCancelBattleEntryValidity(User user, BattleEntry battleEntry) {
-        Long entrantLeaderId = battleEntry.getEntrantField().getLeaderId();
-        Long userId = user.getId();
-        fieldBusiness.validateIsLeader(userId, entrantLeaderId);
+        Field entrantField = battleEntry.getEntrantField();
+        entrantField.validateIsLeader(user.getId());
     }
 
     private void checkAcceptBattleEntryValidity(User user, Field entrantField, Field hostField) {
-        fieldBusiness.validateIsLeader(user.getId(), hostField.getLeaderId());
-        fieldBusiness.validateIsFull(hostField);
-        fieldBusiness.validateIsFull(entrantField);
+        hostField.validateIsLeader(user.getId());
+        hostField.validateIsFull();
+        entrantField.validateIsFull();
     }
 
     private BattleEntry getBattleEntry(Long entryId) {

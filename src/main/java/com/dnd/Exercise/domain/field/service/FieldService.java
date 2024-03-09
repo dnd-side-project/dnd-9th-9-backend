@@ -30,7 +30,7 @@ public interface FieldService {
 
     void updateFieldInfo(Long id, User user, UpdateFieldInfoReq updateFieldInfoReq);
 
-    void deleteFieldId(Long id, User user);
+    void deleteField(Long id, User user);
 
     AutoMatchingRes autoMatching(FieldType fieldType, User user);
 

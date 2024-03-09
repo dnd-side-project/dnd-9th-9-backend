@@ -1,16 +1,23 @@
 package com.dnd.Exercise.domain.field.repository;
 
+import static com.dnd.Exercise.domain.activityRing.entity.QActivityRing.activityRing;
+import static com.dnd.Exercise.domain.exercise.entity.QExercise.exercise;
 import static com.dnd.Exercise.domain.field.entity.QField.field;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
+import static com.dnd.Exercise.domain.user.entity.QUser.user;
 
 import com.dnd.Exercise.domain.field.dto.request.FindAllFieldsCond;
+import com.dnd.Exercise.domain.field.dto.response.RankingDto;
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
+import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.SimpleExpression;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +42,7 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
                 .limit(findAllFieldsCond.getSize())
                 .fetch();
     }
-    private BooleanExpression ltFieldId(Long fieldId) {
-        return fieldId == null ? null : field.id.lt(fieldId);
-    }
+
 
     @Override
     public Long countAllFieldsWithFilter(FindAllFieldsCond findAllFieldsCond) {
@@ -50,6 +55,54 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
                 .fetchOne();
     }
 
+    @Override
+    public List<RankingDto> findTopByActivityCriteria(
+            RankCriterion rankCriterion, LocalDate date, List<Long> userIds) {
+
+        NumberExpression<?> aggregateExpression = getAggregateExpression(rankCriterion);
+
+        return queryFactory
+                .select(Projections.constructor(RankingDto.class, user.id, user.profileImg, aggregateExpression))
+                .from(activityRing)
+                .join(activityRing.user, user)
+                .where(activityRing.date.eq(date).and(activityRing.user.id.in(userIds)))
+                .groupBy(user)
+                .orderBy(aggregateExpression.desc())
+                .limit(3)
+                .fetch();
+    }
+
+    @Override
+    public List<RankingDto> findTopByExerciseCriteria(
+            RankCriterion rankCriterion, LocalDate date, List<Long> userIds) {
+
+        NumberExpression<?> aggregateExpression = getAggregateExpression(rankCriterion);
+
+        return queryFactory
+                .select(Projections.constructor(RankingDto.class, user.id, user.profileImg, aggregateExpression))
+                .from(exercise)
+                .join(exercise.user, user)
+                .where(exercise.exerciseDate.eq(date).and(exercise.user.id.in(userIds)))
+                .groupBy(user)
+                .orderBy(aggregateExpression.desc())
+                .limit(3)
+                .fetch();
+    }
+
+    private NumberExpression<?> getAggregateExpression(RankCriterion criterion) {
+        switch (criterion) {
+            case BURNED_CALORIE:
+                return activityRing.burnedCalorie.sum();
+            case GOAL_ACHIEVED:
+                return activityRing.isGoalAchieved.castToNum(Integer.class).sum();
+            case EXERCISE_TIME:
+                return exercise.durationMinute.sum();
+            case RECORD_COUNT:
+                return exercise.count().castToNum(Integer.class);
+            default:
+                throw new IllegalArgumentException("Invalid criterion: " + criterion);
+        }
+    }
 
 
     private BooleanBuilder filterBuilder(FindAllFieldsCond findAllFieldsCond){
@@ -79,6 +132,8 @@ public class FieldRepositoryImpl implements FieldRepositoryCustom{
         return value == null ? null : path.likeIgnoreCase("%" + value + "%");
     }
 
-
+    private BooleanExpression ltFieldId(Long fieldId) {
+        return fieldId == null ? null : field.id.lt(fieldId);
+    }
 
 }

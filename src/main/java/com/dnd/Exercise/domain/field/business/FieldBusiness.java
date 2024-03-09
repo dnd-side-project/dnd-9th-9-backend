@@ -6,15 +6,10 @@ import static com.dnd.Exercise.domain.field.entity.enums.FieldType.DUEL;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_PREFIX;
 import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.DUEL_MAX_ONE;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_MEMBER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NO_SIMILAR_FIELD_FOUND;
-import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.SHOULD_CREATE;
 
 import com.dnd.Exercise.domain.activityRing.entity.ActivityRing;
@@ -102,33 +97,9 @@ public class FieldBusiness {
                 .orElseThrow(() -> new BusinessException(FIELD_NOT_FOUND));
     }
 
-    public void validateIsLeader(Long userId, Long leaderId) {
-        if(!userId.equals(leaderId)){
-            throw new BusinessException(NOT_LEADER);
-        }
-    }
-
     public void validateIsMember(User user, Field field) {
         if (!userFieldRepository.existsByFieldAndUser(field, user)) {
             throw new BusinessException(NOT_MEMBER);
-        }
-    }
-
-    public void validateHaveOpponent(Field field) {
-        if(field.getOpponent() != null){
-            throw new BusinessException(ALREADY_IN_PROGRESS);
-        }
-    }
-
-    public void validateIsFull(Field field) {
-        if(field.getCurrentSize() != field.getMaxSize()){
-            throw new BusinessException(RECRUITING_YET);
-        }
-    }
-
-    public void validateIsNotFull(Field field) {
-        if(field.getCurrentSize() == field.getMaxSize()){
-            throw new BusinessException(ALREADY_FULL);
         }
     }
 
@@ -206,11 +177,6 @@ public class FieldBusiness {
                 (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null);
     }
 
-    public void validateDuelMaxSize(FieldType fieldType, int maxSize) {
-        if (DUEL.equals(fieldType) && maxSize != 1) {
-            throw new BusinessException(DUEL_MAX_ONE);
-        }
-    }
 
     public void updateIfNotTeam(Field myField, List<Integer> mySummary, FindFieldResultDto home, FindFieldResultRes result) {
         if (!TEAM.equals(myField.getFieldType())){
@@ -239,10 +205,8 @@ public class FieldBusiness {
     }
 
     private void addTotalScore(WinStatus winStatus, FindFieldResultDto home, FindFieldResultDto away) {
-        if (winStatus == WinStatus.WIN)
-            home.addTotalScore(1);
-        else if (winStatus == WinStatus.LOSE)
-            away.addTotalScore(1);
+        if (winStatus == WinStatus.WIN) home.addTotalScore(1);
+        else if (winStatus == WinStatus.LOSE) away.addTotalScore(1);
     }
 
     private List<WinStatus> getElementWiseWinStatus(List<Integer> myScores, List<Integer> opponentScores){

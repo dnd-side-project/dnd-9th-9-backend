@@ -1,11 +1,6 @@
 package com.dnd.Exercise.domain.field.service;
 
-import static com.dnd.Exercise.domain.field.dto.response.FieldRole.GUEST;
-import static com.dnd.Exercise.domain.field.dto.response.FieldRole.LEADER;
-import static com.dnd.Exercise.domain.field.dto.response.FieldRole.MEMBER;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldSide.AWAY;
-import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.COMPLETED;
-import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.*;
 import static com.dnd.Exercise.domain.field.entity.enums.RankCriterion.BURNED_CALORIE;
@@ -19,7 +14,6 @@ import static com.dnd.Exercise.global.common.Constants.REDIS_AUTO_SPLIT_REGEX;
 import static com.dnd.Exercise.global.common.Constants.S3_FILED_PROFILE_FOLDER_NAME;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.*;
 
-import com.dnd.Exercise.domain.activityRing.repository.ActivityRingRepository;
 import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.business.FieldBusiness;
@@ -31,7 +25,6 @@ import com.dnd.Exercise.domain.field.dto.request.FieldSideDateReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldInfoReq;
 import com.dnd.Exercise.domain.field.dto.request.UpdateFieldProfileReq;
 import com.dnd.Exercise.domain.field.dto.response.AutoMatchingRes;
-import com.dnd.Exercise.domain.field.dto.response.ElementWiseWin;
 import com.dnd.Exercise.domain.field.dto.response.FieldDto;
 import com.dnd.Exercise.domain.field.dto.response.FieldRole;
 import com.dnd.Exercise.domain.field.dto.response.FindAllFieldRecordsRes;
@@ -48,7 +41,6 @@ import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldSide;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.Period;
-import com.dnd.Exercise.domain.field.entity.enums.RankCriterion;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.event.CreateEvent;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
@@ -63,8 +55,6 @@ import com.dnd.Exercise.global.error.exception.BusinessException;
 import com.dnd.Exercise.global.s3.AwsS3Service;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -85,7 +75,6 @@ public class FieldServiceImpl implements FieldService{
     private final FieldRepository fieldRepository;
     private final UserFieldRepository userFieldRepository;
     private final FieldMapper fieldMapper;
-    private final ActivityRingRepository activityRingRepository;
     private final ExerciseRepository exerciseRepository;
     private final AwsS3Service awsS3Service;
     private final FieldBusiness fieldBusiness;
@@ -100,13 +89,10 @@ public class FieldServiceImpl implements FieldService{
     @Transactional
     @Override
     public Long createField(CreateFieldReq createFieldReq, User user) {
-        fieldBusiness.validateNotHavingField(user, createFieldReq.getFieldType());
-        fieldBusiness.validateDuelMaxSize(createFieldReq.getFieldType(), createFieldReq.getMaxSize());
+        checkCreateFieldValidity(createFieldReq, user);
 
         String profileImg = s3Upload(createFieldReq.getProfileImg());
-
-        Long userId = user.getId();
-        Field field = createFieldReq.toEntity(userId, profileImg);
+        Field field = createFieldReq.toEntity(user.getId(), profileImg);
         Field savedField = fieldRepository.save(field);
 
         eventPublisher.publishEvent(CreateEvent.newEvent(user, savedField));
@@ -136,8 +122,8 @@ public class FieldServiceImpl implements FieldService{
         Field myField = fieldBusiness.getField(id);
         Boolean isMember = userFieldRepository.existsByFieldAndUser(myField, user);
 
-        FieldDto myFieldDto = fieldMapper.toFieldDto(myField);
-        myFieldDto.setFieldRole(myField.determineFieldRole(user, isMember));
+        FieldRole fieldRole = myField.determineFieldRole(user, isMember);
+        FieldDto myFieldDto = FieldDto.from(myField, fieldRole);
 
         FindFieldRes result = FindFieldRes.from(myFieldDto);
         result.updateAssignedField(myField, isMember);
@@ -148,12 +134,12 @@ public class FieldServiceImpl implements FieldService{
     @Override
     public void updateFieldProfile(Long id, User user, UpdateFieldProfileReq updateFieldProfileReq) {
         Field field = fieldBusiness.getField(id);
-        fieldBusiness.validateIsLeader(user.getId(), field.getLeaderId());
+        field.validateIsLeader(user.getId());
+
         fieldBusiness.deleteProfileImgIfPresent(field);
 
         String imgUrl = s3Upload(updateFieldProfileReq.getProfileImg());
-        fieldMapper.updateFromProfileDto(updateFieldProfileReq, field);
-        field.changeProfileImg(imgUrl);
+        fieldMapper.updateFromProfileDto(updateFieldProfileReq, imgUrl, field);
 
         notificationService.sendFieldNotification(UPDATE_INFO, field);
     }
@@ -163,23 +149,18 @@ public class FieldServiceImpl implements FieldService{
     @Override
     public void updateFieldInfo(Long id, User user, UpdateFieldInfoReq updateFieldInfoReq) {
         Field field = fieldBusiness.getField(id);
-        fieldBusiness.validateIsLeader(user.getId(), field.getLeaderId());
-        fieldBusiness.validateHaveOpponent(field);
-        fieldBusiness.validateDuelMaxSize(updateFieldInfoReq.getFieldType(), updateFieldInfoReq.getMaxSize());
+        checkUpdateFieldInfo(user, updateFieldInfoReq, field);
 
         fieldMapper.updateFromInfoDto(updateFieldInfoReq, field);
-
         notificationService.sendFieldNotification(UPDATE_INFO, field);
     }
 
 
     @Transactional
     @Override
-    public void deleteFieldId(Long id, User user) {
+    public void deleteField(Long id, User user) {
         Field myField = fieldBusiness.getField(id);
-
-        fieldBusiness.validateIsLeader(user.getId(), myField.getLeaderId());
-        fieldBusiness.validateHaveOpponent(myField);
+        checkDeleteFieldValidity(user, myField);
 
         userFieldRepository.deleteAllByField(myField);
         fieldRepository.deleteById(id);
@@ -192,12 +173,8 @@ public class FieldServiceImpl implements FieldService{
 
         Period period = myField.getPeriod();
         List<Field> allFittingFields = fieldRepository.findFullHouseFieldsByCond(RECRUITING, fieldType, period);
+        Field resultField = getBestMatchingField(myField, allFittingFields);
 
-        String redisValue = redisService.getValues(REDIS_AUTO_PREFIX + myField.getId());
-        List<String> matchedIds = fieldBusiness.getMatchedIds(redisValue);
-
-        Field resultField = fieldBusiness.findBestMatchingField(myField, allFittingFields, matchedIds);
-        setMatchedFieldsRedis(myField, redisValue, resultField);
         return fieldMapper.toAutoMatchingRes(resultField);
     }
 
@@ -206,14 +183,12 @@ public class FieldServiceImpl implements FieldService{
         Field myField = validateFieldRecordAccess(user, fieldId);
 
         Field opponentField = myField.getOpponent();
-
         List<Integer> mySummary = fieldBusiness.getFieldSummary(fieldId, targetDate);
         GetFieldExerciseSummaryRes summaryRes = GetFieldExerciseSummaryRes.of(mySummary);
 
         if (opponentField != null) {
             WinStatus winStatus = getWinStatus(targetDate, opponentField, mySummary);
-            summaryRes.setWinStatus(winStatus);
-            summaryRes.setOpponentFieldName(opponentField.getName());
+            summaryRes.changeFrom(winStatus, opponentField.getName());
         }
         return summaryRes;
     }
@@ -224,10 +199,8 @@ public class FieldServiceImpl implements FieldService{
         myField.validateOpponentPresence();
 
         Field opponentField = myField.getOpponent();
-
         List<Integer> opponentSummary = fieldBusiness.getFieldSummary(opponentField.getId(), targetDate);
-        GetFieldExerciseSummaryRes summaryRes = GetFieldExerciseSummaryRes.of(opponentSummary);
-        return summaryRes;
+        return GetFieldExerciseSummaryRes.of(opponentSummary);
     }
 
     @Override
@@ -258,10 +231,8 @@ public class FieldServiceImpl implements FieldService{
         Pageable pageable = getPageable(recordsReq);
 
         List<Long> targetUserIds = fieldBusiness.getTargetUserIds(field);
-
-        Long leaderId = field.getLeaderId();
         Page<FindFieldRecordDto> fieldRecordPage = exerciseRepository.findAllByUserAndDate(
-                targetDate, targetUserIds, pageable, leaderId);
+                targetDate, targetUserIds, pageable, field.getLeaderId());
 
         FindAllFieldRecordsRes result = FindAllFieldRecordsRes.from(fieldRecordPage, field, pageable);
         updateWinStatusIfNotTeam(field, targetDate, result);
@@ -294,7 +265,6 @@ public class FieldServiceImpl implements FieldService{
     @Override
     public FindFieldResultRes findFieldResult(User user, Long fieldId) {
         Field myField = validateFieldRecordAccess(user, fieldId);
-
         myField.validateCompleted();
 
         LocalDate startDate = myField.getStartDate();
@@ -311,20 +281,19 @@ public class FieldServiceImpl implements FieldService{
         return result;
     }
 
-
     @Transactional
     @Override
     public void changeLeader(User user, Long fieldId, Long id) {
         Field field = fieldBusiness.getField(fieldId);
-        fieldBusiness.validateIsLeader(user.getId(), field.getLeaderId());
+        field.validateIsLeader(user.getId());
 
         User newLeader = userRepository.findById(id).orElseThrow(() -> new BusinessException(NOT_FOUND));
         fieldBusiness.validateIsMember(newLeader, field);
 
         field.changeLeader(newLeader.getId());
-
         notificationService.sendFieldNotification(CHANGE_LEADER, field, newLeader.getName());
     }
+
 
     private Field validateFieldRecordAccess(User user, Long fieldId) {
         Field field = fieldBusiness.getField(fieldId);
@@ -333,20 +302,30 @@ public class FieldServiceImpl implements FieldService{
         return field;
     }
 
-    private void setMatchedFieldsRedis(Field myField, String redisValue, Field resultField) {
-        redisService.setValues(REDIS_AUTO_PREFIX + myField.getId(),
-                redisValue + REDIS_AUTO_SPLIT_REGEX + resultField.getId(),
-                Duration.ofSeconds(60));
+    private void checkCreateFieldValidity(CreateFieldReq createFieldReq, User user) {
+        fieldBusiness.validateNotHavingField(user, createFieldReq.getFieldType());
+        createFieldReq.validateDuelMaxSize();
+    }
+
+    private void checkUpdateFieldInfo(User user, UpdateFieldInfoReq updateFieldInfoReq, Field field) {
+        field.validateIsLeader(user.getId());
+        field.validateHaveOpponent();
+        updateFieldInfoReq.validateDuelMaxSize();
     }
 
     private Field checkAutoMatchingValidity(FieldType fieldType, User user) {
         UserField userField = fieldBusiness.validateHavingField(user, fieldType);
         Field myField = userField.getField();
 
-        fieldBusiness.validateHaveOpponent(myField);
-        fieldBusiness.validateIsFull(myField);
-        fieldBusiness.validateIsLeader(user.getId(), myField.getLeaderId());
+        myField.validateHaveOpponent();
+        myField.validateIsFull();
+        myField.validateIsLeader(user.getId());
         return myField;
+    }
+
+    private void checkDeleteFieldValidity(User user, Field myField) {
+        myField.validateIsLeader(user.getId());
+        myField.validateHaveOpponent();
     }
 
     private void updateWinStatusIfNotTeam(Field field, LocalDate targetDate, FindAllFieldRecordsRes result) {
@@ -363,10 +342,26 @@ public class FieldServiceImpl implements FieldService{
         return fieldBusiness.compareSummaries(mySummary, opponentSummary);
     }
 
-    private PageRequest getPageable(FindAllFieldRecordsReq recordsReq) {
-        int page = recordsReq.getPage();
-        int size = recordsReq.getSize();
-        return PageRequest.of(page, size);
+    private Field getBestMatchingField(Field myField, List<Field> allFittingFields) {
+        String redisValue = redisService.getValues(REDIS_AUTO_PREFIX + myField.getId());
+        List<String> matchedIds = fieldBusiness.getMatchedIds(redisValue);
+        Field resultField = fieldBusiness.findBestMatchingField(myField, allFittingFields, matchedIds);
+        setMatchedFieldsRedis(myField, redisValue, resultField);
+        return resultField;
+    }
+
+    private void setMatchedFieldsRedis(Field myField, String redisValue, Field resultField) {
+        redisService.setValues(REDIS_AUTO_PREFIX + myField.getId(),
+                redisValue + REDIS_AUTO_SPLIT_REGEX + resultField.getId(),
+                Duration.ofSeconds(60));
+    }
+
+    private GetRankingRes toGetRankingRes(LocalDate date, List<Long> memberIds) {
+        List<RankingDto> recordCount = fieldRepository.findTopByExerciseCriteria(RECORD_COUNT, date, memberIds);
+        List<RankingDto> exerciseTime = fieldRepository.findTopByExerciseCriteria(EXERCISE_TIME, date, memberIds);
+        List<RankingDto> burnedCalorie = fieldRepository.findTopByActivityCriteria(BURNED_CALORIE, date, memberIds);
+        List<RankingDto> goalAchievedCount = fieldRepository.findTopByActivityCriteria(GOAL_ACHIEVED, date, memberIds);
+        return GetRankingRes.from(recordCount, exerciseTime, burnedCalorie, goalAchievedCount);
     }
 
     private String s3Upload(MultipartFile profileImg) {
@@ -374,17 +369,9 @@ public class FieldServiceImpl implements FieldService{
         return awsS3Service.upload(profileImg, S3_FILED_PROFILE_FOLDER_NAME);
     }
 
-    private GetRankingRes toGetRankingRes(LocalDate date, List<Long> memberIds) {
-        List<RankingDto> recordCount = getRankingByCriteria(RECORD_COUNT, date, memberIds);
-        List<RankingDto> exerciseTime = getRankingByCriteria(EXERCISE_TIME, date, memberIds);
-        List<RankingDto> burnedCalorie = getRankingByCriteria(BURNED_CALORIE, date, memberIds);
-        List<RankingDto> goalAchievedCount = getRankingByCriteria(GOAL_ACHIEVED, date, memberIds);
-        return GetRankingRes.from(recordCount, exerciseTime, burnedCalorie, goalAchievedCount);
-    }
-
-    private List<RankingDto> getRankingByCriteria(RankCriterion criterion, LocalDate date, List<Long> memberIds) {
-        if (criterion == BURNED_CALORIE || criterion == GOAL_ACHIEVED)
-            return activityRingRepository.findTopByDynamicCriteria(criterion, date, memberIds);
-        return exerciseRepository.findTopByDynamicCriteria(criterion, date, memberIds);
+    private PageRequest getPageable(FindAllFieldRecordsReq recordsReq) {
+        int page = recordsReq.getPage();
+        int size = recordsReq.getSize();
+        return PageRequest.of(page, size);
     }
 }

@@ -1,11 +1,15 @@
 package com.dnd.Exercise.domain.field.dto.request;
 
+import static com.dnd.Exercise.domain.field.entity.enums.FieldType.DUEL;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.DUEL_MAX_ONE;
+
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.Period;
 import com.dnd.Exercise.domain.field.entity.enums.Goal;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.enums.Strength;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -74,6 +78,12 @@ public class CreateFieldReq {
                 .fieldType(fieldType)
                 .skillLevel(skillLevel)
                 .build();
+    }
+
+    public void validateDuelMaxSize() {
+        if (DUEL.equals(fieldType) && maxSize != 1) {
+            throw new BusinessException(DUEL_MAX_ONE);
+        }
     }
 }
 
