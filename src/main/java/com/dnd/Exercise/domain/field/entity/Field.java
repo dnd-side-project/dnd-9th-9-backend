@@ -12,6 +12,7 @@ import static com.dnd.Exercise.domain.field.entity.enums.Period.TWO_WEEKS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_COMPLETED;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.OPPONENT_NOT_FOUND;
@@ -167,6 +168,12 @@ public class Field extends BaseEntity {
     public void validateIsNotFull() {
         if(this.currentSize == this.maxSize){
             throw new BusinessException(ALREADY_FULL);
+        }
+    }
+
+    public void validateIsNotLeader(User user) {
+        if(user.getId().equals(this.leaderId)){
+            throw new BusinessException(MUST_NOT_LEADER);
         }
     }
 
