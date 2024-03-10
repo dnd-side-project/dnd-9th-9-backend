@@ -3,6 +3,7 @@ package com.dnd.Exercise.global.util.field;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.domain.field.entity.enums.FieldType.TEAM;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.FIELD_NOT_FOUND;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.HAVING_IN_PROGRESS;
@@ -42,40 +43,46 @@ public class FieldUtil {
     private final FieldRepository fieldRepository;
 
     public List<Long> getMemberIds(Long fieldId) {
-        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
+        return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
+    }
+
+    public List<Long> getMemberIds(List<Long> fieldIds) {
+        List<UserField> allMembers = userFieldRepository.findAllByFieldIdIn(fieldIds);
         return allMembers.stream().map(userField -> userField.getUser().getId()).collect(Collectors.toList());
     }
 
     public List<User> getMembers(Long fieldId){
-        List<UserField> allMembers = userFieldRepository.findAllByField(fieldId);
+        List<UserField> allMembers = userFieldRepository.findAllByFieldId(fieldId);
         return allMembers.stream().map(UserField::getUser).collect(Collectors.toList());
-    }
-
-    public List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {
-        return activityRingRepository.findAllByDateAndUserIdIn(date, memberIds);
-    }
-
-    public List<Exercise> getExercises(LocalDate date, List<Long> memberIds) {
-        return exerciseRepository.findAllByExerciseDateAndUserIdIn(date, memberIds);
-    }
-
-    public List<ActivityRing> getActivityRings(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
-        return activityRingRepository.findAllByDateBetweenAndUserIdIn(
-                startDate, endDate, memberIds);
-    }
-
-    public List<Exercise> getExercises(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
-        return exerciseRepository.findAllByExerciseDateBetweenAndUserIdIn(
-                startDate, endDate, memberIds);
     }
 
     public List<Integer> calculateRecord(List<ActivityRing> activityRings, List<Exercise> exercises) {
         int totalRecordCount = exercises.size();
-        int goalAchievementCount = (int) activityRings.stream().filter(ActivityRing::getIsGoalAchieved).count();
-        int totalBurnedCalorie = activityRings.stream().mapToInt(ActivityRing::getBurnedCalorie).sum();
-        int totalExerciseTimeMinute = exercises.stream().mapToInt(Exercise::getDurationMinute).sum();
+        int goalAchievementCount = getGoalAchievementCount(activityRings);
+        int totalBurnedCalorie = getTotalBurnedCalorie(activityRings);
+        int totalExerciseTimeMinute = getTotalExerciseTimeMinute(exercises);
 
-        return List.of(totalRecordCount, goalAchievementCount, totalBurnedCalorie, totalExerciseTimeMinute);
+        return List.of(totalRecordCount, goalAchievementCount,
+                totalBurnedCalorie, totalExerciseTimeMinute);
+    }
+
+    private int getTotalExerciseTimeMinute(List<Exercise> exercises) {
+        return exercises.stream()
+                .mapToInt(Exercise::getDurationMinute)
+                .sum();
+    }
+
+    private int getTotalBurnedCalorie(List<ActivityRing> activityRings) {
+        return activityRings.stream()
+                .mapToInt(ActivityRing::getBurnedCalorie)
+                .sum();
+    }
+
+    private int getGoalAchievementCount(List<ActivityRing> activityRings) {
+        return (int) activityRings.stream()
+                .filter(ActivityRing::getIsGoalAchieved)
+                .count();
     }
 
     public Field getField(Long id) {
@@ -107,6 +114,12 @@ public class FieldUtil {
         }
     }
 
+    public void validateIsNotFull(Field field) {
+        if(field.getCurrentSize() == field.getMaxSize()){
+            throw new BusinessException(ALREADY_FULL);
+        }
+    }
+
     public List<Integer> getFieldSummary(Long fieldId, LocalDate targetDate) {
         List<Long> memberIds = getMemberIds(fieldId);
         List<ActivityRing> activityRings = getActivityRings(targetDate, memberIds);
@@ -123,16 +136,39 @@ public class FieldUtil {
         return calculateRecord(activityRings, exercises);
     }
 
-    public WinStatus getFieldWinStatus(Field field) {
-        if (TEAM.equals(field.getFieldType())) {
-            return null;
-        }
-        Field opponent = field.getOpponent();
-        List<Integer> myScores = getFieldSummary(field.getId(),field.getStartDate(),field.getEndDate());
-        List<Integer> opponentScores = getFieldSummary(opponent.getId(),opponent.getStartDate(),opponent.getEndDate());
+    public List<ActivityRing> getActivityRings(LocalDate date, List<Long> memberIds) {
+        return activityRingRepository.findAllByDateAndUserIdIn(date, memberIds);
+    }
 
-        int result = IntStream.range(0, myScores.size())
-                .map(i -> Integer.compare(myScores.get(i), opponentScores.get(i))).sum();
+    public List<ActivityRing> getActivityRings(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
+        return activityRingRepository.findAllByDateBetweenAndUserIdIn(startDate, endDate, memberIds);
+    }
+
+    public List<Exercise> getExercises(LocalDate date, List<Long> memberIds) {
+        return exerciseRepository.findAllByExerciseDateAndUserIdIn(date, memberIds);
+    }
+
+    public List<Exercise> getExercises(LocalDate startDate, LocalDate endDate, List<Long> memberIds) {
+        return exerciseRepository.findAllByExerciseDateBetweenAndUserIdIn(
+                startDate, endDate, memberIds);
+    }
+
+    public WinStatus getFieldWinStatus(Field field) {
+        if (TEAM.equals(field.getFieldType())) return null;
+        Field opponent = field.getOpponent();
+        LocalDate startDate = field.getStartDate();
+        LocalDate endDate = field.getEndDate();
+
+        List<Integer> mySummary = getFieldSummary(field.getId(), startDate, endDate);
+        List<Integer> opponentSummary = getFieldSummary(opponent.getId(), startDate, endDate);
+
+        return compareSummaries(mySummary, opponentSummary);
+    }
+
+    public WinStatus compareSummaries(List<Integer> mySummary, List<Integer> opponentSummary) {
+        int result = IntStream.range(0, 4)
+                .map(i -> Integer.compare(mySummary.get(i), opponentSummary.get(i)))
+                .sum();
 
         if (result > 0) return WinStatus.WIN;
         if (result < 0) return WinStatus.LOSE;
@@ -141,26 +177,20 @@ public class FieldUtil {
 
     public void validateNotHavingField(User user, FieldType fieldType){
         if (!userFieldRepository.findByUserAndStatusInAndType(
-                user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType))
-                .isEmpty()){
+                user, List.of(RECRUITING, IN_PROGRESS), fieldType).isEmpty()){
             throw new BusinessException(HAVING_IN_PROGRESS);
         }
     }
 
     public UserField validateHavingField(User user, FieldType fieldType){
         List<UserField> userField = userFieldRepository.findByUserAndStatusInAndType(
-                user, List.of(RECRUITING, IN_PROGRESS), List.of(fieldType));
-        if (userField.isEmpty()){
-            throw new BusinessException(SHOULD_CREATE);
-        }
+                user, List.of(RECRUITING, IN_PROGRESS), fieldType);
+        if (userField.isEmpty()) throw new BusinessException(SHOULD_CREATE);
         return userField.get(0);
     }
 
     public Boolean isFieldInProgress(Field field) {
-        if (field.getFieldStatus() == FieldStatus.IN_PROGRESS ||
-                (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null)) {
-            return true;
-        }
-        return false;
+        return field.getFieldStatus() == FieldStatus.IN_PROGRESS ||
+                (field.getFieldStatus() == FieldStatus.RECRUITING && field.getOpponent() != null);
     }
 }

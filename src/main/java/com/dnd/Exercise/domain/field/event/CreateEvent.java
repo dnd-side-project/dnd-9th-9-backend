@@ -11,7 +11,7 @@ public class CreateEvent {
     private final User creator;
     private final Field field;
 
-    static public CreateEvent newEvent(User creator, Field field){
+    public static CreateEvent newEvent(User creator, Field field){
         return new CreateEvent(creator, field);
     }
 }

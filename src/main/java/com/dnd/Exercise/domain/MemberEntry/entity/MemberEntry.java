@@ -1,15 +1,12 @@
-package com.dnd.Exercise.domain.fieldEntry.entity;
+package com.dnd.Exercise.domain.MemberEntry.entity;
 
 import static javax.persistence.FetchType.*;
 
 import com.dnd.Exercise.domain.field.entity.Field;
-import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.BaseEntity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -24,33 +21,32 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FieldEntry extends BaseEntity {
+public class MemberEntry extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "field_entry_id")
+    @Column(name = "member_entry_id")
     private Long id;
-
-    @Enumerated(EnumType.STRING)
-    private FieldType fieldType;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "entrant_user_id")
     private User entrantUser;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "entrant_field_id")
-    private Field entrantField;
-
-    @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "host_field_id")
     private Field hostField;
 
     @Builder
-    public FieldEntry(FieldType fieldType, User entrantUser, Field entrantField, Field hostField) {
-        this.fieldType = fieldType;
+    public MemberEntry(User entrantUser, Field hostField) {
         this.entrantUser = entrantUser;
-        this.entrantField = entrantField;
         this.hostField = hostField;
     }
+
+    public static MemberEntry from(User entrantUser, Field hostField){
+        return MemberEntry.builder()
+                .entrantUser(entrantUser)
+                .hostField(hostField)
+                .build();
+    }
 }
+

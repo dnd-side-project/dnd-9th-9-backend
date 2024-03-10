@@ -25,12 +25,12 @@ public class GetFieldExerciseSummaryRes {
 
     private WinStatus winStatus;
 
-    public GetFieldExerciseSummaryRes(List<Integer> summary) {
-        this.totalRecordCount = summary.get(0);
-        this.goalAchievedCount = summary.get(1);
-        this.totalBurnedCalorie = summary.get(2);
-        this.totalExerciseTimeMinute = summary.get(3);
-        this.opponentFieldName = null;
-        this.winStatus = null;
+    public static GetFieldExerciseSummaryRes of(List<Integer> summary){
+        return GetFieldExerciseSummaryRes.builder()
+                .totalBurnedCalorie(summary.get(0))
+                .goalAchievedCount(summary.get(1))
+                .totalBurnedCalorie(summary.get(2))
+                .totalExerciseTimeMinute(summary.get(3))
+                .build();
     }
 }

@@ -72,7 +72,7 @@ public enum ErrorCode {
 
     PERIOD_NOT_MATCH(HttpStatus.BAD_REQUEST, "FE-004", "기간이 같아야 합니다."),
 
-    MUST_LEADER(HttpStatus.FORBIDDEN, "FE-005", "매칭에 대한 설정은 팀장만 가능합니다."),
+    ENTRY_NOT_FOUND(HttpStatus.NOT_FOUND, "FE-005", "신청 내역을 찾을 수 없습니다."),
 
     ACTIVITY_RING_NOT_FOUND(HttpStatus.NOT_FOUND, "AR-001", "해당 날짜에 대한 활동링 소모칼로리 정보가 존재하지 않습니다."),
 

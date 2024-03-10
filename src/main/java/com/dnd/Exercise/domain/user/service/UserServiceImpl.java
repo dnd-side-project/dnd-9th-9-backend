@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.user.service;
 
+import com.dnd.Exercise.domain.MemberEntry.repository.MemberEntryRepository;
 import com.dnd.Exercise.domain.auth.service.AuthService;
 import com.dnd.Exercise.domain.exercise.repository.ExerciseRepository;
 import com.dnd.Exercise.domain.field.entity.Field;
@@ -7,7 +8,7 @@ import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
 import com.dnd.Exercise.domain.field.repository.FieldRepository;
-import com.dnd.Exercise.domain.fieldEntry.repository.FieldEntryRepository;
+import com.dnd.Exercise.domain.BattleEntry.repository.BattleEntryRepository;
 import com.dnd.Exercise.domain.user.dto.UserMapper;
 import com.dnd.Exercise.domain.user.dto.request.*;
 import com.dnd.Exercise.domain.user.dto.response.GetFinalSummaryRes;
@@ -41,7 +42,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserFieldRepository userFieldRepository;
-    private final FieldEntryRepository fieldEntryRepository;
+    private final BattleEntryRepository battleEntryRepository;
+    private final MemberEntryRepository memberEntryRepository;
     private final FieldRepository fieldRepository;
     private final ExerciseRepository exerciseRepository;
 
@@ -198,7 +200,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void deleteMyEntrantRequest(User user) {
-        fieldEntryRepository.deleteAllByEntrantUser(user);
+        memberEntryRepository.deleteAllByEntrantUser(user);
     }
 
     private void exitBeforeProgressFields(User user) {
@@ -218,8 +220,8 @@ public class UserServiceImpl implements UserService {
 
     private void deleteFieldAndEntries(Field field, User user) {
         long fieldId = field.getId();
-        fieldEntryRepository.deleteAllByEntrantField(field);
-        fieldEntryRepository.deleteAllByHostField(field);
+        battleEntryRepository.deleteAllByEntrantField(field);
+        battleEntryRepository.deleteAllByHostField(field);
         userFieldRepository.deleteByFieldAndUser(field,user);
         fieldRepository.deleteById(fieldId);
     }
@@ -230,8 +232,8 @@ public class UserServiceImpl implements UserService {
         }
         else {
             exitOfMember(field,user);
-            fieldEntryRepository.deleteAllByHostField(field);
-            fieldEntryRepository.deleteAllByEntrantField(field);
+            battleEntryRepository.deleteAllByHostField(field);
+            battleEntryRepository.deleteAllByEntrantField(field);
         }
     }
 
@@ -243,8 +245,8 @@ public class UserServiceImpl implements UserService {
         }
 
         if (field.getFieldType() == TEAM_BATTLE) {
-            fieldEntryRepository.deleteAllByEntrantField(field);
-            fieldEntryRepository.deleteAllByHostField(field);
+            battleEntryRepository.deleteAllByEntrantField(field);
+            battleEntryRepository.deleteAllByHostField(field);
         }
         userFieldRepository.deleteByFieldAndUser(field,user);
         fieldRepository.deleteById(fieldId);
@@ -264,13 +266,12 @@ public class UserServiceImpl implements UserService {
 
     private int getWinningRate(User user) {
         int totalMatchCount = userFieldRepository.countCompletedFieldsByUserIdAndFieldType(user.getId(),List.of(TEAM_BATTLE,DUEL));
-        int winMatchCount = Long.valueOf(
-                Optional.ofNullable(userFieldRepository.findByUserAndStatusInAndType(user, List.of(FieldStatus.COMPLETED), List.of(TEAM_BATTLE, DUEL)))
-                        .map(fields -> fields.stream()
-                                .map(UserField::getField)
-                                .filter(field -> fieldUtil.getFieldWinStatus(field) == WinStatus.WIN)
-                                .count())
-                        .orElse(0L)).intValue();
+        int winMatchCount = Optional.ofNullable(userFieldRepository.findByUserAndStatusInAndTypeIn(user, List.of(FieldStatus.COMPLETED), List.of(TEAM_BATTLE, DUEL)))
+                .map(fields -> fields.stream()
+                        .map(UserField::getField)
+                        .filter(field -> fieldUtil.getFieldWinStatus(field) == WinStatus.WIN)
+                        .count())
+                .orElse(0L).intValue();
         double winningRate = (double) winMatchCount / (double) totalMatchCount * 100.0;
         return (int) Math.round(winningRate);
     }

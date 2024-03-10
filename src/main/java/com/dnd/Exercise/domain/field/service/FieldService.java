@@ -34,7 +34,9 @@ public interface FieldService {
 
     AutoMatchingRes autoMatching(FieldType fieldType, User user);
 
-    GetFieldExerciseSummaryRes getFieldExerciseSummary(User user, Long fieldId, FieldSideDateReq summaryReq);
+    GetFieldExerciseSummaryRes getMyFieldExerciseSummary(User user, Long fieldId, LocalDate targetDate);
+
+    GetFieldExerciseSummaryRes getOpponentFieldExerciseSummary(User user, Long fieldId, LocalDate targetDate);
 
     GetRankingRes getTeamRanking(User user, Long fieldId, FieldSideDateReq teamRankingReq);
 

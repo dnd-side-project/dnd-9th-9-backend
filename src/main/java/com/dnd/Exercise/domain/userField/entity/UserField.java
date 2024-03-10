@@ -39,4 +39,11 @@ public class UserField {
         this.user = user;
         this.field = field;
     }
+
+    public static UserField from(User user, Field field){
+        return UserField.builder()
+                .user(user)
+                .field(field)
+                .build();
+    }
 }

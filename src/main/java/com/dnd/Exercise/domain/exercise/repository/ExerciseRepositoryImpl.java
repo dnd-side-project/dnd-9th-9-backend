@@ -67,7 +67,7 @@ public class ExerciseRepositoryImpl implements ExerciseRepositoryCustom {
     }
 
     @Override
-    public Page<FindFieldRecordDto> findAllWithUser(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId) {
+    public Page<FindFieldRecordDto> findAllByUserAndDate(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId) {
 
         BooleanExpression isLeader = getIsLeader(leaderId);
 

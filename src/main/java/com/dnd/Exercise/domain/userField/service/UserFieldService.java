@@ -32,6 +32,4 @@ public interface UserFieldService {
     void cheerMember(User user, Long id);
 
     void alertMembers(User user, Long id);
-
-    void checkOwnBattle(User user);
 }

@@ -16,7 +16,7 @@ public interface ExerciseRepositoryCustom {
 
     TopPlayerDto findAccumulatedTopByDynamicCriteria(RankCriterion rankCriterion, LocalDate date, List<Long> userIds);
 
-    Page<FindFieldRecordDto> findAllWithUser(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId);
+    Page<FindFieldRecordDto> findAllByUserAndDate(LocalDate date, List<Long> userIds, Pageable pageable, Long leaderId);
 
     void deleteUnexistingAppleWorkouts(List<String> existingAppleUids);
 

@@ -2,9 +2,11 @@ package com.dnd.Exercise.domain.userField.dto.response;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 @AllArgsConstructor
 public class BattleStatusDto {
 
@@ -18,11 +20,13 @@ public class BattleStatusDto {
 
     private Integer totalExerciseTimeMinute;
 
-    public BattleStatusDto(String name, List<Integer> score){
-        this.name = name;
-        this.totalRecordCount = score.get(0);
-        this.goalAchievedCount = score.get(1);
-        this.totalBurnedCalorie = score.get(2);
-        this.totalExerciseTimeMinute = score.get(3);
+    public static BattleStatusDto from(String name, List<Integer> score){
+        return BattleStatusDto.builder()
+                .name(name)
+                .totalRecordCount(score.get(0))
+                .goalAchievedCount(score.get(1))
+                .totalBurnedCalorie(score.get(2))
+                .totalExerciseTimeMinute(score.get(3))
+                .build();
     }
 }
