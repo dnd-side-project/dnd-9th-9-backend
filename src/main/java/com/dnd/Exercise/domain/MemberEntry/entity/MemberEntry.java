@@ -1,10 +1,12 @@
 package com.dnd.Exercise.domain.MemberEntry.entity;
 
+import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static javax.persistence.FetchType.*;
 
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.BaseEntity;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -47,6 +49,12 @@ public class MemberEntry extends BaseEntity {
                 .entrantUser(entrantUser)
                 .hostField(hostField)
                 .build();
+    }
+
+    public void validateMyEntry(User user){
+        if(!this.entrantUser.getId().equals(user.getId())) {
+            throw new BusinessException(BAD_REQUEST);
+        }
     }
 }
 
