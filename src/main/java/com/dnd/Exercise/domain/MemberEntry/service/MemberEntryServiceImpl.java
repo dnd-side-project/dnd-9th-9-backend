@@ -1,22 +1,19 @@
 package com.dnd.Exercise.domain.MemberEntry.service;
 
-import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.TEAM_ACCEPT;
-
 import com.dnd.Exercise.domain.BattleEntry.dto.response.FindBattleEntriesDto;
 import com.dnd.Exercise.domain.BattleEntry.dto.response.FindBattleEntriesRes;
 import com.dnd.Exercise.domain.MemberEntry.business.MemberEntryBusiness;
 import com.dnd.Exercise.domain.MemberEntry.dtos.response.FindMemberEntriesDto;
 import com.dnd.Exercise.domain.MemberEntry.dtos.response.FindMemberEntriesRes;
 import com.dnd.Exercise.domain.MemberEntry.entity.MemberEntry;
+import com.dnd.Exercise.domain.MemberEntry.event.AcceptMemberEvent;
 import com.dnd.Exercise.domain.MemberEntry.repository.MemberEntryRepository;
 import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
-import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
-import com.dnd.Exercise.domain.userField.entity.UserField;
-import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,9 +26,8 @@ public class MemberEntryServiceImpl implements MemberEntryService{
 
     private final FieldBusiness fieldBusiness;
     private final MemberEntryRepository memberEntryRepository;
-    private final UserFieldRepository userFieldRepository;
-    private final NotificationService notificationService;
     private final MemberEntryBusiness memberEntryBusiness;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -60,13 +56,9 @@ public class MemberEntryServiceImpl implements MemberEntryService{
         Field hostField = memberEntry.getHostField();
 
         checkAcceptMemberEntryValidity(user, hostField);
-
         hostField.addMember();
-        userFieldRepository.save(UserField.from(entrantUser, hostField));
-        memberEntryBusiness.deleteOrphanEntry(entrantUser, hostField);
 
-        notificationService.sendUserNotification(TEAM_ACCEPT, hostField, entrantUser);
-        notificationService.sendFieldNotification(TEAM_ACCEPT, hostField, entrantUser.getName());
+        eventPublisher.publishEvent(AcceptMemberEvent.from(entrantUser, hostField));
     }
 
     @Override
