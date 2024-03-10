@@ -11,9 +11,11 @@ import static com.dnd.Exercise.domain.field.entity.enums.Period.THREE_WEEKS;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.TWO_WEEKS;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_COMPLETED;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.OPPONENT_NOT_FOUND;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
 import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static javax.persistence.FetchType.LAZY;
 
@@ -138,19 +140,6 @@ public class Field extends BaseEntity {
         this.leaderId = leaderId;
     }
 
-    public void updateDate(Period period){
-        long plusDays = 0;
-        if (ONE_WEEK.equals(period)){
-            plusDays = 7;
-        } else if (TWO_WEEKS.equals(period)) {
-            plusDays = 14;
-        } else if(THREE_WEEKS.equals(period)){
-            plusDays = 21;
-        }
-        this.startDate = LocalDate.now();
-        this.endDate = LocalDate.now().plusDays(plusDays);
-    }
-
     public void validateNotRecruiting() {
         if (RECRUITING.equals(this.fieldStatus)) {
             throw new BusinessException(RECRUITING_YET);
@@ -193,6 +182,18 @@ public class Field extends BaseEntity {
         }
     }
 
+    public void validateSamePeriod(Field field) {
+        if(!this.period.equals(field.getPeriod())){
+            throw new BusinessException(PERIOD_NOT_MATCH);
+        }
+    }
+
+    public void validateIsMyField(Field field) {
+        if(this.id.equals(field.getId())){
+            throw new BusinessException(BAD_REQUEST);
+        }
+    }
+
     public FieldRole determineFieldRole(User user, Boolean isMember) {
         Long userId = user.getId();
         if (userId.equals(this.leaderId)) return LEADER;
@@ -212,6 +213,19 @@ public class Field extends BaseEntity {
 
     public boolean isNotSameField(Field field) {
         return !field.getId().equals(this.id);
+    }
+
+    public void updateDate(Period period){
+        long plusDays = 0;
+        if (ONE_WEEK.equals(period)){
+            plusDays = 7;
+        } else if (TWO_WEEKS.equals(period)) {
+            plusDays = 14;
+        } else if(THREE_WEEKS.equals(period)){
+            plusDays = 21;
+        }
+        this.startDate = LocalDate.now();
+        this.endDate = LocalDate.now().plusDays(plusDays);
     }
 
     public void updateFieldStatusForScheduler() {
