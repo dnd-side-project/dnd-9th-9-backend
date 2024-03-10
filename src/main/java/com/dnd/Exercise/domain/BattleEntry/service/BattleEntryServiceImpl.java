@@ -1,23 +1,22 @@
 package com.dnd.Exercise.domain.BattleEntry.service;
 
-import static com.dnd.Exercise.domain.notification.entity.NotificationTopic.BATTLE_ACCEPT;
-
 import com.dnd.Exercise.domain.BattleEntry.business.BattleEntryBusiness;
 import com.dnd.Exercise.domain.BattleEntry.dto.response.FindBattleEntriesDto;
 import com.dnd.Exercise.domain.BattleEntry.entity.BattleEntry;
+import com.dnd.Exercise.domain.BattleEntry.event.AcceptBattleEvent;
 import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.BattleType;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.BattleEntry.dto.response.FindBattleEntriesRes;
 import com.dnd.Exercise.domain.BattleEntry.repository.BattleEntryRepository;
-import com.dnd.Exercise.domain.notification.service.NotificationService;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,8 +31,8 @@ public class BattleEntryServiceImpl implements BattleEntryService {
     private final FieldBusiness fieldBusiness;
     private final BattleEntryRepository battleEntryRepository;
     private final UserFieldRepository userFieldRepository;
-    private final NotificationService notificationService;
     private final BattleEntryBusiness battleEntryBusiness;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Transactional
@@ -66,10 +65,7 @@ public class BattleEntryServiceImpl implements BattleEntryService {
         checkAcceptBattleEntryValidity(user, entrantField, hostField);
 
         entrantField.changeOpponent(hostField);
-        battleEntryRepository.deleteAllByEntrantFieldOrHostField(entrantField, hostField);
-
-        notificationService.sendFieldNotification(BATTLE_ACCEPT, hostField, entrantField.getName());
-        notificationService.sendFieldNotification(BATTLE_ACCEPT, entrantField, hostField.getName());
+        eventPublisher.publishEvent(AcceptBattleEvent.from(entrantField, hostField));
     }
 
     @Override
