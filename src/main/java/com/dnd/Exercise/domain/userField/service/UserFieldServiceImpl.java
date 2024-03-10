@@ -23,12 +23,15 @@ import com.dnd.Exercise.domain.userField.dto.response.FindAllMyFieldsDto;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyBattleStatusRes;
 import com.dnd.Exercise.domain.userField.dto.response.FindMyTeamStatusRes;
 import com.dnd.Exercise.domain.userField.entity.UserField;
+import com.dnd.Exercise.domain.userField.event.EjectMemberEvent;
+import com.dnd.Exercise.domain.userField.event.ExitFieldEvent;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.common.RedisService;
 import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,23 +44,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserFieldServiceImpl implements UserFieldService {
 
     private final UserFieldRepository userFieldRepository;
-    private final UserRepository userRepository;
-    private final BattleEntryRepository battleEntryRepository;
     private final FieldBusiness fieldBusiness;
     private final NotificationService notificationService;
     private final RedisService redisService;
     private final UserFieldBusiness userFieldBusiness;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @Override
     public void ejectMember(User user, Long fieldId, List<Long> ids) {
         Field field = fieldBusiness.getField(fieldId);
         checkEjectMemberValidity(user, field, ids);
-        field.subtractMember(ids.size());
 
+        field.subtractMember(ids.size());
         userFieldRepository.deleteAllByFieldAndUserIdIn(field, ids);
-        List<User> targetUsers = userRepository.findByIdIn(ids);
-        targetUsers.forEach(u -> notificationService.sendUserNotification(EJECT, field, u));
+
+        eventPublisher.publishEvent(EjectMemberEvent.from(field, ids));
     }
 
     @Transactional
@@ -69,8 +71,7 @@ public class UserFieldServiceImpl implements UserFieldService {
         field.subtractMember();
         userFieldRepository.deleteByFieldAndUser(field, user);
 
-        clearBattleEntries(field);
-        notificationService.sendFieldNotification(EXIT, field, user.getName());
+        eventPublisher.publishEvent(ExitFieldEvent.from(user, field));
     }
 
     @Transactional
@@ -151,10 +152,5 @@ public class UserFieldServiceImpl implements UserFieldService {
         field.validateHaveOpponent();
         fieldBusiness.validateIsMember(user, field);
         field.validateIsNotLeader(user);
-    }
-
-    private void clearBattleEntries(Field field) {
-        battleEntryRepository.deleteAllByHostField(field);
-        battleEntryRepository.deleteAllByEntrantField(field);
     }
 }
