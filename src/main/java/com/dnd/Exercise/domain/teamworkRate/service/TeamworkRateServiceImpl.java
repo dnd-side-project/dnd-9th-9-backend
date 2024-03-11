@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.teamworkRate.service;
 
+import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.WinStatus;
@@ -14,7 +15,6 @@ import com.dnd.Exercise.domain.user.repository.UserRepository;
 import com.dnd.Exercise.domain.userField.entity.UserField;
 import com.dnd.Exercise.domain.userField.repository.UserFieldRepository;
 import com.dnd.Exercise.global.error.exception.BusinessException;
-import com.dnd.Exercise.global.util.field.FieldUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,7 +38,7 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     private final TeamworkRateRepository teamworkRateRepository;
     private final UserFieldRepository userFieldRepository;
     private final UserRepository userRepository;
-    private final FieldUtil fieldUtil;
+    private final FieldBusiness fieldBusiness;
     private final TeamworkRateMapper teamworkRateMapper;
 
     @Override
@@ -47,10 +47,10 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
         long fieldId = postTeamworkRateReq.getFieldId();
         int teamworkRate = postTeamworkRateReq.getTeamworkRate();
 
-        Field field = fieldUtil.getField(fieldId);
+        Field field = fieldBusiness.getField(fieldId);
         FieldType fieldType = field.getFieldType();
 
-        fieldUtil.validateIsMember(user, field);
+        fieldBusiness.validateIsMember(user, field);
         validateIsFieldCompleted(field);
         validateIsPostingUndone(field, user);
 
@@ -75,9 +75,9 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
 
     @Override
     public Boolean getIsRatingDone(Long fieldId, User user) {
-        Field field = fieldUtil.getField(fieldId);
+        Field field = fieldBusiness.getField(fieldId);
 
-        fieldUtil.validateIsMember(user, field);
+        fieldBusiness.validateIsMember(user, field);
         validateIsFieldCompleted(field);
 
         if (teamworkRateRepository.existsByFieldAndSubmitUser(field, user)) { return true; }
@@ -95,7 +95,7 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
         List<TeamworkRateHistoryDto> teamworkRateHistoryDtos = completedFields.stream()
                 .map(field -> {
                     Integer teamworkRate = getRateGainOfField(field);
-                    WinStatus winStatus = fieldUtil.getFieldWinStatus(field);
+                    WinStatus winStatus = fieldBusiness.getFieldWinStatus(field);
                     return teamworkRateMapper.from(field,teamworkRate,winStatus);})
                 .collect(Collectors.toList());
 
@@ -121,7 +121,7 @@ public class TeamworkRateServiceImpl implements TeamworkRateService {
     }
 
     private void updateRatingOfTeamMembers(Field field) {
-        List<User> teamMembers = fieldUtil.getMembers(field.getId());
+        List<User> teamMembers = fieldBusiness.getMembers(field.getId());
         teamMembers.forEach(user -> updateTeamworkRateOfUser(user));
     }
 

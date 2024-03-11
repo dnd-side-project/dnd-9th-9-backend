@@ -1,6 +1,8 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
+import com.dnd.Exercise.domain.exercise.entity.Exercise;
 import com.dnd.Exercise.domain.sports.entity.Sports;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.querydsl.core.annotations.QueryProjection;
 import java.time.LocalDateTime;
@@ -37,21 +39,18 @@ public class FindFieldRecordDto {
     private Boolean isMemoPublic;
 
     @QueryProjection
-    public FindFieldRecordDto(Long id, Long userId, String profileImg, String name,
-            Boolean isLeader,
-            Sports sports, LocalDateTime exerciseDateTime, int durationMinute, int burnedCalorie,
-            String memoImg, String memoContent, Boolean isMemoPublic) {
-        this.id = id;
-        this.userId = userId;
-        this.profileImg = profileImg;
-        this.name = name;
+    public FindFieldRecordDto(Exercise exercise, User user, Boolean isLeader) {
+        this.id = exercise.getId();
+        this.userId = user.getId();
+        this.profileImg = user.getProfileImg();
+        this.name = user.getName();
         this.isLeader = isLeader;
-        this.sports = sports;
-        this.exerciseDateTime = exerciseDateTime;
-        this.durationMinute = durationMinute;
-        this.burnedCalorie = burnedCalorie;
-        this.memoImg = memoImg;
-        this.memoContent = memoContent;
-        this.isMemoPublic = isMemoPublic;
+        this.sports = exercise.getSports();
+        this.exerciseDateTime = exercise.getRecordingDateTime();
+        this.durationMinute = exercise.getDurationMinute();
+        this.burnedCalorie = exercise.getBurnedCalorie();
+        this.memoImg = exercise.getMemoImg();
+        this.memoContent = exercise.getMemoContent();
+        this.isMemoPublic = exercise.isMemoPublic();
     }
 }

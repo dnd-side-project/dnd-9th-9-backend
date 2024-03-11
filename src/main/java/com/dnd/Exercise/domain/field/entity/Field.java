@@ -1,18 +1,37 @@
 package com.dnd.Exercise.domain.field.entity;
 
+import static com.dnd.Exercise.domain.field.dto.response.FieldRole.GUEST;
+import static com.dnd.Exercise.domain.field.dto.response.FieldRole.LEADER;
+import static com.dnd.Exercise.domain.field.dto.response.FieldRole.MEMBER;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.COMPLETED;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.IN_PROGRESS;
+import static com.dnd.Exercise.domain.field.entity.enums.FieldStatus.RECRUITING;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.ONE_WEEK;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.THREE_WEEKS;
 import static com.dnd.Exercise.domain.field.entity.enums.Period.TWO_WEEKS;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_FULL;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.ALREADY_IN_PROGRESS;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.BAD_REQUEST;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.MUST_NOT_LEADER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_COMPLETED;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.NOT_LEADER;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.OPPONENT_NOT_FOUND;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.PERIOD_NOT_MATCH;
+import static com.dnd.Exercise.global.error.dto.ErrorCode.RECRUITING_YET;
 import static javax.persistence.FetchType.LAZY;
 
+import com.dnd.Exercise.domain.field.dto.response.FieldRole;
 import com.dnd.Exercise.domain.field.entity.enums.FieldStatus;
 import com.dnd.Exercise.domain.field.entity.enums.FieldType;
 import com.dnd.Exercise.domain.field.entity.enums.Goal;
 import com.dnd.Exercise.domain.field.entity.enums.Period;
 import com.dnd.Exercise.domain.field.entity.enums.SkillLevel;
 import com.dnd.Exercise.domain.field.entity.enums.Strength;
+import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.common.BaseEntity;
+import com.dnd.Exercise.global.error.exception.BusinessException;
 import java.time.LocalDate;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -101,10 +120,6 @@ public class Field extends BaseEntity {
         this.opponent = null;
     }
 
-    public void removeOpponent(){
-        this.opponent = null;
-    }
-
     public void changeOpponent(Field field){
         this.opponent = field;
         field.opponent = this;
@@ -122,14 +137,89 @@ public class Field extends BaseEntity {
         this.currentSize -= cnt;
     }
 
-    public void changeProfileImg(String imgUrl){
-        this.profileImg = imgUrl;
-    }
-
-    public void changeFieldStatus(FieldStatus fieldStatus){ this.fieldStatus = fieldStatus; }
-
     public void changeLeader(Long leaderId){
         this.leaderId = leaderId;
+    }
+
+    public void validateNotRecruiting() {
+        if (RECRUITING.equals(this.fieldStatus)) {
+            throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    public void validateCompleted() {
+        if(!COMPLETED.equals(this.fieldStatus)){
+            throw new BusinessException(NOT_COMPLETED);
+        }
+    }
+
+    public void validateHaveOpponent() {
+        if(this.opponent != null){
+            throw new BusinessException(ALREADY_IN_PROGRESS);
+        }
+    }
+
+    public void validateIsFull() {
+        if(this.currentSize != this.maxSize){
+            throw new BusinessException(RECRUITING_YET);
+        }
+    }
+
+    public void validateIsNotFull() {
+        if(this.currentSize == this.maxSize){
+            throw new BusinessException(ALREADY_FULL);
+        }
+    }
+
+    public void validateIsNotLeader(User user) {
+        if(user.getId().equals(this.leaderId)){
+            throw new BusinessException(MUST_NOT_LEADER);
+        }
+    }
+
+    public void validateIsLeader(Long userId) {
+        if(!userId.equals(this.leaderId)){
+            throw new BusinessException(NOT_LEADER);
+        }
+    }
+
+    public void validateOpponentPresence() {
+        if (this.opponent == null) {
+            throw new BusinessException(OPPONENT_NOT_FOUND);
+        }
+    }
+
+    public void validateSamePeriod(Field field) {
+        if(!this.period.equals(field.getPeriod())){
+            throw new BusinessException(PERIOD_NOT_MATCH);
+        }
+    }
+
+    public void validateIsMyField(Field field) {
+        if(this.id.equals(field.getId())){
+            throw new BusinessException(BAD_REQUEST);
+        }
+    }
+
+    public FieldRole determineFieldRole(User user, Boolean isMember) {
+        Long userId = user.getId();
+        if (userId.equals(this.leaderId)) return LEADER;
+        else if (isMember) return MEMBER;
+        else return GUEST;
+    }
+
+    public int calculateFieldDifference(Field field) {
+        return Math.abs(this.skillLevel.ordinal() - field.getSkillLevel().ordinal())
+                + Math.abs(this.strength.ordinal() - field.getStrength().ordinal())
+                + Math.abs(this.maxSize - field.getMaxSize());
+    }
+
+    public boolean isNotMatchedField(List<String> matchedFieldIds) {
+        return !matchedFieldIds.contains(String.valueOf(this.id));
+    }
+
+    public boolean isNotSameField(Field field) {
+        return !field.getId().equals(this.id);
     }
 
     public void updateDate(Period period){
@@ -143,5 +233,14 @@ public class Field extends BaseEntity {
         }
         this.startDate = LocalDate.now();
         this.endDate = LocalDate.now().plusDays(plusDays);
+    }
+
+    public void updateFieldStatusForScheduler() {
+        if (RECRUITING.equals(this.fieldStatus) && this.opponent != null) {
+            this.fieldStatus = IN_PROGRESS;
+            updateDate(period);
+        } else if (IN_PROGRESS.equals(this.fieldStatus) && LocalDate.now().equals(this.endDate)) {
+            this.fieldStatus = COMPLETED;
+        }
     }
 }

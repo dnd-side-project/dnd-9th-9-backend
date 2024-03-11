@@ -1,5 +1,6 @@
 package com.dnd.Exercise.domain.field.dto.response;
 
+import com.dnd.Exercise.domain.field.entity.Field;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,11 @@ public class FindFieldRes {
                 .build();
     }
 
-    public void updateAssignedField(FindAllFieldsDto assignedFieldDto){
-        this.assignedFieldDto = assignedFieldDto;
+    public void updateAssignedField(Field field, Boolean isMember) {
+        Field opponentField = field.getOpponent();
+        if (isMember && opponentField != null){
+            FindAllFieldsDto assignedFieldDto = FindAllFieldsDto.of(opponentField);
+            this.assignedFieldDto = assignedFieldDto;
+        }
     }
 }

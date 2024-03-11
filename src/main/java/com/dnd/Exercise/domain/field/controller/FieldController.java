@@ -155,7 +155,7 @@ public class FieldController {
     public ResponseEntity<String> deleteField(
             @AuthenticationPrincipal User user,
             @Parameter(description = "필드 Id값") @PathVariable("id") Long id){
-        fieldService.deleteFieldId(id, user);
+        fieldService.deleteField(id, user);
         return ResponseDto.ok("필드 삭제 완료");
     }
 

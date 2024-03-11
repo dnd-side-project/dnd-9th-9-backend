@@ -9,6 +9,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.dnd.Exercise.domain.fcmToken.entity.FcmToken;
 import com.dnd.Exercise.domain.fcmToken.repository.FcmTokenRepository;
+import com.dnd.Exercise.domain.field.business.FieldBusiness;
 import com.dnd.Exercise.domain.field.entity.Field;
 import com.dnd.Exercise.domain.notification.dto.NotificationMapper;
 import com.dnd.Exercise.domain.notification.dto.response.FieldNotificationDto;
@@ -22,7 +23,6 @@ import com.dnd.Exercise.domain.notification.entity.NotificationType;
 import com.dnd.Exercise.domain.notification.repository.NotificationRepository;
 import com.dnd.Exercise.domain.user.entity.User;
 import com.dnd.Exercise.global.error.exception.BusinessException;
-import com.dnd.Exercise.global.util.field.FieldUtil;
 import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -48,7 +48,7 @@ public class NotificationServiceImpl implements NotificationService{
     private final FcmTokenRepository fcmTokenRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
-    private final FieldUtil fieldUtil;
+    private final FieldBusiness fieldBusiness;
 
     @Override
     @Transactional
@@ -60,7 +60,7 @@ public class NotificationServiceImpl implements NotificationService{
                 .notificationType(NotificationType.FIELD)
                 .build();
 
-        List<User> members = fieldUtil.getMembers(field.getId());
+        List<User> members = fieldBusiness.getMembers(field.getId());
         List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(members);
         sendNotificationAndSave(notificationDto, fcmTokens);
     }
@@ -76,7 +76,7 @@ public class NotificationServiceImpl implements NotificationService{
                 .name(name)
                 .build();
 
-        List<User> members = fieldUtil.getMembers(field.getId());
+        List<User> members = fieldBusiness.getMembers(field.getId());
         List<FcmToken> fcmTokens = fcmTokenRepository.findByUserIn(members);
         sendNotificationAndSave(notificationDto, fcmTokens);
     }
@@ -146,8 +146,8 @@ public class NotificationServiceImpl implements NotificationService{
 
     @Override
     public FindFieldNotificationsRes findFieldNotifications(User user, Long id, Pageable pageable) {
-        Field field = fieldUtil.getField(id);
-        fieldUtil.validateIsMember(user, field);
+        Field field = fieldBusiness.getField(id);
+        fieldBusiness.validateIsMember(user, field);
 
         Page<Notification> queryResult = notificationRepository.findByUserAndNotificationType(user, FIELD, pageable);
 
